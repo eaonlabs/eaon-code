@@ -51,7 +51,7 @@ function getDefaultAttributionHeaders(
 
 	if (isNvidiaNimModel(model)) {
 		return {
-			"X-BILLING-INVOKE-ORIGIN": "Pi",
+			"X-BILLING-INVOKE-ORIGIN": "Eaon Code",
 		};
 	}
 

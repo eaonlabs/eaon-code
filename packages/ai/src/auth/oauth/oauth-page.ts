@@ -1,4 +1,5 @@
-const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" aria-hidden="true"><path fill="#fff" fill-rule="evenodd" d="M165.29 165.29 H517.36 V400 H400 V517.36 H282.65 V634.72 H165.29 Z M282.65 282.65 V400 H400 V282.65 Z"/><path fill="#fff" d="M517.36 400 H634.72 V634.72 H517.36 Z"/></svg>`;
+// Eaon Code mark — geometric E in a rounded square (replaces upstream Pi logo)
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" aria-hidden="true"><rect x="72" y="72" width="656" height="656" rx="148" fill="none" stroke="#fff" stroke-width="56"/><rect x="220" y="236" width="360" height="64" rx="32" fill="#fff"/><rect x="220" y="368" width="248" height="64" rx="32" fill="#fff"/><rect x="220" y="500" width="360" height="64" rx="32" fill="#fff"/></svg>`;
 
 function escapeHtml(value: string): string {
 	return value
