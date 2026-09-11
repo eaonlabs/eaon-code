@@ -231,7 +231,7 @@ describe("AgentSession compaction characterization", () => {
 		const harness = await createHarness({ withConfiguredAuth: false });
 		harnesses.push(harness);
 
-		await expect(harness.session.compact()).rejects.toThrow(`No API key found for ${harness.getModel().provider}.`);
+		await expect(harness.session.compact()).rejects.toThrow(`No API key for ${harness.getModel().provider}.`);
 	});
 
 	it("manually compacts with a custom streamFn when registry auth is absent", async () => {

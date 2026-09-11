@@ -196,13 +196,13 @@ describe("createAgentSession provider attribution headers", () => {
 	it("adds default attribution headers for direct NVIDIA NIM endpoints", async () => {
 		const headers = await captureHeaders(createModel("custom-nim", "https://integrate.api.nvidia.com/v1"));
 
-		expect(headers?.["X-BILLING-INVOKE-ORIGIN"]).toBe("Pi");
+		expect(headers?.["X-BILLING-INVOKE-ORIGIN"]).toBe("Eaon Code");
 	});
 
 	it("adds default attribution headers for the NVIDIA provider", async () => {
 		const headers = await captureHeaders(createModel("nvidia", "https://example.test/v1"));
 
-		expect(headers?.["X-BILLING-INVOKE-ORIGIN"]).toBe("Pi");
+		expect(headers?.["X-BILLING-INVOKE-ORIGIN"]).toBe("Eaon Code");
 	});
 
 	it("does not add NVIDIA NIM attribution headers when telemetry is disabled", async () => {

@@ -527,7 +527,8 @@ export function getShareViewerUrl(gistId: string): string {
 
 /** Get the agent config directory (e.g., ~/.pi/agent/) */
 export function getAgentDir(): string {
-	const envDir = process.env[ENV_AGENT_DIR];
+	// Prefer the Eaon env var; still honor upstream PI_CODING_AGENT_DIR for compatibility.
+	const envDir = process.env[ENV_AGENT_DIR] ?? process.env.PI_CODING_AGENT_DIR;
 	if (envDir) {
 		return expandTildePath(envDir);
 	}
