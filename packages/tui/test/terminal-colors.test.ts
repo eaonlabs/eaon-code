@@ -62,7 +62,6 @@ class TestTerminal implements Terminal {
 	clearScreen(): void {}
 
 	setTitle(_title: string): void {}
-	setBackgroundColor(_hex: string | undefined): void {}
 
 	setProgress(_active: boolean): void {}
 

@@ -4,7 +4,6 @@ import {
 	detectTerminalBackgroundFromEnv,
 	detectTerminalBackgroundTheme,
 	detectTerminalThemeForAuto,
-	getThemeExportColors,
 	initTheme,
 	parseAutoThemeSetting,
 	resolveThemeSetting,
@@ -47,14 +46,12 @@ export class InteractiveThemeController {
 		);
 		initTheme(this.activeThemeName, true);
 		this.bindTerminalColorSchemeListener();
-		this.applyTerminalBackground();
 	}
 
 	rebindTui(): void {
 		this.terminalColorSchemeUnsubscribe?.();
 		this.bindTerminalColorSchemeListener();
 		this.ui.setTerminalColorSchemeNotifications(this.autoSyncEnabled);
-		this.applyTerminalBackground();
 	}
 
 	async applyFromSettings(): Promise<void> {
@@ -106,7 +103,6 @@ export class InteractiveThemeController {
 		setThemeInstance(themeInstance);
 		this.activeThemeName = "<in-memory>";
 		this.notifyChanged();
-		this.applyTerminalBackground();
 		return { success: true };
 	}
 
@@ -114,7 +110,6 @@ export class InteractiveThemeController {
 		const themeName = resolveThemeSetting(themeSettingOrName, this.terminalTheme) ?? this.activeThemeName;
 		if (!themeName) return;
 		if (setTheme(themeName, true).success) {
-			this.applyTerminalBackground();
 			this.ui.invalidate();
 			this.ui.requestRender();
 		}
@@ -128,39 +123,18 @@ export class InteractiveThemeController {
 		this.setAutoSync(false);
 		this.terminalColorSchemeUnsubscribe?.();
 		this.terminalColorSchemeUnsubscribe = undefined;
-		// Restore the terminal's default background on exit
-		try {
-			this.ui.terminal.setBackgroundColor(undefined);
-		} catch {
-			// best effort
-		}
 	}
 
 	getTerminalTheme(): TerminalTheme {
 		return this.terminalTheme;
 	}
 
-	/** Paint the real terminal background from the active theme's export.pageBg. */
-	private applyTerminalBackground(): void {
-		try {
-			const { pageBg } = getThemeExportColors(this.activeThemeName);
-			this.ui.terminal.setBackgroundColor(pageBg);
-			// Repaint empty cells with the new default background
-			if (pageBg) {
-				this.ui.terminal.clearScreen();
-			}
-		} catch {
-			// Some terminals reject OSC 11; ignore.
-		}
-	}
-
 	private applyThemeName(themeName: string, showError = false): ThemeResult {
 		const result = setTheme(themeName, true);
-		this.activeThemeName = result.success ? themeName : "orange";
-		this.applyTerminalBackground();
+		this.activeThemeName = result.success ? themeName : "dark";
 		this.notifyChanged();
 		if (!result.success && showError) {
-			this.showError(`Failed to load theme "${themeName}": ${result.error}\nFell back to orange theme.`);
+			this.showError(`Failed to load theme "${themeName}": ${result.error}\nFell back to dark theme.`);
 		}
 		return result;
 	}
