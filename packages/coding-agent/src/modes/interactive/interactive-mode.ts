@@ -929,6 +929,7 @@ export class InteractiveMode {
 		// Restore optional modes (default: both off)
 		if (this.settingsManager.getPlanMode()) this.enablePlanMode();
 		if (this.settingsManager.getSwarmMode()) this.enableSwarmMode();
+		this.refreshModeStatus();
 
 		// Add header with keybindings from config (unless silenced)
 		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
