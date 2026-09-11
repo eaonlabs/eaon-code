@@ -30,6 +30,7 @@
 				"yaml": "2.9.0"
 			},
 			"bin": {
+				"eaon-code": "dist/bundle/cli.js",
 				"pi": "dist/bundle/cli.js"
 			},
 			"engines": {
@@ -420,7 +421,7 @@
 		},
 		"node_modules/@eaonlabs/eaon-agent-core": {
 			"version": "0.85.1",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-agent-core/-/pi-agent-core-0.85.1.tgz",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-agent-core/-/eaon-agent-core-0.85.1.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"@eaonlabs/chord": "^0.85.1",
@@ -437,7 +438,7 @@
 		},
 		"node_modules/@eaonlabs/eaon-ai": {
 			"version": "0.85.1",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-ai/-/pi-ai-0.85.1.tgz",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-ai/-/eaon-ai-0.85.1.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"@anthropic-ai/sdk": "0.124.0",
@@ -452,6 +453,7 @@
 				"typebox": "1.3.27"
 			},
 			"bin": {
+				"eaon-ai": "dist/cli.js",
 				"pi-ai": "dist/cli.js"
 			},
 			"engines": {
@@ -483,7 +485,7 @@
 		},
 		"node_modules/@eaonlabs/eaon-telemetry": {
 			"version": "0.85.1",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-telemetry/-/pi-telemetry-0.85.1.tgz",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-telemetry/-/eaon-telemetry-0.85.1.tgz",
 			"license": "MIT",
 			"engines": {
 				"node": ">=22.19.0"
@@ -491,7 +493,7 @@
 		},
 		"node_modules/@eaonlabs/eaon-tui": {
 			"version": "0.85.1",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-tui/-/pi-tui-0.85.1.tgz",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-tui/-/eaon-tui-0.85.1.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"get-east-asian-width": "1.6.0",

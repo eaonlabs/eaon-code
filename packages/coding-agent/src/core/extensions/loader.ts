@@ -113,10 +113,7 @@ function getAliases(): Record<string, string> {
 	// global API keep working at runtime until compat is removed.
 	const piAiCompatEntry = resolveWorkspaceOrImport("ai/dist/compat.js", "@eaonlabs/eaon-ai/compat");
 	const piAiOauthEntry = resolveWorkspaceOrImport("ai/dist/oauth.js", "@eaonlabs/eaon-ai/oauth");
-	const piAiProvidersEntry = resolveWorkspaceOrImport(
-		"ai/dist/providers/all.js",
-		"@eaonlabs/eaon-ai/providers/all",
-	);
+	const piAiProvidersEntry = resolveWorkspaceOrImport("ai/dist/providers/all.js", "@eaonlabs/eaon-ai/providers/all");
 
 	_aliases = {
 		"@eaonlabs/eaon-code": piCodingAgentEntry,

@@ -92,8 +92,7 @@ export async function persistEvalArtifactReferences(
 	const references: Array<{ name: string; path: string }> = [];
 	for (const artifact of artifacts) {
 		if (
-			(artifact.type !== "@eaonlabs/eaon-evals:session" &&
-				artifact.type !== "@eaonlabs/eaon-evals:source") ||
+			(artifact.type !== "@eaonlabs/eaon-evals:session" && artifact.type !== "@eaonlabs/eaon-evals:source") ||
 			artifact.runId !== runId
 		) {
 			continue;

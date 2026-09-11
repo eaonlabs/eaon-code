@@ -1,9 +1,4 @@
-import {
-	CustomEditor,
-	type ExtensionAPI,
-	type ExtensionContext,
-	type KeybindingsManager,
-} from "@eaonlabs/eaon-code";
+import { CustomEditor, type ExtensionAPI, type ExtensionContext, type KeybindingsManager } from "@eaonlabs/eaon-code";
 import type { Component, EditorTheme, TUI } from "@eaonlabs/eaon-tui";
 import { truncateToWidth, visibleWidth } from "@eaonlabs/eaon-tui";
 

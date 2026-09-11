@@ -12,9 +12,7 @@ describe("package boundary", () => {
 		const manifest = JSON.parse(await readFile(resolve(packageDirectory, "package.json"), "utf8")) as {
 			dependencies?: Record<string, string>;
 		};
-		expect(Object.keys(manifest.dependencies ?? {}).filter((name) => name.startsWith("@eaonlabs/eaon-"))).toEqual(
-			[],
-		);
+		expect(Object.keys(manifest.dependencies ?? {}).filter((name) => name.startsWith("@eaonlabs/eaon-"))).toEqual([]);
 
 		const paths = (await readdir(sourceDirectory, { recursive: true })).filter((path) => path.endsWith(".ts")).sort();
 		const violations: string[] = [];

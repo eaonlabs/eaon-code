@@ -13,12 +13,7 @@
  *   export default function (pi: ExtensionAPI) { ... }
  */
 
-import {
-	createAgentSession,
-	DefaultResourceLoader,
-	getAgentDir,
-	SessionManager,
-} from "@eaonlabs/eaon-code";
+import { createAgentSession, DefaultResourceLoader, getAgentDir, SessionManager } from "@eaonlabs/eaon-code";
 
 // Extensions are discovered automatically from standard locations.
 // You can also add paths via settings.json or DefaultResourceLoader options.

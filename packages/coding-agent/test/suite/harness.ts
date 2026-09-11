@@ -8,12 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AgentMessage, AgentTool } from "@eaonlabs/eaon-agent-core";
 import { Agent } from "@eaonlabs/eaon-agent-core";
-import type {
-	FauxModelDefinition,
-	FauxProviderRegistration,
-	FauxResponseStep,
-	Model,
-} from "@eaonlabs/eaon-ai/compat";
+import type { FauxModelDefinition, FauxProviderRegistration, FauxResponseStep, Model } from "@eaonlabs/eaon-ai/compat";
 import { registerFauxProvider, streamSimple } from "@eaonlabs/eaon-ai/compat";
 import { AgentSession, type AgentSessionEvent } from "../../src/core/agent-session.ts";
 import { AuthStorage } from "../../src/core/auth-storage.ts";

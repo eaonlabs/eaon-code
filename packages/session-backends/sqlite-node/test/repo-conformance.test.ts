@@ -1,10 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-	type ConformanceCase,
-	createSessionRepoConformance,
-} from "@eaonlabs/eaon-agent-core/harness/session/testing";
+import { type ConformanceCase, createSessionRepoConformance } from "@eaonlabs/eaon-agent-core/harness/session/testing";
 import { describe, it } from "vitest";
 import { createNodeSqliteFactory, SqliteSessionRepo } from "../src/index.ts";
 

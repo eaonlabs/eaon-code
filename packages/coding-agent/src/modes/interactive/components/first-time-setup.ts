@@ -53,12 +53,8 @@ export class FirstTimeSetupComponent extends Container {
 		this.addChild(new Spacer(1));
 		this.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
 		this.addChild(new Spacer(1));
-		this.addChild(
-			new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}`)), 1, 0),
-		);
-		this.addChild(
-			new Text(theme.fg("muted", "A coding agent for your terminal. Two quick choices:"), 1, 0),
-		);
+		this.addChild(new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}`)), 1, 0));
+		this.addChild(new Text(theme.fg("muted", "A coding agent for your terminal. Two quick choices:"), 1, 0));
 		this.addChild(new Spacer(1));
 
 		if (this.step === "theme") {

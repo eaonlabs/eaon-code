@@ -6,15 +6,7 @@
  */
 
 import type { ExtensionAPI } from "@eaonlabs/eaon-code";
-import {
-	Editor,
-	type EditorTheme,
-	Key,
-	matchesKey,
-	Text,
-	visibleWidth,
-	wrapTextWithAnsi,
-} from "@eaonlabs/eaon-tui";
+import { Editor, type EditorTheme, Key, matchesKey, Text, visibleWidth, wrapTextWithAnsi } from "@eaonlabs/eaon-tui";
 import { Type } from "typebox";
 
 // Types

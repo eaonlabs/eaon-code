@@ -1,13 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type {
-	AnthropicMessagesCompat,
-	Api,
-	Context,
-	Model,
-	OpenAICompletionsCompat,
-} from "@eaonlabs/eaon-ai/compat";
+import type { AnthropicMessagesCompat, Api, Context, Model, OpenAICompletionsCompat } from "@eaonlabs/eaon-ai/compat";
 import { getApiProvider, getModels, getSupportedThinkingLevels } from "@eaonlabs/eaon-ai/compat";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.ts";

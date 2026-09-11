@@ -2,11 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { bundleFacetPackage } from "@eaonlabs/chord/bundler";
-import {
-	FACET_BUNDLE_MANIFEST_FILE,
-	type FacetBundleArtifact,
-	readFacetBundleArtifact,
-} from "@eaonlabs/chord/node";
+import { FACET_BUNDLE_MANIFEST_FILE, type FacetBundleArtifact, readFacetBundleArtifact } from "@eaonlabs/chord/node";
 import type { ServerId } from "@eaonlabs/eaon-protocol";
 
 const PLUGIN_PACKAGE_PROFILE_VERSION = 1;

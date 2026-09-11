@@ -119,7 +119,9 @@ function verifyManagedRelease(releaseDir: string, expectedVersion: string): void
 	}
 	const installedVersion = result.stdout.trim();
 	if (installedVersion !== expectedVersion) {
-		throw new Error(`Managed Eaon Code smoke test returned version ${installedVersion}; expected ${expectedVersion}.`);
+		throw new Error(
+			`Managed Eaon Code smoke test returned version ${installedVersion}; expected ${expectedVersion}.`,
+		);
 	}
 }
 

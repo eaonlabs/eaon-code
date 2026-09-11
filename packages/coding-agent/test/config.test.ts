@@ -189,15 +189,7 @@ describe("detectInstallMethod", () => {
 		expect(detectInstallMethod()).toBe("npm");
 		expect(command).toEqual({
 			command: "npm",
-			args: [
-				"--prefix",
-				prefix,
-				"install",
-				"-g",
-				"--ignore-scripts",
-				"--min-release-age=0",
-				"@eaonlabs/eaon-code",
-			],
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@eaonlabs/eaon-code"],
 			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @eaonlabs/eaon-code`,
 		});
 	});
@@ -256,15 +248,7 @@ describe("detectInstallMethod", () => {
 
 		expect(command).toEqual({
 			command: "npm",
-			args: [
-				"--prefix",
-				prefix,
-				"install",
-				"-g",
-				"--ignore-scripts",
-				"--min-release-age=0",
-				"@eaonlabs/eaon-code",
-			],
+			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@eaonlabs/eaon-code"],
 			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @eaonlabs/eaon-code`,
 		});
 	});
@@ -444,8 +428,6 @@ describe("detectInstallMethod", () => {
 		chmodSync(packageDir, 0o500);
 
 		expect(getSelfUpdateCommand("@eaonlabs/eaon-code")).toBeUndefined();
-		expect(getSelfUpdateUnavailableInstruction("@eaonlabs/eaon-code")).toContain(
-			"the install path is not writable",
-		);
+		expect(getSelfUpdateUnavailableInstruction("@eaonlabs/eaon-code")).toContain("the install path is not writable");
 	});
 });

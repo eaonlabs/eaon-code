@@ -989,8 +989,18 @@ export function getResolvedThemeColors(themeName?: string): Record<string, strin
  * Check if a theme is a "light" theme (for CSS that needs light/dark variants).
  */
 export function isLightTheme(themeName?: string): boolean {
-	// Currently just check the name - could be extended to analyze colors
-	return themeName === "light";
+	if (!themeName) return false;
+	return themeName === "light" || themeName.startsWith("light-");
+}
+
+/** Themes designed for dark terminal backgrounds (product default family). */
+export function getDarkThemeNames(): string[] {
+	return getAvailableThemes().filter((name) => !isLightTheme(name));
+}
+
+/** Themes designed for light terminal backgrounds. */
+export function getLightThemeNames(): string[] {
+	return getAvailableThemes().filter((name) => isLightTheme(name));
 }
 
 /**

@@ -9,12 +9,7 @@ import {
 	type ServiceCall,
 	type ServiceProviderUpdate,
 } from "@eaonlabs/chord";
-import {
-	BACKGROUND_CONTEXT,
-	type Context,
-	type JsonlSessionMetadata,
-	TODO_CONTEXT,
-} from "@eaonlabs/eaon-agent-core";
+import { BACKGROUND_CONTEXT, type Context, type JsonlSessionMetadata, TODO_CONTEXT } from "@eaonlabs/eaon-agent-core";
 import { type RoutedSessionAttachment, type RoutedSessionHandle, ServerError } from "@eaonlabs/eaon-server";
 import { Check } from "typebox/value";
 import type { CoordinatorConnection, CoordinatorConnectionEvent } from "./coordinator.ts";

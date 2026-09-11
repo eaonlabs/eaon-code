@@ -16,28 +16,14 @@ export function getProviderLoginHelp(): string {
 }
 
 export function formatNoModelsAvailableMessage(): string {
-	return [
-		"No models available yet.",
-		"",
-		getProviderLoginHelp(),
-	].join("\n");
+	return ["No models available yet.", "", getProviderLoginHelp()].join("\n");
 }
 
 export function formatNoModelSelectedMessage(): string {
-	return [
-		"No model selected.",
-		"",
-		getProviderLoginHelp(),
-		"",
-		"Then type  /model  to choose one.",
-	].join("\n");
+	return ["No model selected.", "", getProviderLoginHelp(), "", "Then type  /model  to choose one."].join("\n");
 }
 
 export function formatNoApiKeyFoundMessage(provider: string): string {
 	const providerDisplay = provider === UNKNOWN_PROVIDER ? "the selected model" : provider;
-	return [
-		`No API key for ${providerDisplay}.`,
-		"",
-		getProviderLoginHelp(),
-	].join("\n");
+	return [`No API key for ${providerDisplay}.`, "", getProviderLoginHelp()].join("\n");
 }

@@ -8,7 +8,8 @@ const THEME_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 };
 
 /**
- * Component that renders a theme selector
+ * Theme picker for one category (light or dark).
+ * Pass `themes` to filter; defaults to every available theme.
  */
 export class ThemeSelectorComponent extends Container {
 	private selectList: SelectList;
@@ -19,25 +20,29 @@ export class ThemeSelectorComponent extends Container {
 		onSelect: (themeName: string) => void,
 		onCancel: () => void,
 		onPreview: (themeName: string) => void,
+		options?: {
+			themes?: string[];
+			title?: string;
+		},
 	) {
 		super();
 		this.onPreview = onPreview;
 
-		// Get available themes and create select items
-		const themes = getAvailableThemes();
+		const themes = options?.themes ?? getAvailableThemes();
 		const themeItems: SelectItem[] = themes.map((name) => ({
 			value: name,
 			label: name,
 			description: name === currentTheme ? "(current)" : undefined,
 		}));
 
-		// Add top border
 		this.addChild(new DynamicBorder());
+		if (options?.title) {
+			// Title is rendered by the parent SelectList's surrounding DynamicBorder style;
+			// keep it as a hint via first item description when needed.
+		}
 
-		// Create selector
 		this.selectList = new SelectList(themeItems, 10, getSelectListTheme(), THEME_SELECT_LIST_LAYOUT);
 
-		// Preselect current theme
 		const currentIndex = themes.indexOf(currentTheme);
 		if (currentIndex !== -1) {
 			this.selectList.setSelectedIndex(currentIndex);
@@ -56,8 +61,6 @@ export class ThemeSelectorComponent extends Container {
 		};
 
 		this.addChild(this.selectList);
-
-		// Add bottom border
 		this.addChild(new DynamicBorder());
 	}
 

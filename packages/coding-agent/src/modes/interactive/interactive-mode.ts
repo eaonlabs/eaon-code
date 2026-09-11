@@ -32,15 +32,16 @@ import {
 	hyperlink,
 	Markdown,
 	matchesKey,
+	SelectList,
 	Spacer,
 	setCapabilityOverrides,
 	setKeybindings,
 	Text,
 	TruncatedText,
-	truncateToWidth,
 	type TUI,
 	TuiAltScreen,
 	TuiMainScreen,
+	truncateToWidth,
 	visibleWidth,
 } from "@eaonlabs/eaon-tui";
 import chalk from "chalk";
@@ -148,8 +149,8 @@ import {
 	type StatusIndicator,
 	WorkingStatusIndicator,
 } from "./components/status-indicator.ts";
-import { ThinkingSelectorComponent } from "./components/thinking-selector.ts";
 import { ThemeSelectorComponent } from "./components/theme-selector.ts";
+import { ThinkingSelectorComponent } from "./components/thinking-selector.ts";
 import { ToolExecutionComponent } from "./components/tool-execution.ts";
 import { TreeSelectorComponent } from "./components/tree-selector.ts";
 import { TrustSelectorComponent } from "./components/trust-selector.ts";
@@ -162,9 +163,13 @@ import { shareSession } from "./session-share.ts";
 import {
 	getAvailableThemes,
 	getAvailableThemesWithPaths,
+	getDarkThemeNames,
 	getEditorTheme,
+	getLightThemeNames,
 	getMarkdownTheme,
+	getSelectListTheme,
 	getThemeByName,
+	isLightTheme,
 	onThemeChange,
 	setRegisteredThemes,
 	stopThemeWatcher,
@@ -945,10 +950,7 @@ export class InteractiveMode {
 				rawKeyHint("!", "bash"),
 				hint("app.tools.expand", "more"),
 			].join(theme.fg("muted", " · "));
-			const compactOnboarding = theme.fg(
-				"dim",
-				`Press ${keyText("app.tools.expand")} for the full shortcut list.`,
-			);
+			const compactOnboarding = theme.fg("dim", `Press ${keyText("app.tools.expand")} for the full shortcut list.`);
 			const onboarding = theme.fg(
 				"dim",
 				[
@@ -5002,9 +5004,12 @@ export class InteractiveMode {
 		});
 	}
 
-	/** /theme [name] — set a preset by name, or open the theme picker. */
+	/**
+	 * /theme [name]
+	 * - with a name: apply that theme
+	 * - without: pick Light or Dark first, then only that category's themes
+	 */
 	private handleThemeCommand(name?: string): void {
-		const themes = getAvailableThemes();
 		const applyTheme = (themeName: string) => {
 			const result = this.themeController.setThemeName(themeName);
 			if (result.success) {
@@ -5016,33 +5021,76 @@ export class InteractiveMode {
 			}
 		};
 
+		const allThemes = getAvailableThemes();
+
 		if (name) {
-			const match = themes.find((t) => t.toLowerCase() === name.toLowerCase());
+			const match = allThemes.find((t) => t.toLowerCase() === name.toLowerCase());
 			if (!match) {
-				this.showError(`Unknown theme "${name}". Available: ${themes.join(", ")}`);
+				const light = getLightThemeNames().join(", ");
+				const dark = getDarkThemeNames().join(", ");
+				this.showError(`Unknown theme "${name}".\nDark: ${dark}\nLight: ${light}`);
 				return;
 			}
 			applyTheme(match);
 			return;
 		}
 
+		const openCategoryList = (category: "dark" | "light") => {
+			const themes = category === "light" ? getLightThemeNames() : getDarkThemeNames();
+			const title = category === "light" ? "Light themes" : "Dark themes";
+			this.showSelector((done) => {
+				const current = this.themeController.getThemeSelection() || "orange";
+				const selector = new ThemeSelectorComponent(
+					current,
+					(themeName: string) => {
+						done();
+						applyTheme(themeName);
+					},
+					() => {
+						// Back to category step
+						done();
+						this.handleThemeCommand();
+					},
+					(themeName: string) => {
+						this.themeController.preview(themeName);
+					},
+					{ themes, title },
+				);
+				return { component: selector, focus: selector.getSelectList() };
+			});
+			this.showStatus(`${title} (${themes.length})  ·  Esc to go back`);
+		};
+
+		// Step 1: Light vs Dark
+		const current = this.themeController.getThemeSelection() || "orange";
+		const startInLight = isLightTheme(current);
 		this.showSelector((done) => {
-			const current = this.themeController.getThemeSelection() || "orange";
-			const selector = new ThemeSelectorComponent(
-				current,
-				(themeName: string) => {
-					done();
-					applyTheme(themeName);
+			const items = [
+				{
+					value: "dark" as const,
+					label: "Dark themes",
+					description: `${getDarkThemeNames().length} presets · for dark terminals`,
 				},
-				() => {
-					done();
-					this.ui.requestRender();
+				{
+					value: "light" as const,
+					label: "Light themes",
+					description: `${getLightThemeNames().length} presets · for light terminals`,
 				},
-				(themeName: string) => {
-					this.themeController.preview(themeName);
-				},
-			);
-			return { component: selector, focus: selector.getSelectList() };
+			];
+			const list = new SelectList(items, 2, getSelectListTheme(), {
+				minPrimaryColumnWidth: 14,
+				maxPrimaryColumnWidth: 20,
+			});
+			list.setSelectedIndex(startInLight ? 1 : 0);
+			list.onSelect = (item) => {
+				done();
+				openCategoryList(item.value as "dark" | "light");
+			};
+			list.onCancel = () => {
+				done();
+				this.ui.requestRender();
+			};
+			return { component: list, focus: list };
 		});
 	}
 
