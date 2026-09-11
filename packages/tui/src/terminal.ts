@@ -108,6 +108,9 @@ export interface Terminal {
 	// Title operations
 	setTitle(title: string): void; // Set terminal window title
 
+	// Background color (OSC 11). Pass undefined to reset to the terminal default.
+	setBackgroundColor(hex: string | undefined): void;
+
 	// Progress indicator (OSC 9;4)
 	setProgress(active: boolean): void;
 }
@@ -520,6 +523,32 @@ export class ProcessTerminal implements Terminal {
 	setTitle(title: string): void {
 		// OSC 0;title BEL - set terminal window title
 		process.stdout.write(`\x1b]0;${title}\x07`);
+	}
+
+	/**
+	 * Set the terminal default background via OSC 11.
+	 * Accepts `#RRGGBB` or `RRGGBB`. `undefined` resets to the terminal default
+	 * (OSC 11 with a special empty/default form used by common terminals).
+	 */
+	setBackgroundColor(hex: string | undefined): void {
+		if (hex === undefined) {
+			// Reset: many terminals treat OSC 11 with the default color as restore.
+			// `#000000` is wrong; emit the standard reset used by iTerm/WezTerm/kitty:
+			// OSC 11 with no color payload is not portable, so use the common
+			// "reset to default" form via OSC 11 ; # + BEL is invalid — use 104
+			// (reset special colors) which restores the default palette entry.
+			process.stdout.write("\x1b]111\x07");
+			return;
+		}
+		const cleaned = hex.replace("#", "");
+		if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) {
+			return;
+		}
+		const r = cleaned.slice(0, 2);
+		const g = cleaned.slice(2, 4);
+		const b = cleaned.slice(4, 6);
+		// OSC 11 ; rgb:RR/GG/BB BEL — widely supported (xterm, iTerm2, kitty, WezTerm, Ghostty)
+		process.stdout.write(`\x1b]11;rgb:${r}/${g}/${b}\x07`);
 	}
 
 	setProgress(active: boolean): void {
