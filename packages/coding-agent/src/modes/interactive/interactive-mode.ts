@@ -7,6 +7,7 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { AgentMessage, ThinkingLevel } from "@eaonlabs/eaon-agent-core";
 import type { AuthEvent, AuthPrompt } from "@eaonlabs/eaon-ai";
 import type { AssistantMessage, ImageContent, Message, Model, Usage } from "@eaonlabs/eaon-ai/compat";
@@ -96,6 +97,9 @@ import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../cor
 import { type SessionEntry, SessionManager, sessionEntryToContextMessages } from "../../core/session-manager.ts";
 import type { FullscreenExitOutput, TuiMode } from "../../core/settings-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
+import { McpClient, mcpToolName, type McpServerConfig } from "../../core/mcp.ts";
+import { PLAN_MODE_PROMPT, toolsForPlanMode } from "../../core/plan-mode.ts";
+import { createSwarmSubagentTool, defaultSwarmCliOptions, SWARM_MODE_PROMPT } from "../../core/swarm.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
 import { isInstallTelemetryEnabled } from "../../core/telemetry.ts";
 import { withBuiltInRenderers } from "../../core/tools/renderers/index.ts";
@@ -510,6 +514,14 @@ export class InteractiveMode {
 	private autoTrustOnReloadCwd: string | undefined;
 	private themeController: InteractiveThemeController;
 
+	// Modes: plan / swarm / optional MCP
+	private planModeEnabled = false;
+	private swarmModeEnabled = false;
+	private toolsBeforePlanMode: string[] | undefined;
+	private toolsBeforeSwarm: string[] | undefined;
+	private mcpClients = new Map<string, McpClient>();
+	private baseSystemPromptBeforeModes: string | undefined;
+
 	// Convenience accessors
 	private get session(): AgentSession {
 		return this.runtimeHost.session;
@@ -914,6 +926,10 @@ export class InteractiveMode {
 		this.isInitialized = true;
 
 		await this.themeController.applyFromSettings();
+
+		// Restore optional modes (default: both off)
+		if (this.settingsManager.getPlanMode()) this.enablePlanMode();
+		if (this.settingsManager.getSwarmMode()) this.enableSwarmMode();
 
 		// Add header with keybindings from config (unless silenced)
 		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
@@ -3041,6 +3057,22 @@ export class InteractiveMode {
 			if (text === "/help") {
 				this.handleHelpCommand();
 				this.editor.setText("");
+				return;
+			}
+			if (text === "/plan") {
+				this.editor.setText("");
+				this.handlePlanCommand();
+				return;
+			}
+			if (text === "/swarm") {
+				this.editor.setText("");
+				this.handleSwarmCommand();
+				return;
+			}
+			if (text === "/mcp" || text.startsWith("/mcp ")) {
+				const rest = text.startsWith("/mcp ") ? text.slice(5).trim() : "";
+				this.editor.setText("");
+				void this.handleMcpCommand(rest);
 				return;
 			}
 			if (text === "/fork") {
@@ -6564,11 +6596,219 @@ export class InteractiveMode {
 			this.chatContainer.addChild(new Text(truncateToWidth(line, width, "…"), 1, 1));
 		}
 		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Modes")), 1, 0));
+		this.chatContainer.addChild(
+			new Text(theme.fg("muted", "  /plan   —  read-only exploration, then a numbered plan"), 1, 1),
+		);
+		this.chatContainer.addChild(
+			new Text(theme.fg("muted", "  /swarm  —  delegate work to 2–6 sub-agents (scout/implement/test)"), 1, 1),
+		);
+		this.chatContainer.addChild(
+			new Text(theme.fg("muted", "  /mcp    —  optional MCP servers (none by default; not required)"), 1, 1),
+		);
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Extensions")), 1, 0));
+		this.chatContainer.addChild(
+			new Text(
+				theme.fg(
+					"muted",
+					"  Eaon Code works with extensions and packages — add tools, themes, prompts,\n  and skills via settings or `eaon-code install`. See docs/extensions.md.",
+				),
+				1,
+				1,
+			),
+		);
+		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(
 			new Text(theme.fg("dim", "Keyboard: /hotkeys  ·  Colors: /theme  ·  Providers: /login"), 1, 1),
 		);
 		this.chatContainer.addChild(new DynamicBorder());
 		this.ui.requestRender();
+	}
+
+	/** Rebuild system prompt = base tools prompt + active mode appendices. */
+	private rebuildModeSystemPrompt(): void {
+		const base =
+			this.baseSystemPromptBeforeModes ??
+			this.session.systemPrompt.replace(/\n\n# Plan mode[\s\S]*$/, "").replace(/\n\n# Swarm mode[\s\S]*$/, "");
+		this.baseSystemPromptBeforeModes = base;
+		let next = base;
+		if (this.planModeEnabled) next += `\n\n${PLAN_MODE_PROMPT}`;
+		if (this.swarmModeEnabled) next += `\n\n${SWARM_MODE_PROMPT}`;
+		// Apply via session agent state (next turn picks it up)
+		(this.session as unknown as { agent: { state: { systemPrompt: string } } }).agent.state.systemPrompt = next;
+	}
+
+	private enablePlanMode(): void {
+		this.planModeEnabled = true;
+		this.settingsManager.setPlanMode(true);
+		this.toolsBeforePlanMode = this.session.getActiveToolNames();
+		const nextTools = toolsForPlanMode(this.toolsBeforePlanMode);
+		this.session.setActiveToolsByName(nextTools.length ? nextTools : ["read", "bash", "grep", "find", "ls"]);
+		this.rebuildModeSystemPrompt();
+	}
+
+	private disablePlanMode(): void {
+		this.planModeEnabled = false;
+		this.settingsManager.setPlanMode(false);
+		if (this.toolsBeforePlanMode?.length) {
+			this.session.setActiveToolsByName(this.toolsBeforePlanMode);
+		}
+		this.toolsBeforePlanMode = undefined;
+		this.rebuildModeSystemPrompt();
+	}
+
+	private enableSwarmMode(): void {
+		this.swarmModeEnabled = true;
+		this.settingsManager.setSwarmMode(true);
+		this.toolsBeforeSwarm = this.session.getActiveToolNames();
+		const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+		const tool = createSwarmSubagentTool(defaultSwarmCliOptions(repoRoot));
+		this.session.registerRuntimeTool(tool as never);
+		const active = new Set(this.session.getActiveToolNames());
+		active.add("subagent");
+		this.session.setActiveToolsByName([...active]);
+		this.rebuildModeSystemPrompt();
+	}
+
+	private disableSwarmMode(): void {
+		this.swarmModeEnabled = false;
+		this.settingsManager.setSwarmMode(false);
+		this.session.unregisterRuntimeTool("subagent");
+		if (this.toolsBeforeSwarm?.length) {
+			this.session.setActiveToolsByName(this.toolsBeforeSwarm.filter((n) => n !== "subagent"));
+		}
+		this.toolsBeforeSwarm = undefined;
+		this.rebuildModeSystemPrompt();
+	}
+
+	private handlePlanCommand(): void {
+		if (this.planModeEnabled) {
+			this.disablePlanMode();
+			this.showStatus("Plan mode OFF  ·  write/edit tools restored");
+		} else {
+			this.enablePlanMode();
+			this.showStatus("Plan mode ON  ·  read-only  ·  /plan to exit and implement");
+		}
+		this.footer.invalidate();
+		this.ui.requestRender();
+	}
+
+	private handleSwarmCommand(): void {
+		if (this.swarmModeEnabled) {
+			this.disableSwarmMode();
+			this.showStatus("Swarm OFF");
+		} else {
+			this.enableSwarmMode();
+			this.showStatus("Swarm ON  ·  will use 2–6 sub-agents  ·  /swarm to turn off");
+		}
+		this.footer.invalidate();
+		this.ui.requestRender();
+	}
+
+	private async handleMcpCommand(rest: string): Promise<void> {
+		const [cmd, ...args] = rest.split(/\s+/).filter(Boolean);
+		const servers = this.settingsManager.getMcpServers();
+
+		if (!cmd || cmd === "list") {
+			const names = Object.keys(servers);
+			if (names.length === 0) {
+				this.showStatus("MCP: no servers configured (optional). /mcp add <name> <command> [args…]");
+				return;
+			}
+			const lines = names.map((n) => {
+				const s = servers[n];
+				const connected = this.mcpClients.get(n)?.connected ? "connected" : "disconnected";
+				return `  ${n}  ${s.command} ${(s.args ?? []).join(" ")}  ·  ${connected}`;
+			});
+			this.chatContainer.addChild(new Spacer(1));
+			this.chatContainer.addChild(new DynamicBorder());
+			this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "MCP servers (optional)")), 1, 0));
+			for (const line of lines) this.chatContainer.addChild(new Text(theme.fg("muted", line), 1, 1));
+			this.chatContainer.addChild(new DynamicBorder());
+			this.ui.requestRender();
+			return;
+		}
+
+		if (cmd === "add") {
+			const [name, command, ...cmdArgs] = args;
+			if (!name || !command) {
+				this.showError("Usage: /mcp add <name> <command> [args…]");
+				return;
+			}
+			servers[name] = { command, args: cmdArgs, enabled: true };
+			this.settingsManager.setMcpServers(servers);
+			this.showStatus(`MCP "${name}" saved  ·  /mcp connect to start it`);
+			return;
+		}
+
+		if (cmd === "remove") {
+			const name = args[0];
+			if (!name) {
+				this.showError("Usage: /mcp remove <name>");
+				return;
+			}
+			delete servers[name];
+			this.settingsManager.setMcpServers(servers);
+			await this.mcpClients.get(name)?.close();
+			this.mcpClients.delete(name);
+			this.session.unregisterRuntimeTool(`mcp__${name}`);
+			// unregister all tools for that server
+			for (const t of this.session.getAllTools()) {
+				if (t.name.startsWith(`mcp__${name}__`)) this.session.unregisterRuntimeTool(t.name);
+			}
+			this.showStatus(`MCP "${name}" removed`);
+			return;
+		}
+
+		if (cmd === "connect") {
+			const target = args[0];
+			const names = target ? [target] : Object.keys(servers).filter((n) => servers[n].enabled !== false);
+			if (names.length === 0) {
+				this.showStatus("No MCP servers to connect. /mcp add <name> <command> first.");
+				return;
+			}
+			for (const name of names) {
+				const config: McpServerConfig | undefined = servers[name];
+				if (!config) {
+					this.showError(`Unknown MCP server "${name}"`);
+					continue;
+				}
+				try {
+					const client = new McpClient(name, config);
+					await client.connect();
+					this.mcpClients.set(name, client);
+					for (const tool of client.tools) {
+						const toolName = mcpToolName(name, tool.name);
+						this.session.registerRuntimeTool({
+							name: toolName,
+							description: `[MCP:${name}] ${tool.description ?? tool.name}`,
+							parameters: (tool.inputSchema as never) ?? { type: "object", properties: {} },
+							execute: async (_id: string, params: unknown) => {
+								try {
+									const text = await client.callTool(tool.name, (params as Record<string, unknown>) ?? {});
+									return { content: [{ type: "text", text }], isError: false };
+								} catch (e) {
+									return {
+										content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+										isError: true,
+									};
+								}
+							},
+						} as never);
+					}
+					const active = new Set(this.session.getActiveToolNames());
+					for (const t of client.tools) active.add(mcpToolName(name, t.name));
+					this.session.setActiveToolsByName([...active]);
+					this.showStatus(`MCP "${name}" connected  ·  ${client.tools.length} tools`);
+				} catch (e) {
+					this.showError(`MCP "${name}" failed: ${e instanceof Error ? e.message : String(e)}`);
+				}
+			}
+			return;
+		}
+
+		this.showError("Usage: /mcp [list|add <name> <cmd> [args…]|remove <name>|connect]");
 	}
 
 	private async handleClearCommand(): Promise<void> {

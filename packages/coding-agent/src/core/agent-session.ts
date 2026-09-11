@@ -2784,6 +2784,28 @@ export class AgentSession {
 		this.setActiveToolsByName([...new Set(nextActiveToolNames)]);
 	}
 
+	/**
+	 * Register a tool at runtime (Swarm/MCP). Merges into the SDK custom-tool set
+	 * and refreshes the registry so the tool can be activated.
+	 */
+	registerRuntimeTool(definition: ToolDefinition): void {
+		const existing = this._customTools.findIndex((t) => t.name === definition.name);
+		if (existing >= 0) this._customTools[existing] = definition;
+		else this._customTools.push(definition);
+		const active = new Set(this.getActiveToolNames());
+		active.add(definition.name);
+		this._refreshToolRegistry({ activeToolNames: [...active] });
+	}
+
+	/** Remove a runtime-registered tool by name. */
+	unregisterRuntimeTool(name: string): void {
+		const before = this._customTools.length;
+		this._customTools = this._customTools.filter((t) => t.name !== name);
+		if (this._customTools.length === before) return;
+		const active = this.getActiveToolNames().filter((n) => n !== name);
+		this._refreshToolRegistry({ activeToolNames: active });
+	}
+
 	private _buildRuntime(options: {
 		activeToolNames?: string[];
 		flagValues?: Map<string, boolean | string>;

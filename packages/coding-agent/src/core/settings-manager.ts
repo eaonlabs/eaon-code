@@ -155,6 +155,9 @@ export interface Settings {
 	fullscreenExitOutput?: FullscreenExitOutput; // default: "transcript"; no effect in regular TUI mode
 	fullscreenScrollbar?: ScrollViewScrollbar; // default: "auto"; no effect in regular TUI mode
 	fullscreenCopyOnSelect?: boolean; // default: true; no effect in regular TUI mode
+	planMode?: boolean; // default: false — read-only plan mode
+	swarmMode?: boolean; // default: false — sub-agent swarm
+	mcpServers?: import("./mcp.ts").McpServersConfig; // default: {} (none)
 }
 
 function isMergeableObject(value: unknown): value is Record<string, unknown> {
@@ -751,6 +754,36 @@ export class SettingsManager {
 		this.globalSettings.defaultModel = modelId;
 		this.markModified("defaultProvider");
 		this.markModified("defaultModel");
+		this.save();
+	}
+
+	getPlanMode(): boolean {
+		return this.settings.planMode === true;
+	}
+
+	setPlanMode(enabled: boolean): void {
+		this.globalSettings.planMode = enabled;
+		this.markModified("planMode");
+		this.save();
+	}
+
+	getSwarmMode(): boolean {
+		return this.settings.swarmMode === true;
+	}
+
+	setSwarmMode(enabled: boolean): void {
+		this.globalSettings.swarmMode = enabled;
+		this.markModified("swarmMode");
+		this.save();
+	}
+
+	getMcpServers(): import("./mcp.ts").McpServersConfig {
+		return { ...(this.settings.mcpServers ?? {}) };
+	}
+
+	setMcpServers(servers: import("./mcp.ts").McpServersConfig): void {
+		this.globalSettings.mcpServers = { ...servers };
+		this.markModified("mcpServers");
 		this.save();
 	}
 
