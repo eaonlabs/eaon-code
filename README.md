@@ -15,7 +15,7 @@
   ·
   <a href="https://github.com/eaonlabs/eaon-code">GitHub</a>
   ·
-  <a href="mailto:developer@eaon.dev">developer@eaon.dev</a>
+  <a href="mailto:sanscreates@eaon.dev">sanscreates@eaon.dev</a>
 </p>
 
 <p align="center">
