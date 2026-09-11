@@ -3,7 +3,9 @@
  * Disables write/edit; injects planning instructions into the system prompt.
  */
 
-export const PLAN_MODE_PROMPT = `# Plan mode (active)
+export const PLAN_MODE_PROMPT = `# ACTIVE MODE: PLAN (read-only)
+
+You ARE in plan mode right now. If the user asks "are you in plan mode?" or "plan mode?", answer YES — plan mode is on until they run /plan again.
 
 You are in PLAN MODE — read-only. Do not modify files, install packages, or run destructive commands.
 
@@ -25,7 +27,7 @@ When you finish planning, present:
 ## Risks / open questions
 - …
 
-Then STOP. Wait for the user to approve before writing code (they will turn plan mode off with /plan).`;
+Then STOP. Wait for the user to approve before writing code (they turn plan mode off with /plan).`;
 
 export function isDestructiveBash(command: string): boolean {
 	const destructive = [

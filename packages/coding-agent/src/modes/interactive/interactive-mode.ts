@@ -520,7 +520,6 @@ export class InteractiveMode {
 	private toolsBeforePlanMode: string[] | undefined;
 	private toolsBeforeSwarm: string[] | undefined;
 	private mcpClients = new Map<string, McpClient>();
-	private baseSystemPromptBeforeModes: string | undefined;
 
 	// Convenience accessors
 	private get session(): AgentSession {
@@ -6626,25 +6625,23 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	/** Rebuild system prompt = base tools prompt + active mode appendices. */
+	/** Apply mode appendices through AgentSession so they survive tool-set rebuilds. */
 	private rebuildModeSystemPrompt(): void {
-		const base =
-			this.baseSystemPromptBeforeModes ??
-			this.session.systemPrompt.replace(/\n\n# Plan mode[\s\S]*$/, "").replace(/\n\n# Swarm mode[\s\S]*$/, "");
-		this.baseSystemPromptBeforeModes = base;
-		let next = base;
-		if (this.planModeEnabled) next += `\n\n${PLAN_MODE_PROMPT}`;
-		if (this.swarmModeEnabled) next += `\n\n${SWARM_MODE_PROMPT}`;
-		// Apply via session agent state (next turn picks it up)
-		(this.session as unknown as { agent: { state: { systemPrompt: string } } }).agent.state.systemPrompt = next;
+		const parts: string[] = [];
+		if (this.planModeEnabled) parts.push(PLAN_MODE_PROMPT);
+		if (this.swarmModeEnabled) parts.push(SWARM_MODE_PROMPT);
+		this.session.setModeSystemPromptAppendix(parts.join("\n\n"));
 	}
 
 	private enablePlanMode(): void {
 		this.planModeEnabled = true;
 		this.settingsManager.setPlanMode(true);
-		this.toolsBeforePlanMode = this.session.getActiveToolNames();
-		const nextTools = toolsForPlanMode(this.toolsBeforePlanMode);
+		if (!this.toolsBeforePlanMode) {
+			this.toolsBeforePlanMode = this.session.getActiveToolNames();
+		}
+		const nextTools = toolsForPlanMode(this.toolsBeforePlanMode.length ? this.toolsBeforePlanMode : this.session.getActiveToolNames());
 		this.session.setActiveToolsByName(nextTools.length ? nextTools : ["read", "bash", "grep", "find", "ls"]);
+		// Must run AFTER setActiveToolsByName (that rebuilds the base prompt)
 		this.rebuildModeSystemPrompt();
 	}
 
@@ -6661,7 +6658,9 @@ export class InteractiveMode {
 	private enableSwarmMode(): void {
 		this.swarmModeEnabled = true;
 		this.settingsManager.setSwarmMode(true);
-		this.toolsBeforeSwarm = this.session.getActiveToolNames();
+		if (!this.toolsBeforeSwarm) {
+			this.toolsBeforeSwarm = this.session.getActiveToolNames();
+		}
 		const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 		const tool = createSwarmSubagentTool(defaultSwarmCliOptions(repoRoot));
 		this.session.registerRuntimeTool(tool as never);
@@ -6690,6 +6689,7 @@ export class InteractiveMode {
 			this.enablePlanMode();
 			this.showStatus("Plan mode ON  ·  read-only  ·  /plan to exit and implement");
 		}
+		this.refreshModeStatus();
 		this.footer.invalidate();
 		this.ui.requestRender();
 	}
@@ -6702,8 +6702,25 @@ export class InteractiveMode {
 			this.enableSwarmMode();
 			this.showStatus("Swarm ON  ·  will use 2–6 sub-agents  ·  /swarm to turn off");
 		}
+		this.refreshModeStatus();
 		this.footer.invalidate();
 		this.ui.requestRender();
+	}
+
+	private refreshModeStatus(): void {
+		const parts: string[] = [];
+		if (this.planModeEnabled) parts.push("plan");
+		if (this.swarmModeEnabled) parts.push("swarm");
+		try {
+			if (typeof (this.ui as { setStatus?: unknown }).setStatus === "function") {
+				(this.ui as unknown as { setStatus: (k: string, v: string | undefined) => void }).setStatus(
+					"modes",
+					parts.length ? theme.fg("warning", parts.join(" · ")) : undefined,
+				);
+			}
+		} catch {
+			// footer status is best-effort
+		}
 	}
 
 	private async handleMcpCommand(rest: string): Promise<void> {

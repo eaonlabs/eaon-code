@@ -376,6 +376,7 @@ export class AgentSession {
 	private _baseSystemPrompt = "";
 	private _baseSystemPromptOptions!: BuildSystemPromptOptions;
 	private _systemPromptOverride?: string;
+	private _modeSystemPromptAppendix = "";
 
 	constructor(config: AgentSessionConfig) {
 		this.agent = config.agent;
@@ -927,6 +928,20 @@ export class AgentSession {
 		return this.agent.state.systemPrompt;
 	}
 
+	/**
+	 * Set a persistent appendix appended to the system prompt on every rebuild
+	 * (plan mode, swarm mode, etc.). Clears when set to empty string.
+	 */
+	setModeSystemPromptAppendix(appendix: string): void {
+		this._modeSystemPromptAppendix = appendix.trim();
+		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
+		this.agent.state.systemPrompt = this._systemPromptOverride ?? this._baseSystemPrompt;
+	}
+
+	getModeSystemPromptAppendix(): string {
+		return this._modeSystemPromptAppendix;
+	}
+
 	/** Current retry attempt (0 if not retrying) */
 	get retryAttempt(): number {
 		return this._retryAttempt;
@@ -1091,7 +1106,8 @@ export class AgentSession {
 			toolSnippets,
 			promptGuidelines,
 		};
-		return buildSystemPrompt(this._baseSystemPromptOptions);
+		const base = buildSystemPrompt(this._baseSystemPromptOptions);
+		return this._modeSystemPromptAppendix ? `${base}\n\n${this._modeSystemPromptAppendix}` : base;
 	}
 
 	// =========================================================================

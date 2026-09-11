@@ -14,7 +14,9 @@ const MIN_AGENTS = 2;
 const MAX_CONCURRENCY = 4;
 const SUBAGENT_TIMEOUT_MS = 8 * 60 * 1000;
 
-export const SWARM_MODE_PROMPT = `# Swarm mode (active)
+export const SWARM_MODE_PROMPT = `# ACTIVE MODE: SWARM (multi sub-agent)
+
+You ARE in swarm mode right now. If the user asks "are you in swarm mode?" or "can you spawn sub agents?", answer YES — you have the \`subagent\` tool and should use it. Swarm stays on until they run /swarm again.
 
 You are the SWARM ORCHESTRATOR. You must delegate most non-trivial work to sub-agents instead of doing it all yourself.
 
