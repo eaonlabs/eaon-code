@@ -1,115 +1,105 @@
 <p align="center">
-  <a href="https://pi.dev">
-    <img alt="pi logo" src="https://pi.dev/logo-auto.svg" width="128">
+  <a href="https://eaon.dev">
+    <img alt="Eaon Code" src="https://avatars.githubusercontent.com/u/310382997?s=128&v=4" width="128">
   </a>
 </p>
+
 <p align="center">
-  <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
-  <a href="https://www.npmjs.com/package/@earendil-works/pi-coding-agent"><img alt="npm" src="https://img.shields.io/npm/v/@earendil-works/pi-coding-agent?style=flat-square" /></a>
+  <strong>Eaon Code</strong>
+  <br />
+  Eaon's official coding agent — token-efficient, extensible, built for your terminal.
 </p>
 
-> New issues and PRs from new contributors are auto-closed by default. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](CONTRIBUTING.md).
+<p align="center">
+  <a href="https://eaon.dev">eaon.dev</a>
+  ·
+  <a href="https://github.com/eaonlabs/eaon-code">GitHub</a>
+  ·
+  <a href="mailto:developer@eaon.dev">developer@eaon.dev</a>
+</p>
 
-# Pi Agent Harness
+<p align="center">
+  <a href="https://github.com/eaonlabs/eaon-code/actions"><img alt="CI" src="https://github.com/eaonlabs/eaon-code/actions/workflows/ci.yml/badge.svg" /></a>
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
+</p>
 
-This is the home of the Pi agent harness project including our self extensible coding agent.
+---
 
-* **[@earendil-works/pi-coding-agent](packages/coding-agent)**: Interactive coding agent CLI
-* **[@earendil-works/pi-agent-core](packages/agent)**: Agent runtime with tool calling and state management
-* **[@earendil-works/pi-ai](packages/ai)**: Unified multi-provider LLM API (OpenAI, Anthropic, Google, …)
+Eaon Code is a self-extensible coding agent CLI. It ships a minimal core — read, bash, edit, write, session management — and gets its workflow features from extensions and skills you install.
 
-To learn more about Pi:
+Built atop the [Pi agent harness](https://github.com/earendil-works/pi), retuned for Eaon: same proven runtime, branded and packaged for the Eaon ecosystem.
 
-* [Visit pi.dev](https://pi.dev), the project website with demos
-* [Read the documentation](https://pi.dev/docs/latest), but you can also ask the agent to explain itself
+## Install
 
-## All Packages
+One line:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
+```
+
+Or with npm:
+
+```bash
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+```
+
+Requires Node.js ≥ 22.19.
+
+The CLI binary is still named `pi` in this first pass (the install script also links `eaon-code`):
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...   # or another provider
+pi
+# or: eaon-code
+```
+
+Or launch and log in interactively:
+
+```bash
+pi
+/login
+```
+
+## Packages
 
 | Package | Description |
 |---------|-------------|
-| **[@earendil-works/chord](packages/chord)** | Standalone application-composition runtime for services, replicated state, RPC, and plugins |
-| **[@earendil-works/pi-telemetry](packages/telemetry)** | Vendor-neutral telemetry contracts, reference adapter, conformance tests, and typed schemas |
-| **[@earendil-works/pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
-| **[@earendil-works/pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
-| **[@earendil-works/pi-coding-agent](packages/coding-agent)** | Interactive coding agent CLI |
-| **[@earendil-works/pi-tui](packages/tui)** | Terminal UI library with differential rendering |
+| **[coding-agent](packages/coding-agent)** | Interactive coding agent CLI (product: Eaon Code) |
+| **[pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
+| **[pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, …) |
+| **[pi-tui](packages/tui)** | Terminal UI library with differential rendering |
+| **[pi-telemetry](packages/telemetry)** | Telemetry contracts, adapters, and typed schemas |
+| **[chord](packages/chord)** | Application-composition runtime for services, RPC, and plugins |
 
-For Slack/chat automation and workflows see [earendil-works/pi-chat](https://github.com/earendil-works/pi-chat).
+> This first rebrand pass updates product name, docs, install, and repo metadata. Package IDs and the CLI binary (`pi`) still use upstream Pi identifiers so the monorepo keeps building; they will move under Eaon in a later pass.
 
-## Permissions & Containerization
+## Permissions & containerization
 
-Pi does not include a built-in permission system for restricting filesystem, process, network, or credential access. By default, it runs with the permissions of the user and process that launched it.
+Eaon Code does not include a built-in permission system for restricting filesystem, process, network, or credential access. By default it runs with the permissions of the user and process that launched it.
 
-If you need stronger boundaries, containerize or sandbox Pi. See [packages/coding-agent/docs/containerization.md](packages/coding-agent/docs/containerization.md) for three patterns:
+If you need stronger boundaries, containerize or sandbox it. See [packages/coding-agent/docs/containerization.md](packages/coding-agent/docs/containerization.md) for three patterns:
 
-- **Gondolin extension**: keep `pi` and provider auth on the host while routing built-in tools and `!` commands into a local Linux micro-VM.
-- **Plain Docker**: run the whole `pi` process in a local container for simple isolation.
-- **OpenShell**: run the whole `pi` process in a policy-controlled sandbox.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and [AGENTS.md](AGENTS.md) for project-specific rules (for both humans and agents).  Longer term plans for Pi can also be found in [RFCs](https://rfc.earendil.com/keyword/pi/).
+- **Gondolin extension**: keep the agent and provider auth on the host while routing tools and `!` commands into a local Linux micro-VM.
+- **Plain Docker**: run the whole process in a local container.
+- **OpenShell**: run the whole process in a policy-controlled sandbox.
 
 ## Development
 
 ```bash
 npm install --ignore-scripts  # Install all dependencies without running lifecycle scripts
-npm run build         # Refresh model data, then build all packages
-npm run build:offline # Rebuild using existing model data without network access
-npm run check         # Lint, format, and type check
-./test.sh            # Run tests (skips LLM-dependent tests without API keys)
-./pi-test.sh         # Run pi from sources (can be run from any directory)
+npm run build                 # Refresh model data, then build all packages
+npm run build:offline         # Rebuild using existing model data without network access
+npm run check                 # Lint, format, and type check
+./test.sh                     # Run tests (skips LLM-dependent tests without API keys)
+./pi-test.sh                  # Run the agent from sources (can be run from any directory)
 ```
 
-## Building standalone binaries from release source
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
 
-GitHub releases include a versioned source archive covered by the release's `SHA256SUMS` file. Extract it and run the same build script used for the official standalone binaries:
+## Upstream
 
-```bash
-VERSION="<release-version>"
-tar -xzf "pi-${VERSION}-source.tar.gz"
-cd "pi-${VERSION}"
-./scripts/build-binaries.sh --offline-model-data --platform linux-x64 --out "$PWD/out"
-```
-
-The archive includes release model data and native prebuilds. `--offline-model-data` uses that model data without refreshing provider catalogs. The script installs dependencies and builds the executable with its runtime assets; pass `--skip-install` if dependencies are already provided.
-
-## Supply-chain hardening
-
-We treat npm dependency changes as reviewed code changes.
-
-- Direct external dependencies are pinned to exact versions. Internal workspace packages remain version-ranged.
-- `.npmrc` sets `save-exact=true` and `min-release-age=2` to avoid same-day dependency releases during npm resolution.
-- `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1` is set.
-- `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap.
-- The published CLI package includes `packages/coding-agent/npm-shrinkwrap.json`, generated from the root lockfile, to pin transitive deps for npm users.
-- Release smoke tests use `npm run release:local` to build, pack, and create isolated npm and Bun installs outside the repo before tagging a release.
-- Local release installs, documented npm installs, and `pi update --self` use `--ignore-scripts` where supported.
-- CI installs with `npm ci --ignore-scripts`, and a scheduled GitHub workflow runs `npm audit --omit=dev` plus `npm audit signatures --omit=dev`.
-- Shrinkwrap generation has an explicit allowlist for dependency lifecycle scripts; new lifecycle-script deps fail checks until reviewed.
-
-## Share your OSS coding agent sessions
-
-If you use Pi or other coding agents for open source work, please share your sessions.
-
-Public OSS session data helps improve coding agents with real-world tasks, tool use, failures, and fixes instead of toy benchmarks.
-
-For the full explanation, see [this post on X](https://x.com/badlogicgames/status/2037811643774652911).
-
-To publish sessions, use [`badlogic/pi-share-hf`](https://github.com/badlogic/pi-share-hf). Read its README.md for setup instructions. All you need is a Hugging Face account, the Hugging Face CLI, and `pi-share-hf`.
-
-You can also watch [this video](https://x.com/badlogicgames/status/2041151967695634619), where I show how I publish my `pi-mono` sessions.
-
-I regularly publish my own `pi-mono` work sessions here:
-
-- [badlogicgames/pi-mono on Hugging Face](https://huggingface.co/datasets/badlogicgames/pi-mono)
+Eaon Code is derived from [Pi](https://github.com/earendil-works/pi) by Mario Zechner / Earendil. Original copyright remains in [LICENSE](LICENSE). Thank you to the Pi maintainers.
 
 ## License
 
 MIT
-
-<p align="center">
-  <a href="https://pi.dev">pi.dev</a> domain graciously donated by
-  <br /><br />
-  <a href="https://exe.dev"><img src="packages/coding-agent/docs/images/exy.png" alt="Exy mascot" width="48" /><br />exe.dev</a>
-</p>
