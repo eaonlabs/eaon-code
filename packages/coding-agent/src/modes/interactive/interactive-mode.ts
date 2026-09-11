@@ -4195,19 +4195,19 @@ export class InteractiveMode {
 	}
 
 	private cycleThinkingLevel(): void {
-		const newLevel = this.session.cycleThinkingLevel();
+		const newLevel = this.session.cycleThinkingLevel({ persist: true });
 		if (newLevel === undefined) {
 			this.showStatus("Current model does not support thinking");
 		} else {
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
-			this.showStatus(`Thinking level: ${newLevel}`);
+			this.showStatus(`Thinking level: ${newLevel}  ·  saved for next time`);
 		}
 	}
 
 	private async cycleModel(direction: "forward" | "backward"): Promise<void> {
 		try {
-			const result = await this.session.cycleModel(direction);
+			const result = await this.session.cycleModel(direction, { persist: true });
 			if (result === undefined) {
 				const msg = this.session.scopedModels.length > 0 ? "Only one model in scope" : "Only one model available";
 				this.showStatus(msg);
@@ -4825,10 +4825,11 @@ export class InteractiveMode {
 
 	private selectThinkingLevel(level: ThinkingLevel, persist: boolean): void {
 		try {
-			this.session.setThinkingLevel(level, { persist });
+			// Always persist so the next session starts at the last-used level.
+			this.session.setThinkingLevel(level, { persist: true });
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
-			this.showStatus(persist ? `Default thinking level: ${level}` : `Thinking level: ${level}`);
+			this.showStatus(`Thinking level: ${level}  ·  saved for next time`);
 		} catch (error) {
 			this.showError(error instanceof Error ? error.message : String(error));
 		}
@@ -4864,10 +4865,10 @@ export class InteractiveMode {
 		const model = await this.findExactModelMatch(searchTerm);
 		if (model) {
 			try {
-				await this.session.setModel(model, { persist: false });
+				await this.session.setModel(model, { persist: true });
 				this.footer.invalidate();
 				this.updateEditorBorderColor();
-				this.showStatus(`Model: ${model.id}`);
+				this.showStatus(`Model: ${model.provider}/${model.id}  ·  saved for next time`);
 				void this.maybeWarnAboutAnthropicSubscriptionAuth(model);
 				this.checkDaxnutsEasterEgg(model);
 			} catch (error) {
@@ -5098,12 +5099,14 @@ export class InteractiveMode {
 		this.showSelector((done) => {
 			const selectModel = async (model: Model<any>, persist: boolean) => {
 				try {
-					await this.session.setModel(model, { persist });
+					// Always remember the last-used model so it comes back next session.
+					// persist=true is the explicit "set as default" path (same result today).
+					await this.session.setModel(model, { persist: true });
 					this.updateAvailableProviderCount();
 					this.footer.invalidate();
 					this.updateEditorBorderColor();
 					done();
-					this.showStatus(persist ? `Default model: ${model.provider}/${model.id}` : `Model: ${model.id}`);
+					this.showStatus(`Model: ${model.provider}/${model.id}`);
 					void this.maybeWarnAboutAnthropicSubscriptionAuth(model);
 					this.checkDaxnutsEasterEgg(model);
 				} catch (error) {
