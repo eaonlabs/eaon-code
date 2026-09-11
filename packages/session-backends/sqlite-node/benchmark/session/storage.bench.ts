@@ -3,7 +3,7 @@ import {
 	STORAGE_READ_BENCHMARK_SCENARIOS,
 	STORAGE_WRITE_BENCHMARK_SCENARIOS,
 	seedStorageBenchmark,
-} from "@earendil-works/pi-agent-core/harness/session/testing";
+} from "@eaonlabs/eaon-agent-core/harness/session/testing";
 import { registerReadBenchmarks, registerWriteBenchmarks } from "../../../../agent/benchmark/session/benchmark.ts";
 import { storageBenchmarkTargets } from "./storage-targets.ts";
 

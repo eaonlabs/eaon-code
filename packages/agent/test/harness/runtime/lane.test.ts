@@ -1,4 +1,4 @@
-import { type Api, createModels, fauxProvider, type Model } from "@earendil-works/pi-ai";
+import { type Api, createModels, fauxProvider, type Model } from "@eaonlabs/eaon-ai";
 import { afterEach, describe, expect, it } from "vitest";
 import { HarnessClosed, type HarnessEvent } from "../../../src/harness/agent-harness.ts";
 import { DEFAULT_COMPACTION_SETTINGS } from "../../../src/harness/compaction/compaction.ts";

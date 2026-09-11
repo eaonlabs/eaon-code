@@ -10,9 +10,9 @@ import { spawn } from "node:child_process";
 import { extname } from "node:path";
 import { fileURLToPath } from "node:url";
 // Narrow entries: the server routes and lists sessions, it never runs an agent.
-import { BACKGROUND_CONTEXT } from "@earendil-works/pi-agent-core/harness/context";
-import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/harness/env/nodejs";
-import { JsonlSessionRepo } from "@earendil-works/pi-agent-core/harness/session";
+import { BACKGROUND_CONTEXT } from "@eaonlabs/eaon-agent-core/harness/context";
+import { NodeExecutionEnv } from "@eaonlabs/eaon-agent-core/harness/env/nodejs";
+import { JsonlSessionRepo } from "@eaonlabs/eaon-agent-core/harness/session";
 import { type SessionSummary, Sessions, type SessionsServiceApi, Worker } from "../shared/protocol.ts";
 import { createPeer, type RpcPeer } from "../shared/rpc.ts";
 import { childConnection, type Transport } from "../shared/transport.ts";

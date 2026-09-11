@@ -477,13 +477,13 @@ export function getBundledInteractiveAssetPath(name: string): string {
 }
 
 // =============================================================================
-// App Config (from package.json piConfig)
+// App Config (from package.json eaonConfig)
 // =============================================================================
 
 interface PackageJson {
 	name?: string;
 	version?: string;
-	piConfig?: {
+	eaonConfig?: {
 		name?: string;
 		configDir?: string;
 	};
@@ -497,16 +497,17 @@ try {
 	if (err.code !== "ENOENT") throw e;
 }
 
-const piConfigName: string | undefined = pkg.piConfig?.name;
-export const PACKAGE_NAME: string = pkg.name || "@earendil-works/pi-coding-agent";
-export const APP_NAME: string = piConfigName || "pi";
-export const APP_TITLE: string = piConfigName ? APP_NAME : "π";
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
+const eaonConfigName: string | undefined = pkg.eaonConfig?.name;
+export const PACKAGE_NAME: string = pkg.name || "@eaonlabs/eaon-code";
+export const APP_NAME: string = eaonConfigName || "eaon-code";
+export const APP_TITLE: string = eaonConfigName ? APP_NAME : "Eaon Code";
+export const CONFIG_DIR_NAME: string = pkg.eaonConfig?.configDir || ".pi";
 export const VERSION: string = pkg.version || "0.0.0";
 
-// e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
-export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
-export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;
+// e.g., EAON_CODE_CODING_AGENT_DIR — sanitize hyphens so the name is a valid env var
+const ENV_APP_PREFIX = APP_NAME.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+export const ENV_AGENT_DIR = `${ENV_APP_PREFIX}_CODING_AGENT_DIR`;
+export const ENV_SESSION_DIR = `${ENV_APP_PREFIX}_CODING_AGENT_SESSION_DIR`;
 
 export function expandTildePath(path: string): string {
 	return normalizePath(path);

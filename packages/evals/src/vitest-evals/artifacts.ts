@@ -30,13 +30,13 @@ export interface SourceAttachment extends TestAttachment {
 }
 
 interface PiSessionArtifact extends TestArtifactBase {
-	type: "@earendil-works/pi-evals:session";
+	type: "@eaonlabs/eaon-evals:session";
 	runId: string;
 	attachments: [PiSessionAttachment] | [];
 }
 
 interface SourceArtifact extends TestArtifactBase {
-	type: "@earendil-works/pi-evals:source";
+	type: "@eaonlabs/eaon-evals:source";
 	runId: string;
 	attachments: [SourceAttachment] | [];
 }
@@ -59,7 +59,7 @@ export async function recordEvalSessionArtifact(
 		throw new TypeError("Pi eval session artifact metadata is invalid.");
 	}
 	await recordArtifact(task, {
-		type: "@earendil-works/pi-evals:session",
+		type: "@eaonlabs/eaon-evals:session",
 		runId,
 		attachments: [
 			{
@@ -78,7 +78,7 @@ export async function recordEvalSourceArtifact(
 	attachment: SourceAttachment,
 ): Promise<void> {
 	await recordArtifact(task, {
-		type: "@earendil-works/pi-evals:source",
+		type: "@eaonlabs/eaon-evals:source",
 		runId,
 		attachments: [attachment],
 	});
@@ -92,13 +92,13 @@ export async function persistEvalArtifactReferences(
 	const references: Array<{ name: string; path: string }> = [];
 	for (const artifact of artifacts) {
 		if (
-			(artifact.type !== "@earendil-works/pi-evals:session" &&
-				artifact.type !== "@earendil-works/pi-evals:source") ||
+			(artifact.type !== "@eaonlabs/eaon-evals:session" &&
+				artifact.type !== "@eaonlabs/eaon-evals:source") ||
 			artifact.runId !== runId
 		) {
 			continue;
 		}
-		const category = artifact.type === "@earendil-works/pi-evals:session" ? "sessions" : "sources";
+		const category = artifact.type === "@eaonlabs/eaon-evals:session" ? "sessions" : "sources";
 		for (const attachment of artifact.attachments) {
 			const name = basename(attachment.name);
 			if (name !== attachment.name) throw new TypeError(`Invalid eval artifact name: ${attachment.name}`);

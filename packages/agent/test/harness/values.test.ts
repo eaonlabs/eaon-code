@@ -1,4 +1,4 @@
-import type { AssistantMessageFrame } from "@earendil-works/pi-ai";
+import type { AssistantMessageFrame } from "@eaonlabs/eaon-ai";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { BACKGROUND_CONTEXT } from "../../src/harness/context.ts";
 import { MemoryStorage } from "../../src/harness/session/memory.ts";

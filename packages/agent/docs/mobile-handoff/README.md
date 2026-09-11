@@ -73,7 +73,7 @@ once `retireScope` replaces the per-address deletes. That is the change landing.
   `node --experimental-strip-types` with no build step and no dependencies.
 - In the pi repo, tests run from the package:
   `cd packages/agent && npx vitest run --config vitest.harness.config.ts`.
-  The root vitest config does **not** alias `@earendil-works/pi-ai`; the
+  The root vitest config does **not** alias `@eaonlabs/eaon-ai`; the
   per-package harness config does.
 - Typecheck with `npx tsgo --noEmit` from the repo root. **Baseline is ~788
   pre-existing errors**, almost all in `packages/ai/test`. Count only:

@@ -1,7 +1,7 @@
-import { type Context, defineFacet, type Facet, type MutableReplicatedState } from "@earendil-works/chord";
-import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import type { AgentLane, ThinkingLevel } from "@earendil-works/pi-agent-core";
-import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
+import { type Context, defineFacet, type Facet, type MutableReplicatedState } from "@eaonlabs/chord";
+import { BACKGROUND_CONTEXT } from "@eaonlabs/chord/context";
+import type { AgentLane, ThinkingLevel } from "@eaonlabs/eaon-agent-core";
+import { getSupportedThinkingLevels } from "@eaonlabs/eaon-ai";
 import type { ModelRuntime } from "../../core/model-runtime.ts";
 import type { SettingsManager } from "../../core/settings-manager.ts";
 import { Models, type Models as ModelsService, type ModelsState } from "./models.ts";

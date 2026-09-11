@@ -2,26 +2,26 @@ import { randomUUID } from "node:crypto";
 import { chmod, lstat, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
-import type { Context } from "@earendil-works/chord";
-import type { FacetBundleArtifact } from "@earendil-works/chord/node";
+import type { Context } from "@eaonlabs/chord";
+import type { FacetBundleArtifact } from "@eaonlabs/chord/node";
 import {
 	BACKGROUND_CONTEXT,
 	type JsonlSessionMetadata,
 	JsonlSessionRepo,
 	TODO_CONTEXT,
-} from "@earendil-works/pi-agent-core";
-import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
-import { Client, ServerError as ClientServerError, DisconnectedError } from "@earendil-works/pi-client";
-import { createUnixTransportFactory, type UnixServerRoute } from "@earendil-works/pi-client/unix";
-import { isServerId, type ServerId } from "@earendil-works/pi-protocol";
+} from "@eaonlabs/eaon-agent-core";
+import { NodeExecutionEnv } from "@eaonlabs/eaon-agent-core/node";
+import { Client, ServerError as ClientServerError, DisconnectedError } from "@eaonlabs/eaon-client";
+import { createUnixTransportFactory, type UnixServerRoute } from "@eaonlabs/eaon-client/unix";
+import { isServerId, type ServerId } from "@eaonlabs/eaon-protocol";
 import {
 	ServerError as RoutedServerError,
 	type Server,
 	type ServerHost,
 	SessionAmbiguousError,
 	SessionNotFoundError,
-} from "@earendil-works/pi-server";
-import { createUnixServer, getUnixSocketPath } from "@earendil-works/pi-server/unix";
+} from "@eaonlabs/eaon-server";
+import { createUnixServer, getUnixSocketPath } from "@eaonlabs/eaon-server/unix";
 import lockfile from "proper-lockfile";
 import type { AuthInput } from "../cli/experimental/command-options.ts";
 import { getAgentDir } from "../config.ts";

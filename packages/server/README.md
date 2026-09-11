@@ -1,4 +1,4 @@
-# @earendil-works/pi-server
+# @eaonlabs/eaon-server
 
 Experimental local server for the new durable Session and Agent Harness interfaces.
 
@@ -16,15 +16,15 @@ A Session may have multiple presentation attachments. Repeating `attach` from on
 
 ```ts
 import { randomUUID } from "node:crypto";
-import { MemorySessionRepo, type Session } from "@earendil-works/pi-agent-core";
+import { MemorySessionRepo, type Session } from "@eaonlabs/eaon-agent-core";
 import {
   type RoutedServerServiceHost,
   type RoutedSessionHandle,
   type ServerHost,
   SessionAmbiguousError,
   SessionNotFoundError,
-} from "@earendil-works/pi-server";
-import { createUnixServer, getUnixSocketPath } from "@earendil-works/pi-server/unix";
+} from "@eaonlabs/eaon-server";
+import { createUnixServer, getUnixSocketPath } from "@eaonlabs/eaon-server/unix";
 
 async function startServer(
   serverServices: RoutedServerServiceHost,
@@ -74,6 +74,6 @@ Applications supply a required server service host, a bounded Session resolver, 
 
 `serverId` is a logical identity supplied by the launcher, not a socket address. The Unix preset requires an explicit physical `path`; `getUnixSocketPath()` derives one from a caller-selected directory. Choose a short, private runtime directory rather than deriving the route from an unbounded home-directory path. A long-lived launcher can reuse the same ID and path when replacing a server process.
 
-`Server` composes transports through `ServerListener`; peer authentication remains application policy and is not implemented by the experimental Unix transport. The Unix submodule provides `createUnixListener()` and `createUnixServer()`. Low-level routed-envelope validation, CBOR, and framing come from `@earendil-works/pi-protocol`; Chord owns service-control parsing, error codes, snapshots and updates, and each subscription's replicated-state encoder.
+`Server` composes transports through `ServerListener`; peer authentication remains application policy and is not implemented by the experimental Unix transport. The Unix submodule provides `createUnixListener()` and `createUnixServer()`. Low-level routed-envelope validation, CBOR, and framing come from `@eaonlabs/eaon-protocol`; Chord owns service-control parsing, error codes, snapshots and updates, and each subscription's replicated-state encoder.
 
 Server and worker lifecycle is managed outside the public Pi protocol. The replaceable application server converts connection attachments into private demand updates; the worker combines generation-tagged demand with authoritative Harness activity. The experimental coordinator only supplies stable routing and reports generic server-generation connection changes.

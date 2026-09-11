@@ -1,5 +1,5 @@
 import { platform } from "node:os";
-import { getNativeClipboard } from "@earendil-works/pi-tui";
+import { getNativeClipboard } from "@eaonlabs/eaon-tui";
 import { runClipboardCommand } from "./clipboard-command.ts";
 
 const MAX_OSC52_ENCODED_LENGTH = 100_000;

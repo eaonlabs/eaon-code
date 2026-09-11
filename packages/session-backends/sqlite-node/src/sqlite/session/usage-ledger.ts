@@ -1,4 +1,4 @@
-import type { UsageRow, UsageScan } from "@earendil-works/pi-agent-core";
+import type { UsageRow, UsageScan } from "@eaonlabs/eaon-agent-core";
 import { joinSqlFragments, type SqlQuery, sql } from "../sql.ts";
 import type { SqliteDatabase, SqliteStatement } from "../types.ts";
 

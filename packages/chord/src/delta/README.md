@@ -1,14 +1,14 @@
 # Chord Delta
 
 Chord Delta synchronizes JSON values from an authoritative producer to an
-ordered replica. It is available from `@earendil-works/chord/delta`.
+ordered replica. It is available from `@eaonlabs/chord/delta`.
 
 A change is represented by an `Op`: a JSON tuple for replacing, setting,
 deleting, updating a string, or splicing an array. Producers use `track()`;
 replicas use `apply()` or `applyImmutable()`.
 
 ```ts
-import { apply, track } from "@earendil-works/chord/delta";
+import { apply, track } from "@eaonlabs/chord/delta";
 
 const tracker = track({ output: "", entries: [] as string[] });
 let replica = apply(undefined, tracker.flush());
@@ -37,7 +37,7 @@ the encoded tuples, restores complete paths, and returns the `Op[]` required by
 `apply()`:
 
 ```ts
-import { apply, decoder, encoder, track } from "@earendil-works/chord/delta";
+import { apply, decoder, encoder, track } from "@eaonlabs/chord/delta";
 
 const tracker = track({ output: "" });
 const enc = encoder(); // producer side

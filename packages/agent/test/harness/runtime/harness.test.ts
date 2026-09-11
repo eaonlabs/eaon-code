@@ -1,4 +1,4 @@
-import { createModels, fauxAssistantMessage, fauxProvider, type Provider } from "@earendil-works/pi-ai";
+import { createModels, fauxAssistantMessage, fauxProvider, type Provider } from "@eaonlabs/eaon-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AgentHarness, HarnessFault, InvalidLane, UnknownTarget } from "../../../src/harness/agent-harness.ts";
 import { BACKGROUND_CONTEXT } from "../../../src/harness/context.ts";

@@ -1,4 +1,4 @@
-import type { AssistantMessageFrame } from "@earendil-works/pi-ai";
+import type { AssistantMessageFrame } from "@eaonlabs/eaon-ai";
 import type { AgentToolResult } from "../../types.ts";
 import type {
 	DurableStructuralPreparation,

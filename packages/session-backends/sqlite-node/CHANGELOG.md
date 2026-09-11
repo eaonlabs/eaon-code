@@ -26,7 +26,7 @@
 
 ### Breaking Changes
 
-- Renamed the package from `@earendil-works/pi-storage-sqlite-node` to `@earendil-works/pi-session-backend-sqlite-node`.
+- Renamed the package from `@eaonlabs/eaon-storage-sqlite-node` to `@eaonlabs/eaon-session-backend-sqlite-node`.
 - Replaced the legacy SQLite session schema and repository with the v4 lane-based `SessionRepo` contract. Existing work-in-progress databases are not migrated.
 
 ### Added

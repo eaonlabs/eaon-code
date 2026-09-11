@@ -11,7 +11,7 @@ import {
 	type SimpleStreamOptions,
 	type Usage,
 	uuidv7,
-} from "@earendil-works/pi-ai";
+} from "@eaonlabs/eaon-ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
 import { type Context, getTelemetryContext } from "../context.ts";
 import { convertToLlm, createBranchSummaryMessage, createCompactionSummaryMessage } from "../messages.ts";

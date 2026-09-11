@@ -1,4 +1,4 @@
-import type { AssistantMessage, AssistantMessageFrame, DeferredHandle, Usage } from "@earendil-works/pi-ai";
+import type { AssistantMessage, AssistantMessageFrame, DeferredHandle, Usage } from "@eaonlabs/eaon-ai";
 import { expectTypeOf, it } from "vitest";
 import * as storedValues from "../../src/harness/session/values.ts";
 import type {

@@ -1,4 +1,4 @@
-import type { ModelsRefreshResult } from "@earendil-works/pi-ai";
+import type { ModelsRefreshResult } from "@eaonlabs/eaon-ai";
 import type { ModelRuntime } from "../../core/model-runtime.ts";
 import { raceWithAbortSignal } from "../../utils/abort.ts";
 

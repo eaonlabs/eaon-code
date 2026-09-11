@@ -1,6 +1,6 @@
-import type { AgentMessage, Entry, LaneSnapshot } from "@earendil-works/pi-agent-core";
-import type { AssistantMessage } from "@earendil-works/pi-ai";
-import { Container, Spacer, Text, TruncatedText, type TUI } from "@earendil-works/pi-tui";
+import type { AgentMessage, Entry, LaneSnapshot } from "@eaonlabs/eaon-agent-core";
+import type { AssistantMessage } from "@eaonlabs/eaon-ai";
+import { Container, Spacer, Text, TruncatedText, type TUI } from "@eaonlabs/eaon-tui";
 import { createAllToolRenderers } from "../core/tools/renderers/index.ts";
 import { AssistantMessageComponent } from "../modes/interactive/components/assistant-message.ts";
 import { type StatusIndicator, WorkingStatusIndicator } from "../modes/interactive/components/status-indicator.ts";

@@ -3,7 +3,7 @@
 This document specifies durable partial assistant messages for ordinary assistant generation and deferred-response polling. It builds on:
 
 - bound typed value/list addresses from `values.md`;
-- `AssistantMessageFrame`, `AssistantMessageFrameEncoder`, and `reduceAssistantMessageFrames()` from `@earendil-works/pi-ai`;
+- `AssistantMessageFrame`, `AssistantMessageFrameEncoder`, and `reduceAssistantMessageFrames()` from `@eaonlabs/eaon-ai`;
 - the assistant intent/effect/settlement state machine in `harness.md`.
 
 The design persists compact replayable stream frames without making them operation-state authority and without storing a growing full partial message on every update.

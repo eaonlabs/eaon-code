@@ -465,7 +465,7 @@ Scratch is a task's working state while it runs: streamed frames, a checkpoint, 
 per task, any number of addresses in it, durable across a restart, gone when the task settles.
 
 ```ts
-import { AssistantMessageFrameEncoder, type AssistantMessageFrame } from "@earendil-works/pi-ai";
+import { AssistantMessageFrameEncoder, type AssistantMessageFrame } from "@eaonlabs/eaon-ai";
 
 const frames     = scratchList<AssistantMessageFrame>("frames");
 const checkpoint = scratchValue<Checkpoint>("checkpoint");
@@ -1111,8 +1111,8 @@ then rejects new work. Entries inherited by independent forks are never erased.
 private typed identity alongside its signal; span/budget derivation preserves it without casts:
 
 ```ts
-import type { Context } from "@earendil-works/chord";
-import { createContextKey, withAbortSignal, withContextValue } from "@earendil-works/chord/context";
+import type { Context } from "@eaonlabs/chord";
+import { createContextKey, withAbortSignal, withContextValue } from "@eaonlabs/chord/context";
 
 export type Call = Context;
 

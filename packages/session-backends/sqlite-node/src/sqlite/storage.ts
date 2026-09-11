@@ -16,8 +16,8 @@ import type {
 	Value,
 	ValueList,
 	Write,
-} from "@earendil-works/pi-agent-core";
-import { branchTip, prepareStorageCommit } from "@earendil-works/pi-agent-core";
+} from "@eaonlabs/eaon-agent-core";
+import { branchTip, prepareStorageCommit } from "@eaonlabs/eaon-agent-core";
 import { appendEntryToBranchIndex, scanBranchEntries, scanBranchEntryStructures } from "./session/branch-entries.ts";
 import { decodeEntryRow, EntryRowWriter, readAllEntryRows, readEntryRows, scanEntryRows } from "./session/entries.ts";
 import { advanceNextSeq, readNextSeq } from "./session/session-sequences.ts";

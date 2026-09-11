@@ -447,7 +447,7 @@ Assistant partial durability is the first built-in list consumer:
 const frames = pendingAssistantFrames(operationId, responseEntryId);
 ```
 
-`AssistantMessageFrame`, `AssistantMessageFrameEncoder`, and `reduceAssistantMessageFrames()` come from `@earendil-works/pi-ai`. Do not define a second frame codec or reducer.
+`AssistantMessageFrame`, `AssistantMessageFrameEncoder`, and `reduceAssistantMessageFrames()` come from `@eaonlabs/eaon-ai`. Do not define a second frame codec or reducer.
 
 For every convertible non-terminal provider event, the assistant procedure:
 

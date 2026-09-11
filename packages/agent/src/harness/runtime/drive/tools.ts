@@ -1,4 +1,4 @@
-import type { ToolResultMessage } from "@earendil-works/pi-ai";
+import type { ToolResultMessage } from "@eaonlabs/eaon-ai";
 import type { AgentToolCall, AgentToolResult } from "../../../types.ts";
 import { AbortRequested } from "../../execution/effect-gate.ts";
 import {

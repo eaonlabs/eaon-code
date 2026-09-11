@@ -1,5 +1,5 @@
 {
-	"name": "@earendil-works/chord",
+	"name": "@eaonlabs/chord",
 	"version": "0.85.1",
 	"description": "Application composition runtime for services, replicated state, RPC, and plugins",
 	"type": "module",

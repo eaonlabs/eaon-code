@@ -1,4 +1,4 @@
-import { DEFAULT_MAX_AGENT_RETRY_DELAY_MS } from "@earendil-works/pi-ai";
+import { DEFAULT_MAX_AGENT_RETRY_DELAY_MS } from "@eaonlabs/eaon-ai";
 import type { HarnessEvent, LaneQueuedItem } from "../../agent-harness.ts";
 import { insertEntry } from "../../session/commit.ts";
 import { SessionInvariantError } from "../../session/session.ts";

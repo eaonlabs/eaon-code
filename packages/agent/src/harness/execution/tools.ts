@@ -1,4 +1,4 @@
-import { type ToolResultMessage, validateToolArguments } from "@earendil-works/pi-ai";
+import { type ToolResultMessage, validateToolArguments } from "@eaonlabs/eaon-ai";
 import type { AgentToolCall, AgentToolResult } from "../../types.ts";
 import { type Context, withAbortSignal } from "../context.ts";
 import type { JsonValue } from "../session/types.ts";

@@ -1,7 +1,7 @@
 /** Service contracts and everything that crosses the wire. */
 
-import type { HarnessEvent, LaneSnapshot } from "@earendil-works/pi-agent-core";
-import type { AuthEvent, AuthPrompt } from "@earendil-works/pi-ai";
+import type { HarnessEvent, LaneSnapshot } from "@eaonlabs/eaon-agent-core";
+import type { AuthEvent, AuthPrompt } from "@eaonlabs/eaon-ai";
 
 /** Commands answer with data, never exceptions, exactly like a remote call would. */
 export type CommandResult = { ok: true } | { ok: false; error: string };

@@ -1,5 +1,5 @@
 import { deepStrictEqual, rejects, strictEqual } from "node:assert/strict";
-import type { AssistantMessage, StopReason } from "@earendil-works/pi-ai";
+import type { AssistantMessage, StopReason } from "@eaonlabs/eaon-ai";
 import { BACKGROUND_CONTEXT } from "../../../context.ts";
 import { insertEntry, insertUsage } from "../../commit.ts";
 import type {

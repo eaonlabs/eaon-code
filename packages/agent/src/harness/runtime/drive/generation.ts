@@ -1,4 +1,4 @@
-import type { Api, Model, Tool } from "@earendil-works/pi-ai";
+import type { Api, Model, Tool } from "@eaonlabs/eaon-ai";
 import type { AgentMessage } from "../../../types.ts";
 import { type Context, getTelemetryContext, withAbortSignal } from "../../context.ts";
 import { type HarnessAssistantStreamConfig, streamHarnessAssistant } from "../../execution/assistant.ts";

@@ -5,7 +5,7 @@ import {
 	type Model,
 	retryDelayMs,
 	type SimpleStreamOptions,
-} from "@earendil-works/pi-ai";
+} from "@eaonlabs/eaon-ai";
 import type { HarnessEvent } from "../../agent-harness.ts";
 import type { BranchPreparation, BranchSummaryResult } from "../../compaction/branch-summarization.ts";
 import { generateBranchSummaryWithRequest } from "../../compaction/branch-summarization.ts";

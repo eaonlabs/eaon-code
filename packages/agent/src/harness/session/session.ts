@@ -1,4 +1,4 @@
-import { uuidv7 } from "@earendil-works/pi-ai/utils/uuid";
+import { uuidv7 } from "@eaonlabs/eaon-ai/utils/uuid";
 import type { AgentMessage } from "../../types.ts";
 import type { Context } from "../context.ts";
 import { insertEntry } from "./commit.ts";

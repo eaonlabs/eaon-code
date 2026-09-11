@@ -5,7 +5,7 @@ import {
 	isRecoverableLength,
 	isRetryableAssistantError,
 	retryDelayMs,
-} from "@earendil-works/pi-ai";
+} from "@eaonlabs/eaon-ai";
 import type { HarnessEvent } from "../../agent-harness.ts";
 import type { Context } from "../../context.ts";
 import type { AssistantResponseMetadata, AssistantStreamObserver } from "../../execution/assistant.ts";

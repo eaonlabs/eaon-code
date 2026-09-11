@@ -4,8 +4,8 @@
 		"baseUrl": "../../..",
 		"noEmit": true,
 		"paths": {
-			"@earendil-works/pi-ai": ["packages/ai/src/index.ts"],
-			"@earendil-works/pi-ai/*": ["packages/ai/src/*"]
+			"@eaonlabs/eaon-ai": ["packages/ai/src/index.ts"],
+			"@eaonlabs/eaon-ai/*": ["packages/ai/src/*"]
 		}
 	},
 	"include": ["./**/*.ts", "../src/**/*.ts"]

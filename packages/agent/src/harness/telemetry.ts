@@ -9,7 +9,7 @@ import type {
 	TelemetrySchemaSpanStartAttributes,
 	TelemetrySchemaSpanUnion,
 	TelemetrySpan,
-} from "@earendil-works/pi-telemetry";
+} from "@eaonlabs/eaon-telemetry";
 import { type Context, getTelemetryContext, withTelemetryContext } from "./context.ts";
 
 export type {
@@ -37,7 +37,7 @@ export type {
 	TelemetrySpanDefinition,
 	TelemetryStartAttributeDefinition,
 	TypedSpanStarter,
-} from "@earendil-works/pi-telemetry";
+} from "@eaonlabs/eaon-telemetry";
 
 export const AI_TELEMETRY_SCHEMA = {
 	version: 1,

@@ -1,13 +1,13 @@
-import { combineFacetLoaders, type FacetLoader, type JsonValue } from "@earendil-works/chord";
+import { combineFacetLoaders, type FacetLoader, type JsonValue } from "@eaonlabs/chord";
 import {
 	createFacetBundleArtifactLoader,
 	createFacetBundleLoader,
 	type FacetBundleArtifact,
 	readFacetBundleManifest,
-} from "@earendil-works/chord/node";
+} from "@eaonlabs/chord/node";
 
 const PRESENTATION_FACET_BUNDLES_KEY = "presentationFacetBundles";
-const PI_PLUGIN_API = "@earendil-works/pi-coding-agent/experimental/plugin";
+const PI_PLUGIN_API = "@eaonlabs/eaon-code/experimental/plugin";
 
 export function createSessionPluginFacetLoader(manifestPaths: readonly string[]): FacetLoader | undefined {
 	if (manifestPaths.length === 0) return undefined;

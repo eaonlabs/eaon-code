@@ -8,7 +8,7 @@
 </p>
 <p align="center">
   <a href="https://github.com/eaonlabs/eaon-code"><img alt="GitHub" src="https://img.shields.io/badge/github-eaonlabs%2Feaon--code-181717?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/@earendil-works/pi-coding-agent"><img alt="npm" src="https://img.shields.io/npm/v/@earendil-works/pi-coding-agent?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@eaonlabs/eaon-code"><img alt="npm" src="https://img.shields.io/npm/v/@eaonlabs/eaon-code?style=flat-square" /></a>
 </p>
 
 > New issues and PRs from new contributors are auto-closed by default. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
@@ -21,7 +21,7 @@ Eaon Code ships with powerful defaults but skips features like sub agents and pl
 
 It runs in four modes: interactive, print or JSON, RPC for process integration, and an SDK for embedding in your own apps.
 
-> In this first rebrand pass the CLI binary and npm package id are still upstream `pi` / `@earendil-works/pi-coding-agent`. Product name, docs, and install are Eaon Code.
+Package id is `@eaonlabs/eaon-code`. The CLI binary is `eaon-code` (`pi` remains as an alias). Config directory is still `~/.pi` for compatibility.
 
 ## Share your OSS coding agent sessions
 
@@ -76,24 +76,22 @@ curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh 
 Or with npm:
 
 ```bash
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+npm install -g --ignore-scripts @eaonlabs/eaon-code
 ```
 
 `--ignore-scripts` disables dependency lifecycle scripts during install. Eaon Code does not require install scripts for normal npm installs.
-
-The CLI binary is still named `pi` in this first pass; the install script also links `eaon-code`.
 
 Authenticate with an API key:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-pi
+eaon-code
 ```
 
 Or use your existing subscription:
 
 ```bash
-pi
+eaon-code
 /login  # Then select provider
 ```
 
@@ -472,7 +470,7 @@ See [docs/packages.md](docs/packages.md).
 ### SDK
 
 ```typescript
-import { createAgentSession, ModelRuntime, SessionManager } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, ModelRuntime, SessionManager } from "@eaonlabs/eaon-code";
 
 const modelRuntime = await ModelRuntime.create();
 const { session } = await createAgentSession({
@@ -716,9 +714,9 @@ MIT
 
 ## See Also
 
-- [@earendil-works/pi-ai](https://www.npmjs.com/package/@earendil-works/pi-ai): Core LLM toolkit
-- [@earendil-works/pi-agent-core](https://www.npmjs.com/package/@earendil-works/pi-agent-core): Agent framework
-- [@earendil-works/pi-tui](https://www.npmjs.com/package/@earendil-works/pi-tui): Terminal UI components
+- [@eaonlabs/eaon-ai](https://www.npmjs.com/package/@eaonlabs/eaon-ai): Core LLM toolkit
+- [@eaonlabs/eaon-agent-core](https://www.npmjs.com/package/@eaonlabs/eaon-agent-core): Agent framework
+- [@eaonlabs/eaon-tui](https://www.npmjs.com/package/@eaonlabs/eaon-tui): Terminal UI components
 
 <p align="center">
   <a href="https://pi.dev">pi.dev</a> domain graciously donated by

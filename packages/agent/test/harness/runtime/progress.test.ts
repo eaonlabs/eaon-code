@@ -1,4 +1,4 @@
-import { type AssistantMessageFrame, createModels } from "@earendil-works/pi-ai";
+import { type AssistantMessageFrame, createModels } from "@eaonlabs/eaon-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { WatchHandle } from "../../../src/harness/agent-harness.ts";
 import { DEFAULT_COMPACTION_SETTINGS } from "../../../src/harness/compaction/compaction.ts";

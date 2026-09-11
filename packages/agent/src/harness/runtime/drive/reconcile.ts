@@ -1,4 +1,4 @@
-import type { DeferredHandle } from "@earendil-works/pi-ai";
+import type { DeferredHandle } from "@eaonlabs/eaon-ai";
 import type { HarnessEvent } from "../../agent-harness.ts";
 import { getTelemetryContext } from "../../context.ts";
 import { SessionInvariantError } from "../../session/session.ts";

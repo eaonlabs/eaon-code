@@ -5,7 +5,7 @@ import {
 	type Models,
 	reduceAssistantMessageFrames,
 	type Usage,
-} from "@earendil-works/pi-ai";
+} from "@eaonlabs/eaon-ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
 import type {
 	AbortRequestResult,

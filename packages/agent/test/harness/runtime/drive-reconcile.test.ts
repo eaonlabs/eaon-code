@@ -6,7 +6,7 @@ import {
 	fauxToolCall,
 	type MutableModels,
 	type Provider,
-} from "@earendil-works/pi-ai";
+} from "@eaonlabs/eaon-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { HarnessEvent, WatchHandle } from "../../../src/harness/agent-harness.ts";
 import { DEFAULT_COMPACTION_SETTINGS } from "../../../src/harness/compaction/compaction.ts";

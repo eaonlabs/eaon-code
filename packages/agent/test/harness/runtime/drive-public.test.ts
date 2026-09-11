@@ -1,4 +1,4 @@
-import { createModels, fauxAssistantMessage, fauxProvider } from "@earendil-works/pi-ai";
+import { createModels, fauxAssistantMessage, fauxProvider } from "@eaonlabs/eaon-ai";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	AgentHarness,

@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import { readFacetBundleManifest } from "@earendil-works/chord/node";
+import { BACKGROUND_CONTEXT } from "@eaonlabs/chord/context";
+import { readFacetBundleManifest } from "@eaonlabs/chord/node";
 import { afterEach, describe, expect, test } from "vitest";
 import {
 	activateBuiltinClientServices,
@@ -59,18 +59,18 @@ describe("server-selected presentation facets", () => {
 		await writeFile(
 			join(packagePath, "package.json"),
 			`${JSON.stringify({
-				name: "@earendil-works/test-plugin",
+				name: "@eaonlabs/test-plugin",
 				version: "1.0.0",
 				peerDependencies: {
-					"@earendil-works/chord": "^0.84.4",
-					"@earendil-works/pi-coding-agent": "^0.84.4",
+					"@eaonlabs/chord": "^0.84.4",
+					"@eaonlabs/eaon-code": "^0.84.4",
 				},
 			})}\n`,
 		);
 		const sourcePath = join(packagePath, "src", "tui.ts");
 		await writeFile(
 			sourcePath,
-			'import { defineFacet } from "@earendil-works/chord"; import { SlashCommands } from "@earendil-works/pi-coding-agent/experimental/plugin"; export default defineFacet({ id: "built-a", setup(env) { env.use(SlashCommands); } });\n',
+			'import { defineFacet } from "@eaonlabs/chord"; import { SlashCommands } from "@eaonlabs/eaon-code/experimental/plugin"; export default defineFacet({ id: "built-a", setup(env) { env.use(SlashCommands); } });\n',
 		);
 		const plugin = createServerPluginPackage(directory, serverId, packagePath);
 
@@ -79,14 +79,14 @@ describe("server-selected presentation facets", () => {
 		expect(plugin.manifestPath).toMatch(
 			new RegExp(`/plugin-builds/${serverId}/pi-example-plugin-[a-f0-9]{12}/chord-facets\\.json$`, "u"),
 		);
-		expect(first[0]?.plugin).toEqual({ id: "@earendil-works/test-plugin", version: "1.0.0" });
+		expect(first[0]?.plugin).toEqual({ id: "@eaonlabs/test-plugin", version: "1.0.0" });
 		const firstLoaded = await createPresentationFacetLoaders(createPresentationFacetData(first))[0]!.load();
 		expect(firstLoaded.facets.map(({ id }) => id)).toEqual(["built-a"]);
 		await firstLoaded.dispose();
 
 		await writeFile(
 			sourcePath,
-			'import { defineFacet } from "@earendil-works/chord"; import { SlashCommands } from "@earendil-works/pi-coding-agent/experimental/plugin"; export default defineFacet({ id: "built-b", setup(env) { env.use(SlashCommands); } });\n',
+			'import { defineFacet } from "@eaonlabs/chord"; import { SlashCommands } from "@eaonlabs/eaon-code/experimental/plugin"; export default defineFacet({ id: "built-b", setup(env) { env.use(SlashCommands); } });\n',
 		);
 		const second = await plugin.build();
 		expect(second[0]?.source).not.toBe(first[0]?.source);
@@ -100,14 +100,14 @@ describe("server-selected presentation facets", () => {
 			writeFile(
 				join(secondPackagePath, "package.json"),
 				`${JSON.stringify({
-					name: "@earendil-works/second-test-plugin",
+					name: "@eaonlabs/second-test-plugin",
 					version: "1.0.0",
-					peerDependencies: { "@earendil-works/chord": "^0.84.4" },
+					peerDependencies: { "@eaonlabs/chord": "^0.84.4" },
 				})}\n`,
 			),
 			writeFile(
 				join(secondPackagePath, "src", "tui.ts"),
-				'import { defineFacet } from "@earendil-works/chord"; export default defineFacet({ id: "second-built", setup() {} });\n',
+				'import { defineFacet } from "@eaonlabs/chord"; export default defineFacet({ id: "second-built", setup() {} });\n',
 			),
 		]);
 		const running = await startServer({
@@ -137,7 +137,7 @@ describe("server-selected presentation facets", () => {
 
 		await writeFile(
 			sourcePath,
-			'import { defineFacet } from "@earendil-works/chord"; import { SlashCommands } from "@earendil-works/pi-coding-agent/experimental/plugin"; export default defineFacet({ id: "built-c", setup(env) { env.use(SlashCommands); } });\n',
+			'import { defineFacet } from "@eaonlabs/chord"; import { SlashCommands } from "@eaonlabs/eaon-code/experimental/plugin"; export default defineFacet({ id: "built-c", setup(env) { env.use(SlashCommands); } });\n',
 		);
 		const services = runtime.servers[0]!.server.open({
 			services: [PresentationPlugins],
@@ -164,10 +164,10 @@ describe("server-selected presentation facets", () => {
 
 		const artifacts = await plugin.build();
 		const manifest = await readFacetBundleManifest(plugin.manifestPath);
-		expect(manifest.plugin).toEqual({ id: "@earendil-works/pi-example-plugin", version: "1.0.0" });
+		expect(manifest.plugin).toEqual({ id: "@eaonlabs/eaon-example-plugin", version: "1.0.0" });
 		expect(Object.keys(manifest.entries)).toEqual(["session", "tui"]);
 		const loaded = await createPresentationFacetLoaders(createPresentationFacetData(artifacts))[0]!.load();
-		expect(loaded.facets.map(({ id }) => id)).toEqual(["@earendil-works/pi-example-plugin/tui"]);
+		expect(loaded.facets.map(({ id }) => id)).toEqual(["@eaonlabs/eaon-example-plugin/tui"]);
 		await loaded.dispose();
 	});
 });

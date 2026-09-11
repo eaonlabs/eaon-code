@@ -1,4 +1,4 @@
-import type { Api, DeferredHandle, Model } from "@earendil-works/pi-ai";
+import type { Api, DeferredHandle, Model } from "@eaonlabs/eaon-ai";
 import { type Context, getTelemetryContext, withAbortSignal } from "../../context.ts";
 import { consumeAssistantStream } from "../../execution/assistant.ts";
 import { applyStreamOptionsPatch } from "../../hooks.ts";

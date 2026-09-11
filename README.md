@@ -40,38 +40,46 @@ curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh 
 Or with npm:
 
 ```bash
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+npm install -g --ignore-scripts @eaonlabs/eaon-code
 ```
 
 Requires Node.js ≥ 22.19.
 
-The CLI binary is still named `pi` in this first pass (the install script also links `eaon-code`):
+The CLI is `eaon-code` (`pi` remains as an alias):
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...   # or another provider
-pi
-# or: eaon-code
+eaon-code
 ```
 
 Or launch and log in interactively:
 
 ```bash
-pi
+eaon-code
 /login
+```
+
+**Local run from a private clone** (no publish required):
+
+```bash
+git clone https://github.com/eaonlabs/eaon-code.git
+cd eaon-code
+npm install --ignore-scripts
+./pi-test.sh --help
 ```
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| **[coding-agent](packages/coding-agent)** | Interactive coding agent CLI (product: Eaon Code) |
-| **[pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
-| **[pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, …) |
-| **[pi-tui](packages/tui)** | Terminal UI library with differential rendering |
-| **[pi-telemetry](packages/telemetry)** | Telemetry contracts, adapters, and typed schemas |
-| **[chord](packages/chord)** | Application-composition runtime for services, RPC, and plugins |
+| **[@eaonlabs/eaon-code](packages/coding-agent)** | Interactive coding agent CLI |
+| **[@eaonlabs/eaon-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
+| **[@eaonlabs/eaon-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, …) |
+| **[@eaonlabs/eaon-tui](packages/tui)** | Terminal UI library with differential rendering |
+| **[@eaonlabs/eaon-telemetry](packages/telemetry)** | Telemetry contracts, adapters, and typed schemas |
+| **[@eaonlabs/chord](packages/chord)** | Application-composition runtime for services, RPC, and plugins |
 
-> This first rebrand pass updates product name, docs, install, and repo metadata. Package IDs and the CLI binary (`pi`) still use upstream Pi identifiers so the monorepo keeps building; they will move under Eaon in a later pass.
+Config still lives under `~/.pi` / `.pi/` for compatibility with existing installs.
 
 ## Permissions & containerization
 

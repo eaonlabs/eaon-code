@@ -97,8 +97,8 @@ code, a private typed invocation identity. It is not model context. No casts or 
 are needed. Pure accessors, synchronous registrations and methods inside a transaction take no Call.
 
 ```typescript
-import type { Call } from '@earendil-works/pi-agent';
-import { BACKGROUND_CONTEXT, withCancel } from '@earendil-works/chord/context';
+import type { Call } from '@eaonlabs/eaon-agent';
+import { BACKGROUND_CONTEXT, withCancel } from '@eaonlabs/chord/context';
 
 const call: Call = BACKGROUND_CONTEXT; // host call, without cancellation
 const { context: waitingCall, cancel } = withCancel(call);
@@ -121,17 +121,17 @@ something a facade or type can prevent.
 ## Installation
 
 ```bash
-npm install @earendil-works/pi-agent
+npm install @eaonlabs/eaon-agent
 ```
 
 ## Quick Start
 
 ```typescript
-import { Harness, JsonlStorage, systemSections, type Call } from '@earendil-works/pi-agent';
-import { BACKGROUND_CONTEXT } from '@earendil-works/chord/context';
-import { readTool, writeTool, bashTool } from '@earendil-works/pi-agent/tools';
-import { generationKind } from '@earendil-works/pi-agent/kinds';
-import { builtinModels } from '@earendil-works/pi-ai/providers/all';
+import { Harness, JsonlStorage, systemSections, type Call } from '@eaonlabs/eaon-agent';
+import { BACKGROUND_CONTEXT } from '@eaonlabs/chord/context';
+import { readTool, writeTool, bashTool } from '@eaonlabs/eaon-agent/tools';
+import { generationKind } from '@eaonlabs/eaon-agent/kinds';
+import { builtinModels } from '@eaonlabs/eaon-ai/providers/all';
 
 const call: Call = BACKGROUND_CONTEXT;
 
@@ -223,7 +223,7 @@ A replacement is usually a wrapper that delegates to the original for everything
 change:
 
 ```typescript
-import { generationKind } from '@earendil-works/pi-agent/kinds';
+import { generationKind } from '@eaonlabs/eaon-agent/kinds';
 const h = await Harness.open(storage, { models, tools, replace: {
   generation: { ...generationKind, async execute(task, runtime, call) { await audit(task); return generationKind.execute(task, runtime, call); } },
 }}, call);
@@ -1096,7 +1096,7 @@ to the UI as it happens, is bounded once in one place, and settles into a `ToolO
 the transcript, the model and every renderer share. Failure is a throw; the harness sets `isError`.
 
 ```typescript
-import { Type, type Tool } from '@earendil-works/pi-agent';
+import { Type, type Tool } from '@eaonlabs/eaon-agent';
 
 export const countLinesTool: Tool<{ i: string; path: string; pattern?: string }, { lines: number; matching: number }> = {
   name: 'count_lines',

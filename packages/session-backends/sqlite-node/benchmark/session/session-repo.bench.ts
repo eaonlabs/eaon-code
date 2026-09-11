@@ -6,7 +6,7 @@ import {
 	SESSION_REPO_FORK_WRITE_BENCHMARK_SCENARIOS,
 	seedSessionRepoCatalogBenchmark,
 	seedSessionRepoForkBenchmark,
-} from "@earendil-works/pi-agent-core/harness/session/testing";
+} from "@eaonlabs/eaon-agent-core/harness/session/testing";
 import { registerReadBenchmarks, registerWriteBenchmarks } from "../../../../agent/benchmark/session/benchmark.ts";
 import { sessionRepoBenchmarkTargets } from "./session-repo-targets.ts";
 

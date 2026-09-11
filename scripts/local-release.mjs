@@ -7,16 +7,16 @@ import { spawnSync } from "node:child_process";
 import { installCodingAgentConsumer, packReleasePackages, smokeTestCodingAgentConsumer } from "./coding-agent-consumer.mjs";
 
 const packages = [
-	{ directory: "packages/chord", name: "@earendil-works/chord" },
-	{ directory: "packages/telemetry", name: "@earendil-works/pi-telemetry" },
-	{ directory: "packages/ai", name: "@earendil-works/pi-ai" },
-	{ directory: "packages/tui", name: "@earendil-works/pi-tui" },
-	{ directory: "packages/agent", name: "@earendil-works/pi-agent-core" },
-	{ directory: "packages/protocol", name: "@earendil-works/pi-protocol" },
-	{ directory: "packages/client", name: "@earendil-works/pi-client" },
-	{ directory: "packages/session-backends/sqlite-node", name: "@earendil-works/pi-session-backend-sqlite-node" },
-	{ directory: "packages/server", name: "@earendil-works/pi-server" },
-	{ directory: "packages/coding-agent", name: "@earendil-works/pi-coding-agent" },
+	{ directory: "packages/chord", name: "@eaonlabs/chord" },
+	{ directory: "packages/telemetry", name: "@eaonlabs/eaon-telemetry" },
+	{ directory: "packages/ai", name: "@eaonlabs/eaon-ai" },
+	{ directory: "packages/tui", name: "@eaonlabs/eaon-tui" },
+	{ directory: "packages/agent", name: "@eaonlabs/eaon-agent-core" },
+	{ directory: "packages/protocol", name: "@eaonlabs/eaon-protocol" },
+	{ directory: "packages/client", name: "@eaonlabs/eaon-client" },
+	{ directory: "packages/session-backends/sqlite-node", name: "@eaonlabs/eaon-session-backend-sqlite-node" },
+	{ directory: "packages/server", name: "@eaonlabs/eaon-server" },
+	{ directory: "packages/coding-agent", name: "@eaonlabs/eaon-code" },
 ];
 
 function printUsage() {

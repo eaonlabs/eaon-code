@@ -11,7 +11,7 @@ The invocation context must solve two related problems without `AsyncLocalStorag
 1. preserve correct telemetry parentage through concurrent asynchronous work;
 2. carry an `AbortSignal`, when one exists, that an RPC adapter can map to request cancellation.
 
-This work must reuse `@earendil-works/pi-telemetry`. It must not introduce another span abstraction.
+This work must reuse `@eaonlabs/eaon-telemetry`. It must not introduce another span abstraction.
 
 ## Context model
 

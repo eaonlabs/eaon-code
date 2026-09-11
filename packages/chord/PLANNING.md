@@ -18,7 +18,7 @@ The current Pi experiments prove many required behaviors, but Chord will be impl
 The dependency direction is strict:
 
 ```text
-@earendil-works/chord
+@eaonlabs/chord
         ↑
 Pi agent, protocol, server, coding agent, TUI, and future applications
 ```
@@ -26,7 +26,7 @@ Pi agent, protocol, server, coding agent, TUI, and future applications
 Chord must:
 
 - have no dependency on another Pi workspace package;
-- contain no imports from `@earendil-works/pi-*` or relative paths outside `packages/chord`;
+- contain no imports from `@eaonlabs/eaon-*` or relative paths outside `packages/chord`;
 - use application-neutral vocabulary in source, errors, tests, and examples;
 - own any generic runtime types required by its public API, including strict JSON values and invocation cancellation context;
 - keep Node-specific loading and bundling separate from the platform-neutral runtime; and
@@ -511,7 +511,7 @@ Writes should use a temporary output directory followed by an atomic rename so a
 
 ### 10.3 Bundle rules
 
-- `@earendil-works/chord` must be externalized so a plugin uses the host's one runtime and branding symbols.
+- `@eaonlabs/chord` must be externalized so a plugin uses the host's one runtime and branding symbols.
 - Other dependencies are bundled by default. The explicit bundler API uses an application external allowlist; the package-level API also externalizes peer dependencies because the host provides them.
 - Built-in module use may be allowed for Node entries but is not a trust or sandbox policy.
 - Dynamic imports must be lowered through the loader's restricted `require`, and unresolved externals must be reported deterministically.
@@ -615,7 +615,7 @@ packages/chord/
   PLANNING.md
 ```
 
-If Node-only APIs are exported, they should use a separate package export such as `@earendil-works/chord/node` or `@earendil-works/chord/bundler`; importing the main runtime must not load Node-only modules.
+If Node-only APIs are exported, they should use a separate package export such as `@eaonlabs/chord/node` or `@eaonlabs/chord/bundler`; importing the main runtime must not load Node-only modules.
 
 ## 13. Work packages
 

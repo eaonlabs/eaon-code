@@ -38,7 +38,7 @@ Configure via `package.json`:
 
 ```json
 {
-  "piConfig": {
+  "eaonConfig": {
     "name": "pi",
     "configDir": ".pi"
   }

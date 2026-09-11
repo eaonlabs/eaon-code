@@ -1,4 +1,4 @@
-# @earendil-works/pi-tui
+# @eaonlabs/eaon-tui
 
 Minimal terminal UI framework with differential rendering and synchronized output for flicker-free interactive CLI applications.
 
@@ -18,7 +18,7 @@ Minimal terminal UI framework with differential rendering and synchronized outpu
 ## Quick Start
 
 ```typescript
-import { type TUI, Text, Editor, ProcessTerminal, TuiMainScreen, matchesKey } from "@earendil-works/pi-tui";
+import { type TUI, Text, Editor, ProcessTerminal, TuiMainScreen, matchesKey } from "@eaonlabs/eaon-tui";
 
 // Create terminal
 const terminal = new ProcessTerminal();
@@ -62,7 +62,7 @@ tui.start();
 - `TuiAltScreen` renders a fixed-height viewport in the alternate terminal buffer with application-owned scrolling. When stopped, it restores the main buffer and prints the complete final document.
 
 ```typescript
-import { type TUI, TuiAltScreen, TuiMainScreen } from "@earendil-works/pi-tui";
+import { type TUI, TuiAltScreen, TuiMainScreen } from "@eaonlabs/eaon-tui";
 
 const tui: TUI = new TuiMainScreen(terminal);
 // To use an application-owned viewport in the alternate terminal buffer instead:
@@ -89,7 +89,7 @@ import {
   ScrollView,
   Text,
   VStack,
-} from "@earendil-works/pi-tui";
+} from "@eaonlabs/eaon-tui";
 
 const transcript = new Container();
 transcript.addChild(new Text("History"));
@@ -231,7 +231,7 @@ The TUI appends a full SGR reset and OSC 8 reset at the end of each rendered lin
 `TuiAltScreen` normalizes SGR mouse input and hit-tests components and overlays. Events contain component-local `x`/`y`, absolute `screenX`/`screenY`, bounds, button, modifiers, click count, and wheel delta. `TuiMainScreen` does not capture mouse input because the terminal owns its scrollback.
 
 ```typescript
-import type { TuiMouseEvent, TuiMouseEventResult } from "@earendil-works/pi-tui";
+import type { TuiMouseEvent, TuiMouseEventResult } from "@eaonlabs/eaon-tui";
 
 handleMouse(event: TuiMouseEvent): TuiMouseEventResult | undefined {
   if (event.type === "click" && event.button === "left") {
@@ -270,7 +270,7 @@ const collapsible = new MouseRegion(content, (event) => {
 Components that display a text cursor and need IME (Input Method Editor) support should implement the `Focusable` interface:
 
 ```typescript
-import { CURSOR_MARKER, type Component, type Focusable } from "@earendil-works/pi-tui";
+import { CURSOR_MARKER, type Component, type Focusable } from "@eaonlabs/eaon-tui";
 
 class MyInput implements Component, Focusable {
   focused: boolean = false;  // Set by TUI when focus changes
@@ -294,7 +294,7 @@ The cursor remains hidden by default. This keeps the fake cursor rendering, whil
 **Container components with embedded inputs:** When a container component (dialog, selector, etc.) contains an `Input` or `Editor` child, the container must implement `Focusable` and propagate the focus state to the child:
 
 ```typescript
-import { Container, type Focusable, Input } from "@earendil-works/pi-tui";
+import { Container, type Focusable, Input } from "@eaonlabs/eaon-tui";
 
 class SearchDialog extends Container implements Focusable {
   private searchInput: Input;
@@ -652,7 +652,7 @@ Supported formats: PNG, JPEG, GIF, WebP. Dimensions are parsed from the image he
 Supports both slash commands and file paths.
 
 ```typescript
-import { CombinedAutocompleteProvider } from "@earendil-works/pi-tui";
+import { CombinedAutocompleteProvider } from "@eaonlabs/eaon-tui";
 
 const provider = new CombinedAutocompleteProvider(
   [
@@ -677,7 +677,7 @@ editor.setAutocompleteProvider(provider);
 Use `matchesKey()` with the `Key` helper for detecting keyboard input (supports Kitty keyboard protocol):
 
 ```typescript
-import { matchesKey, Key } from "@earendil-works/pi-tui";
+import { matchesKey, Key } from "@eaonlabs/eaon-tui";
 
 if (matchesKey(data, Key.ctrl("c"))) {
   process.exit(0);
@@ -737,7 +737,7 @@ interface Terminal {
 ## Utilities
 
 ```typescript
-import { visibleWidth, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import { visibleWidth, truncateToWidth, wrapTextWithAnsi } from "@eaonlabs/eaon-tui";
 
 // Get visible width of string (ignoring ANSI codes)
 const width = visibleWidth("\x1b[31mHello\x1b[0m"); // 5
@@ -762,8 +762,8 @@ When creating custom components, **each line returned by `render()` must not exc
 Use `matchesKey()` with the `Key` helper for keyboard input:
 
 ```typescript
-import { matchesKey, Key, truncateToWidth } from "@earendil-works/pi-tui";
-import type { Component } from "@earendil-works/pi-tui";
+import { matchesKey, Key, truncateToWidth } from "@eaonlabs/eaon-tui";
+import type { Component } from "@eaonlabs/eaon-tui";
 
 class MyInteractiveComponent implements Component {
   private selectedIndex = 0;
@@ -798,8 +798,8 @@ class MyInteractiveComponent implements Component {
 Use the provided utilities to ensure lines fit:
 
 ```typescript
-import { visibleWidth, truncateToWidth } from "@earendil-works/pi-tui";
-import type { Component } from "@earendil-works/pi-tui";
+import { visibleWidth, truncateToWidth } from "@eaonlabs/eaon-tui";
+import type { Component } from "@eaonlabs/eaon-tui";
 
 class MyComponent implements Component {
   private text: string;

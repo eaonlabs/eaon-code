@@ -1,7 +1,7 @@
 # Coding-Agent Application Hosts and Facets
 
 The application-neutral facet, service, and replicated-state runtime is provided by
-`@earendil-works/chord`. This document specifies how Pi composes that runtime with Pi-owned
+`@eaonlabs/chord`. This document specifies how Pi composes that runtime with Pi-owned
 service contracts, process roles, routing, and lifecycle policy.
 
 > **Status:** Design specification for the experimental facet and service architecture.

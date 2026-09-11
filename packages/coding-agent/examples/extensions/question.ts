@@ -4,7 +4,7 @@
  * Escape in editor returns to options, Escape in options cancels
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@eaonlabs/eaon-code";
 import {
 	Editor,
 	type EditorTheme,
@@ -13,7 +13,7 @@ import {
 	Text,
 	visibleWidth,
 	wrapTextWithAnsi,
-} from "@earendil-works/pi-tui";
+} from "@eaonlabs/eaon-tui";
 import { Type } from "typebox";
 
 interface OptionWithDesc {

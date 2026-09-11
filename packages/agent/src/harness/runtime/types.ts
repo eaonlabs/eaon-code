@@ -1,4 +1,4 @@
-import type { RetryPolicy } from "@earendil-works/pi-ai";
+import type { RetryPolicy } from "@eaonlabs/eaon-ai";
 import type { QueueMode } from "../../types.ts";
 import type { AgentHarnessOptions, DriveOptions, DriveOutcome, HarnessEvent, Resources } from "../agent-harness.ts";
 import type { CompactionSettings } from "../compaction/compaction.ts";

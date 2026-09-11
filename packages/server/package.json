@@ -1,5 +1,5 @@
 {
-	"name": "@earendil-works/pi-server",
+	"name": "@eaonlabs/eaon-server",
 	"version": "0.85.1",
 	"description": "experimental server package for pi",
 	"type": "module",
@@ -47,9 +47,9 @@
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@earendil-works/chord": "^0.85.1",
-		"@earendil-works/pi-agent-core": "^0.85.1",
-		"@earendil-works/pi-protocol": "^0.85.1"
+		"@eaonlabs/chord": "^0.85.1",
+		"@eaonlabs/eaon-agent-core": "^0.85.1",
+		"@eaonlabs/eaon-protocol": "^0.85.1"
 	},
 	"devDependencies": {
 		"shx": "0.4.0",

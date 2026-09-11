@@ -1,4 +1,4 @@
-import { createModels, fauxAssistantMessage, fauxProvider, type MutableModels } from "@earendil-works/pi-ai";
+import { createModels, fauxAssistantMessage, fauxProvider, type MutableModels } from "@eaonlabs/eaon-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { HarnessEvent, WatchHandle } from "../../../src/harness/agent-harness.ts";
 import { DEFAULT_COMPACTION_SETTINGS } from "../../../src/harness/compaction/compaction.ts";

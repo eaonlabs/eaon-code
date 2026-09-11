@@ -1,4 +1,4 @@
-import { DEFAULT_MAX_AGENT_RETRY_DELAY_MS, type RetryPolicy } from "@earendil-works/pi-ai";
+import { DEFAULT_MAX_AGENT_RETRY_DELAY_MS, type RetryPolicy } from "@eaonlabs/eaon-ai";
 import type { CompactionSettings } from "./compaction/compaction.ts";
 
 export const DEFAULT_RETRY_POLICY: RetryPolicy = {

@@ -1,5 +1,5 @@
-import type { Terminal } from "@earendil-works/pi-tui";
-import { ProcessTerminal, type TUI, TuiAltScreen, TuiMainScreen } from "@earendil-works/pi-tui";
+import type { Terminal } from "@eaonlabs/eaon-tui";
+import { ProcessTerminal, type TUI, TuiAltScreen, TuiMainScreen } from "@eaonlabs/eaon-tui";
 import { copyToClipboard } from "../../utils/clipboard.ts";
 import { openBrowser } from "../../utils/open-browser.ts";
 import { keyDisplayText } from "./components/keybinding-hints.ts";

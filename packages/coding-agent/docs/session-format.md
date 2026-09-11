@@ -34,7 +34,7 @@ Source on GitHub ([pi](https://github.com/earendil-works/pi)):
 - [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/ai/src/types.ts) - Base message types (UserMessage, AssistantMessage, ToolResultMessage)
 - [`packages/agent/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/agent/src/types.ts) - AgentMessage union type
 
-For TypeScript definitions in your project, inspect `node_modules/@earendil-works/pi-coding-agent/dist/` and `node_modules/@earendil-works/pi-ai/dist/`.
+For TypeScript definitions in your project, inspect `node_modules/@eaonlabs/eaon-code/dist/` and `node_modules/@eaonlabs/eaon-ai/dist/`.
 
 ## Message Types
 
