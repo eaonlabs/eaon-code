@@ -54,25 +54,28 @@ export class FirstTimeSetupComponent extends Container {
 		this.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
 		this.addChild(new Spacer(1));
 		this.addChild(
-			new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}, the minimal coding agent.`)), 1, 0),
+			new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}`)), 1, 0),
+		);
+		this.addChild(
+			new Text(theme.fg("muted", "A coding agent for your terminal. Two quick choices:"), 1, 0),
 		);
 		this.addChild(new Spacer(1));
 
 		if (this.step === "theme") {
-			this.addChild(new Text(theme.fg("text", "Pick a theme."), 1, 0));
-			this.addChild(new Text(theme.fg("muted", `Detected system appearance: ${this.options.detectedTheme}`), 1, 0));
+			this.addChild(new Text(theme.fg("text", "1/2  Colors"), 1, 0));
+			this.addChild(new Text(theme.fg("muted", "You can change this later with /theme."), 1, 0));
 			this.addChild(new Spacer(1));
 			this.addOptionList(
 				THEME_OPTIONS.map((option) => option.label),
 				this.themeIndex,
 			);
 		} else {
-			this.addChild(new Text(theme.fg("text", "Opt-in to anonymous usage data sharing?"), 1, 0));
+			this.addChild(new Text(theme.fg("text", "2/2  Anonymous usage data"), 1, 0));
 			this.addChild(
 				new Text(
 					theme.fg(
 						"muted",
-						"Opting in stores a tracking identifier in settings.json and enables anonymous\nusage analytics. This helps us to better debug, reproduce, and resolve issues\nand bugs within Eaon Code. You can observe what is shared using /privacy and make\nchanges anytime in settings.json.",
+						"Optional. Helps fix bugs. Nothing is shared if you skip.\nReview anytime with /privacy or in settings.json.",
 					),
 					1,
 					0,

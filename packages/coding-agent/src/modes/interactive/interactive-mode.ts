@@ -37,6 +37,7 @@ import {
 	setKeybindings,
 	Text,
 	TruncatedText,
+	truncateToWidth,
 	type TUI,
 	TuiAltScreen,
 	TuiMainScreen,
@@ -946,11 +947,17 @@ export class InteractiveMode {
 			].join(theme.fg("muted", " · "));
 			const compactOnboarding = theme.fg(
 				"dim",
-				`Press ${keyText("app.tools.expand")} to show full startup help and loaded resources.`,
+				`Press ${keyText("app.tools.expand")} for the full shortcut list.`,
 			);
 			const onboarding = theme.fg(
 				"dim",
-				`Eaon Code can explain its own features and look up its docs. Ask it how to use or extend itself.`,
+				[
+					`Type a message and press Enter. Common commands:`,
+					`  /login   connect a provider (needed to chat)`,
+					`  /model   pick a model`,
+					`  /theme   change colors`,
+					`  /help    list all commands`,
+				].join("\n"),
 			);
 			this.builtInHeader = new ExpandableText(
 				() => `${logo}\n${compactInstructions}\n${compactOnboarding}\n\n${onboarding}`,
@@ -3029,6 +3036,11 @@ export class InteractiveMode {
 				this.editor.setText("");
 				return;
 			}
+			if (text === "/help") {
+				this.handleHelpCommand();
+				this.editor.setText("");
+				return;
+			}
 			if (text === "/fork") {
 				this.showUserMessageSelector();
 				this.editor.setText("");
@@ -4998,7 +5010,7 @@ export class InteractiveMode {
 			if (result.success) {
 				this.updateEditorBorderColor();
 				this.footer.invalidate();
-				this.showStatus(`Theme: ${themeName}`);
+				this.showStatus(`Colors: ${themeName}  ·  /theme to switch`);
 			} else {
 				this.showError(result.error ?? `Unknown theme: ${themeName}`);
 			}
@@ -6475,6 +6487,35 @@ export class InteractiveMode {
 		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Keyboard Shortcuts")), 1, 0));
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Markdown(hotkeys.trim(), 1, 1, this.getMarkdownThemeWithSettings()));
+		this.chatContainer.addChild(new DynamicBorder());
+		this.ui.requestRender();
+	}
+
+	private handleHelpCommand(): void {
+		const width = this.ui.terminal.columns;
+		const maxName = Math.max(...BUILTIN_SLASH_COMMANDS.map((c) => c.name.length));
+		const lines = BUILTIN_SLASH_COMMANDS.map((c) => {
+			const name = `/${c.name}`.padEnd(maxName + 1);
+			const hint = c.argumentHint ? ` ${c.argumentHint}` : "";
+			const desc = c.description ? `  —  ${c.description}` : "";
+			return `${theme.fg("accent", name)}${theme.fg("dim", hint)}${theme.fg("muted", desc)}`;
+		});
+
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new DynamicBorder());
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Commands")), 1, 0));
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(
+			new Text(theme.fg("muted", "Type a command and press Enter. Tab completes names."), 1, 0),
+		);
+		this.chatContainer.addChild(new Spacer(1));
+		for (const line of lines) {
+			this.chatContainer.addChild(new Text(truncateToWidth(line, width, "…"), 1, 1));
+		}
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(
+			new Text(theme.fg("dim", "Keyboard: /hotkeys  ·  Colors: /theme  ·  Providers: /login"), 1, 1),
+		);
 		this.chatContainer.addChild(new DynamicBorder());
 		this.ui.requestRender();
 	}

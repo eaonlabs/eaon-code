@@ -3,23 +3,41 @@ import { getDocsPath } from "../config.ts";
 
 const UNKNOWN_PROVIDER = "unknown";
 
+/** Short, actionable login help. Prefer this over long doc dumps in the TUI. */
 export function getProviderLoginHelp(): string {
 	return [
-		"Use /login to log into a provider via OAuth or API key. See:",
+		"Next step: type  /login  and pick a provider (Anthropic, OpenAI, Google, …).",
+		"Or set an API key env var and restart, e.g.:",
+		"  export ANTHROPIC_API_KEY=sk-ant-...",
+		"",
+		"More detail:",
 		`  ${join(getDocsPath(), "providers.md")}`,
-		`  ${join(getDocsPath(), "models.md")}`,
 	].join("\n");
 }
 
 export function formatNoModelsAvailableMessage(): string {
-	return `No models available. ${getProviderLoginHelp()}`;
+	return [
+		"No models available yet.",
+		"",
+		getProviderLoginHelp(),
+	].join("\n");
 }
 
 export function formatNoModelSelectedMessage(): string {
-	return `No model selected.\n\n${getProviderLoginHelp()}\n\nThen use /model to select a model.`;
+	return [
+		"No model selected.",
+		"",
+		getProviderLoginHelp(),
+		"",
+		"Then type  /model  to choose one.",
+	].join("\n");
 }
 
 export function formatNoApiKeyFoundMessage(provider: string): string {
 	const providerDisplay = provider === UNKNOWN_PROVIDER ? "the selected model" : provider;
-	return `No API key found for ${providerDisplay}.\n\n${getProviderLoginHelp()}`;
+	return [
+		`No API key for ${providerDisplay}.`,
+		"",
+		getProviderLoginHelp(),
+	].join("\n");
 }
