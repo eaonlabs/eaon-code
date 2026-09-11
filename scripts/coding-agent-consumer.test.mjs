@@ -75,7 +75,7 @@ test("installs only coding-agent directly and uses overrides only for declared r
 	const nested = join(directory, "node_modules", codingAgentName, "node_modules/@eaonlabs/eaon-server");
 	mkdirSync(nested, { recursive: true });
 	writeFileSync(join(nested, "package.json"), JSON.stringify({ name: "@eaonlabs/eaon-server", version: "1.0.0" }));
-	assert.throws(() => smokeTestCodingAgentConsumer(directory), /pi-server must not be installed/);
+	assert.throws(() => smokeTestCodingAgentConsumer(directory), /eaon-server must not be installed/);
 	rmSync(nested, { recursive: true });
 
 	const experimental = join(directory, "node_modules", codingAgentName, "dist/experimental");
@@ -91,5 +91,5 @@ test("fails when the SDK imports an undeclared server despite a working CLI", (t
 
 test("fails if a development-only dependency is added back to the published dependency tree", (t) => {
 	const directory = createFixture(t, { declareServer: true });
-	assert.throws(() => smokeTestCodingAgentConsumer(directory), /pi-server must not be installed/);
+	assert.throws(() => smokeTestCodingAgentConsumer(directory), /eaon-server must not be installed/);
 });
