@@ -25,7 +25,7 @@ coding agent trivially and this cannot be protected against.
 If you believe you found a security vulnerability in Eaon Code or another package in
 this repository, please report it privately by either:
 
-- Emailing `developer@eaon.dev`, or
+- Emailing `sanscreates@eaon.dev`, or
 - Opening a private report through GitHub Security Advisories for this repository
 
 Please include:
