@@ -404,12 +404,14 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const darkPath = path.join(themesDir, "dark.json");
-		const lightPath = path.join(themesDir, "light.json");
-		BUILTIN_THEMES = {
-			dark: JSON.parse(stripBom(fs.readFileSync(darkPath, "utf-8"))) as ThemeJson,
-			light: JSON.parse(stripBom(fs.readFileSync(lightPath, "utf-8"))) as ThemeJson,
-		};
+		BUILTIN_THEMES = {};
+		for (const file of fs.readdirSync(themesDir)) {
+			if (!file.endsWith(".json") || file === "theme-schema.json") {
+				continue;
+			}
+			const name = file.replace(/\.json$/, "");
+			BUILTIN_THEMES[name] = JSON.parse(stripBom(fs.readFileSync(path.join(themesDir, file), "utf-8"))) as ThemeJson;
+		}
 	}
 	return BUILTIN_THEMES;
 }
@@ -729,7 +731,8 @@ export async function detectTerminalThemeForAuto({
 }
 
 export function getDefaultTheme(): string {
-	return detectTerminalBackgroundFromEnv().theme;
+	// Eaon Code default — orange. Terminal light/dark still available via /theme.
+	return "orange";
 }
 
 // ============================================================================
@@ -780,9 +783,9 @@ export function initTheme(themeName?: string, enableWatcher: boolean = false): v
 			startThemeWatcher();
 		}
 	} catch (_error) {
-		// Theme is invalid - fall back to dark theme silently
-		currentThemeName = "dark";
-		setGlobalTheme(loadTheme("dark"));
+		// Theme is invalid - fall back to orange
+		currentThemeName = "orange";
+		setGlobalTheme(loadTheme("orange"));
 		// Don't start watcher for fallback theme
 	}
 }
@@ -799,9 +802,9 @@ export function setTheme(name: string, enableWatcher: boolean = false): { succes
 		}
 		return { success: true };
 	} catch (error) {
-		// Theme is invalid - fall back to dark theme
-		currentThemeName = "dark";
-		setGlobalTheme(loadTheme("dark"));
+		// Theme is invalid - fall back to orange
+		currentThemeName = "orange";
+		setGlobalTheme(loadTheme("orange"));
 		// Don't start watcher for fallback theme
 		return {
 			success: false,
@@ -1218,7 +1221,8 @@ export function getSelectListTheme(): SelectListTheme {
 
 export function getEditorTheme(): EditorTheme {
 	return {
-		borderColor: (text: string) => theme.fg("borderMuted", text),
+		// Input box border follows the active theme border (not thinking level)
+		borderColor: (text: string) => theme.fg("border", text),
 		selectList: getSelectListTheme(),
 	};
 }

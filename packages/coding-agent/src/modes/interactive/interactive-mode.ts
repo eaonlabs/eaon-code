@@ -148,6 +148,7 @@ import {
 	WorkingStatusIndicator,
 } from "./components/status-indicator.ts";
 import { ThinkingSelectorComponent } from "./components/thinking-selector.ts";
+import { ThemeSelectorComponent } from "./components/theme-selector.ts";
 import { ToolExecutionComponent } from "./components/tool-execution.ts";
 import { TreeSelectorComponent } from "./components/tree-selector.ts";
 import { TrustSelectorComponent } from "./components/trust-selector.ts";
@@ -2135,8 +2136,7 @@ export class InteractiveMode {
 
 	private showWorkingStatusIndicator(): void {
 		const colorFn = isWorkingStatusEditor(this.editor)
-			? (text: string) =>
-					(this.editor.borderColor ?? theme.getThinkingBorderColor(this.session.thinkingLevel || "off"))(text)
+			? (text: string) => (this.editor.borderColor ?? ((t: string) => theme.fg("border", t)))(text)
 			: undefined;
 		this.showStatusIndicator(
 			new WorkingStatusIndicator(
@@ -3047,6 +3047,12 @@ export class InteractiveMode {
 			if (text === "/trust") {
 				this.showTrustSelector();
 				this.editor.setText("");
+				return;
+			}
+			if (text === "/theme" || text.startsWith("/theme ")) {
+				const name = text.startsWith("/theme ") ? text.slice(7).trim() : undefined;
+				this.editor.setText("");
+				this.handleThemeCommand(name);
 				return;
 			}
 			if (text === "/login" || text.startsWith("/login ")) {
@@ -4164,11 +4170,11 @@ export class InteractiveMode {
 	}
 
 	private updateEditorBorderColor(): void {
+		// Input box follows the active theme. Thinking/effort must not recolor it.
 		if (this.isBashMode) {
 			this.editor.borderColor = theme.getBashModeBorderColor();
 		} else {
-			const level = this.session.thinkingLevel || "off";
-			this.editor.borderColor = theme.getThinkingBorderColor(level);
+			this.editor.borderColor = (text: string) => theme.fg("border", text);
 		}
 		this.activeStatusIndicator?.invalidate();
 		this.ui.requestRender();
@@ -4575,7 +4581,7 @@ export class InteractiveMode {
 					thinkingLevel: this.settingsManager.getDefaultThinkingLevel() ?? DEFAULT_THINKING_LEVEL,
 					availableThinkingLevels: [...THINKING_LEVEL_OPTIONS],
 					modelThinkingLevels: this.settingsManager.getAllModelThinkingLevels(),
-					currentTheme: this.themeController.getThemeSelection() || "dark",
+					currentTheme: this.themeController.getThemeSelection() || "orange",
 					terminalTheme: this.themeController.getTerminalTheme(),
 					availableThemes: getAvailableThemes(),
 					hideThinkingBlock: this.hideThinkingBlock,
@@ -4981,6 +4987,50 @@ export class InteractiveMode {
 				},
 			});
 			return { component: selector, focus: selector };
+		});
+	}
+
+	/** /theme [name] — set a preset by name, or open the theme picker. */
+	private handleThemeCommand(name?: string): void {
+		const themes = getAvailableThemes();
+		const applyTheme = (themeName: string) => {
+			const result = this.themeController.setThemeName(themeName);
+			if (result.success) {
+				this.updateEditorBorderColor();
+				this.footer.invalidate();
+				this.showStatus(`Theme: ${themeName}`);
+			} else {
+				this.showError(result.error ?? `Unknown theme: ${themeName}`);
+			}
+		};
+
+		if (name) {
+			const match = themes.find((t) => t.toLowerCase() === name.toLowerCase());
+			if (!match) {
+				this.showError(`Unknown theme "${name}". Available: ${themes.join(", ")}`);
+				return;
+			}
+			applyTheme(match);
+			return;
+		}
+
+		this.showSelector((done) => {
+			const current = this.themeController.getThemeSelection() || "orange";
+			const selector = new ThemeSelectorComponent(
+				current,
+				(themeName: string) => {
+					done();
+					applyTheme(themeName);
+				},
+				() => {
+					done();
+					this.ui.requestRender();
+				},
+				(themeName: string) => {
+					this.themeController.preview(themeName);
+				},
+			);
+			return { component: selector, focus: selector.getSelectList() };
 		});
 	}
 
