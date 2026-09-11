@@ -505,11 +505,13 @@ Pi is aggressively extensible so it doesn't have to dictate your workflow. Featu
 
 **No MCP.** Build CLI tools with READMEs (see [Skills](#skills)), or build an extension that adds MCP support. [Why?](https://mariozechner.at/posts/2025-11-02-what-if-you-dont-need-mcp/)
 
-**No sub-agents.** There's many ways to do this. Spawn pi instances via tmux, or build your own with [extensions](#extensions), or install a package that does it your way.
+**No sub-agents by default.** Spawn instances via tmux, or build your own with [extensions](#extensions), or install a package. **Eaon Code adds opt-in Swarm mode** (`/swarm`) that forces 2–6 sub-agents for large tasks.
 
 **No permission popups.** Run in a container, or build your own confirmation flow with [extensions](#extensions) inline with your environment and security requirements.
 
-**No plan mode.** Write plans to files, or build it with [extensions](#extensions), or install a package.
+**No plan mode by default.** Write plans to files, or build it with [extensions](#extensions). **Eaon Code adds opt-in Plan mode** (`/plan`) — read-only explore, then a numbered plan.
+
+**No MCP by default.** Connect your own servers with `/mcp add` / `/mcp connect` — nothing ships and nothing is forced.
 
 **No built-in to-dos.** They confuse models. Use a TODO.md file, or build your own with [extensions](#extensions).
 
