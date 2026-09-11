@@ -2,8 +2,8 @@ import type { TUI } from "@eaonlabs/eaon-tui";
 import type { SettingsManager } from "../../../core/settings-manager.ts";
 import {
 	detectTerminalBackgroundFromEnv,
-	detectTerminalBackgroundTheme,
 	detectTerminalThemeForAuto,
+	getDefaultTheme,
 	initTheme,
 	parseAutoThemeSetting,
 	resolveThemeSetting,
@@ -71,30 +71,32 @@ export class InteractiveThemeController {
 			return;
 		}
 
-		const detection = await detectTerminalBackgroundTheme({ ui: this.ui, timeoutMs: 100 });
-		this.terminalTheme = detection.theme;
-		if (!this.applyThemeName(detection.theme).success) return;
-		if (detection.confidence === "high") {
-			settingsManager.setTheme(detection.theme);
-			await settingsManager.flush();
-		}
+		// No saved preference — use the product default (orange) and remember it
+		// so restarts stay consistent.
+		const fallback = getDefaultTheme();
+		this.applyThemeName(fallback);
+		settingsManager.setTheme(fallback);
+		this.currentThemeSetting = fallback;
 	}
 
 	getThemeSelection(): string | undefined {
 		return this.currentThemeSetting ?? this.getSettingsManager().getThemeSetting() ?? this.activeThemeName;
 	}
 
+	/** Apply a named theme and persist it so it survives restarts. */
 	setThemeName(themeName: string, showError = false): ThemeResult {
 		this.setAutoSync(false);
 		const result = this.applyThemeName(themeName, showError);
 		if (result.success) {
 			this.currentThemeSetting = themeName;
+			this.getSettingsManager().setTheme(themeName);
 		}
 		return result;
 	}
 
 	async setThemeSetting(themeSetting: string): Promise<void> {
 		this.currentThemeSetting = themeSetting;
+		this.getSettingsManager().setTheme(themeSetting);
 		await this.applyFromSettings();
 	}
 
@@ -131,10 +133,10 @@ export class InteractiveThemeController {
 
 	private applyThemeName(themeName: string, showError = false): ThemeResult {
 		const result = setTheme(themeName, true);
-		this.activeThemeName = result.success ? themeName : "dark";
+		this.activeThemeName = result.success ? themeName : getDefaultTheme();
 		this.notifyChanged();
 		if (!result.success && showError) {
-			this.showError(`Failed to load theme "${themeName}": ${result.error}\nFell back to dark theme.`);
+			this.showError(`Failed to load theme "${themeName}": ${result.error}\nFell back to the default theme.`);
 		}
 		return result;
 	}
