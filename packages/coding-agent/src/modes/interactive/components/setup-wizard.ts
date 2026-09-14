@@ -1,12 +1,12 @@
 /**
  * First-run / reusable setup wizard.
  * Steps: welcome → provider (Eaon Plan recommended) → theme → done.
- * One theme list (no light/dark family step). No usage collection.
+ * One theme list. No light/dark split. No usage collection.
  */
 
 import { Container, getKeybindings, Spacer, Text } from "@eaonlabs/eaon-tui";
 import { type TerminalTheme, theme } from "../theme/theme.ts";
-import { getAvailableThemes, isLightTheme } from "../theme/theme.ts";
+import { getAvailableThemes } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
@@ -33,13 +33,10 @@ const LOGO = ["███████", "██     ", "██████ ", "�
 
 type Step = "welcome" | "provider" | "theme" | "done";
 
-/** Prefer ember first, then the rest of the built-in list. */
 function themeListSorted(): string[] {
 	const all = getAvailableThemes();
-	const preferred = ["ember", "light-ember", "orange", "midnight", "light-ocean"];
-	const rest = all.filter((n) => !preferred.includes(n) && n !== "dark" && n !== "light");
-	const head = preferred.filter((n) => all.includes(n));
-	return [...head, ...rest];
+	const rest = all.filter((n) => n !== "ember" && n !== "dark" && n !== "light");
+	return ["ember", ...rest];
 }
 
 export class SetupWizardComponent extends Container {
@@ -54,8 +51,7 @@ export class SetupWizardComponent extends Container {
 		this.options = options;
 		this.themes = themeListSorted();
 		const current = options.currentThemeName;
-		const defaultId = options.detectedTheme === "light" && this.themes.includes("light-ember") ? "light-ember" : "ember";
-		const startId = current && this.themes.includes(current) ? current : defaultId;
+		const startId = current && this.themes.includes(current) ? current : "ember";
 		this.themePickIndex = Math.max(0, this.themes.indexOf(startId));
 		this.previewSelectedTheme();
 		this.update();
@@ -95,13 +91,10 @@ export class SetupWizardComponent extends Container {
 			);
 		} else if (this.step === "theme") {
 			this.addChild(new Text(theme.fg("text", "2/2  Theme"), 1, 0));
-			this.addChild(new Text(theme.fg("muted", "ember is the default. Works on any terminal."), 1, 0));
+			this.addChild(new Text(theme.fg("muted", "Changes message and input colors. Body text stays the same."), 1, 0));
 			this.addChild(new Spacer(1));
 			this.renderOptions(
-				this.themes.map((id) => ({
-					label: id,
-					description: id === "ember" ? "default" : isLightTheme(id) ? "light" : "",
-				})),
+				this.themes.map((id) => ({ label: id, description: id === "ember" ? "default" : "" })),
 				this.themePickIndex,
 			);
 		} else {

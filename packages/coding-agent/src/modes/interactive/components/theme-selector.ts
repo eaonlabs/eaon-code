@@ -31,8 +31,8 @@ export class ThemeSelectorComponent extends Container {
 		const themes = options?.themes ?? getAvailableThemes();
 		// Flat list: ember first, then the rest alphabetically
 		const sorted = [...themes].sort((a, b) => {
-			const aPref = a === "ember" ? 0 : a === "light-ember" ? 1 : 2;
-			const bPref = b === "ember" ? 0 : b === "light-ember" ? 1 : 2;
+			const aPref = a === "ember" ? 0 : 1;
+			const bPref = b === "ember" ? 0 : 1;
 			if (aPref !== bPref) return aPref - bPref;
 			return a.localeCompare(b);
 		});

@@ -731,8 +731,8 @@ export async function detectTerminalThemeForAuto({
 }
 
 export function getDefaultTheme(): string {
-	// Eaon Code default — orange. Terminal light/dark still available via /theme.
-	return "orange";
+	// Eaon Code default — ember. One theme family; no light/dark split.
+	return "ember";
 }
 
 // ============================================================================
@@ -783,9 +783,9 @@ export function initTheme(themeName?: string, enableWatcher: boolean = false): v
 			startThemeWatcher();
 		}
 	} catch (_error) {
-		// Theme is invalid - fall back to orange
-		currentThemeName = "orange";
-		setGlobalTheme(loadTheme("orange"));
+		// Theme is invalid - fall back to ember
+		currentThemeName = "ember";
+		setGlobalTheme(loadTheme("ember"));
 		// Don't start watcher for fallback theme
 	}
 }
@@ -802,9 +802,9 @@ export function setTheme(name: string, enableWatcher: boolean = false): { succes
 		}
 		return { success: true };
 	} catch (error) {
-		// Theme is invalid - fall back to orange
-		currentThemeName = "orange";
-		setGlobalTheme(loadTheme("orange"));
+		// Theme is invalid - fall back to ember
+		currentThemeName = "ember";
+		setGlobalTheme(loadTheme("ember"));
 		// Don't start watcher for fallback theme
 		return {
 			success: false,
@@ -988,19 +988,22 @@ export function getResolvedThemeColors(themeName?: string): Record<string, strin
 /**
  * Check if a theme is a "light" theme (for CSS that needs light/dark variants).
  */
+/**
+ * Light/dark theme families were removed. Body text is pinned to the same
+ * neutrals in every theme; themes only recolor accent, messages, and input.
+ */
 export function isLightTheme(themeName?: string): boolean {
-	if (!themeName) return false;
-	return themeName === "light" || themeName.startsWith("light-");
+	return false;
 }
 
 /** Themes designed for dark terminal backgrounds (product default family). */
 export function getDarkThemeNames(): string[] {
-	return getAvailableThemes().filter((name) => !isLightTheme(name));
+	return getAvailableThemes();
 }
 
-/** Themes designed for light terminal backgrounds. */
+/** Themes designed for light terminal backgrounds (none — single family). */
 export function getLightThemeNames(): string[] {
-	return getAvailableThemes().filter((name) => isLightTheme(name));
+	return [];
 }
 
 /**
