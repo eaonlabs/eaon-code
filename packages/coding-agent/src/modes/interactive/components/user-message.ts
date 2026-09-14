@@ -37,6 +37,7 @@ export class UserMessageComponent extends Container {
 
 	private rebuild(): void {
 		this.clear();
+		// Same hue as the input box: theme accent on a subtle accent-tinted panel.
 		const contentBox = new Box(this.outputPad, 1, (content: string) => theme.bg("userMessageBg", content));
 		contentBox.addChild(
 			new Markdown(
@@ -45,7 +46,7 @@ export class UserMessageComponent extends Container {
 				0,
 				this.markdownTheme,
 				{
-					color: (content: string) => theme.fg("userMessageText", content),
+					color: (content: string) => theme.fg("accent", content),
 				},
 				{
 					preserveOrderedListMarkers: true,
