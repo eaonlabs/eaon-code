@@ -169,13 +169,9 @@ import { shareSession } from "./session-share.ts";
 import {
 	getAvailableThemes,
 	getAvailableThemesWithPaths,
-	getDarkThemeNames,
 	getEditorTheme,
-	getLightThemeNames,
 	getMarkdownTheme,
-	getSelectListTheme,
 	getThemeByName,
-	isLightTheme,
 	onThemeChange,
 	setRegisteredThemes,
 	stopThemeWatcher,
@@ -4229,11 +4225,11 @@ export class InteractiveMode {
 	}
 
 	private updateEditorBorderColor(): void {
-		// Input box follows the active theme. Thinking/effort must not recolor it.
+		// Input box follows theme accent — same as messages — not thinking level.
 		if (this.isBashMode) {
 			this.editor.borderColor = theme.getBashModeBorderColor();
 		} else {
-			this.editor.borderColor = (text: string) => theme.fg("border", text);
+			this.editor.borderColor = (text: string) => theme.fg("accent", text);
 		}
 		this.activeStatusIndicator?.invalidate();
 		this.ui.requestRender();
@@ -5053,7 +5049,7 @@ export class InteractiveMode {
 	/**
 	 * /theme [name]
 	 * - with a name: apply that theme
-	 * - without: pick Light or Dark first, then only that category's themes
+	 * - without: one flat list of all themes (ember first)
 	 */
 	private handleThemeCommand(name?: string): void {
 		const applyTheme = (themeName: string) => {
@@ -5072,71 +5068,30 @@ export class InteractiveMode {
 		if (name) {
 			const match = allThemes.find((t) => t.toLowerCase() === name.toLowerCase());
 			if (!match) {
-				const light = getLightThemeNames().join(", ");
-				const dark = getDarkThemeNames().join(", ");
-				this.showError(`Unknown theme "${name}".\nDark: ${dark}\nLight: ${light}`);
+				this.showError(`Unknown theme "${name}". Available: ${allThemes.join(", ")}`);
 				return;
 			}
 			applyTheme(match);
 			return;
 		}
 
-		const openCategoryList = (category: "dark" | "light") => {
-			const themes = category === "light" ? getLightThemeNames() : getDarkThemeNames();
-			const title = category === "light" ? "Light themes" : "Dark themes";
-			this.showSelector((done) => {
-				const current = this.themeController.getThemeSelection() || "orange";
-				const selector = new ThemeSelectorComponent(
-					current,
-					(themeName: string) => {
-						done();
-						applyTheme(themeName);
-					},
-					() => {
-						// Back to category step
-						done();
-						this.handleThemeCommand();
-					},
-					(themeName: string) => {
-						this.themeController.preview(themeName);
-					},
-					{ themes, title },
-				);
-				return { component: selector, focus: selector.getSelectList() };
-			});
-			this.showStatus(`${title} (${themes.length})  ·  Esc to go back`);
-		};
-
-		// Step 1: Light vs Dark
-		const current = this.themeController.getThemeSelection() || "orange";
-		const startInLight = isLightTheme(current);
 		this.showSelector((done) => {
-			const items = [
-				{
-					value: "dark" as const,
-					label: "Dark themes",
-					description: `${getDarkThemeNames().length} presets · for dark terminals`,
+			const current = this.themeController.getThemeSelection() || "ember";
+			const selector = new ThemeSelectorComponent(
+				current,
+				(themeName: string) => {
+					done();
+					applyTheme(themeName);
 				},
-				{
-					value: "light" as const,
-					label: "Light themes",
-					description: `${getLightThemeNames().length} presets · for light terminals`,
+				() => {
+					done();
+					this.ui.requestRender();
 				},
-			];
-			const list = new SelectList(items, 2, getSelectListTheme(), {
-				minPrimaryColumnWidth: 14,
-				maxPrimaryColumnWidth: 20,
-			});
-			list.setSelectedIndex(startInLight ? 1 : 0);
-			list.onSelect = (item) => {
-				done();
-				openCategoryList(item.value as "dark" | "light");
-			};
-			list.onCancel = () => {
-				done();
-				this.ui.requestRender();
-			};
-			return { component: list, focus: list };
+				(themeName: string) => {
+					this.themeController.preview(themeName);
+				},
+			);
+			return { component: selector, focus: selector.getSelectList() };
 		});
 	}
 
@@ -6695,9 +6650,6 @@ export class InteractiveMode {
 					const applied = this.themeController.setThemeName(result.themeName);
 					if (applied.success) {
 						this.updateEditorBorderColor();
-					}
-					if (result.shareAnalytics) {
-						this.settingsManager.setEnableAnalytics?.(true);
 					}
 					if (result.provider === "eaon" || result.provider === "other") {
 						this.showStatus(

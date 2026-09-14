@@ -175,7 +175,6 @@ export async function showFirstTimeSetup(settingsManager: SettingsManager): Prom
 			settled = true;
 			if (result) {
 				settingsManager.setTheme(result.theme);
-				settingsManager.setEnableAnalytics(result.shareAnalytics);
 				await settingsManager.flush();
 			}
 			await clearStartupTui(ui);

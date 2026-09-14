@@ -29,7 +29,14 @@ export class ThemeSelectorComponent extends Container {
 		this.onPreview = onPreview;
 
 		const themes = options?.themes ?? getAvailableThemes();
-		const themeItems: SelectItem[] = themes.map((name) => ({
+		// Flat list: ember first, then the rest alphabetically
+		const sorted = [...themes].sort((a, b) => {
+			const aPref = a === "ember" ? 0 : a === "light-ember" ? 1 : 2;
+			const bPref = b === "ember" ? 0 : b === "light-ember" ? 1 : 2;
+			if (aPref !== bPref) return aPref - bPref;
+			return a.localeCompare(b);
+		});
+		const themeItems: SelectItem[] = sorted.map((name) => ({
 			value: name,
 			label: name,
 			description: name === currentTheme ? "(current)" : undefined,
@@ -43,7 +50,7 @@ export class ThemeSelectorComponent extends Container {
 
 		this.selectList = new SelectList(themeItems, 10, getSelectListTheme(), THEME_SELECT_LIST_LAYOUT);
 
-		const currentIndex = themes.indexOf(currentTheme);
+		const currentIndex = sorted.indexOf(currentTheme);
 		if (currentIndex !== -1) {
 			this.selectList.setSelectedIndex(currentIndex);
 		}

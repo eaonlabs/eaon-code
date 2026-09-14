@@ -1231,8 +1231,9 @@ export function getSelectListTheme(): SelectListTheme {
 
 export function getEditorTheme(): EditorTheme {
 	return {
-		// Input box border follows the active theme border (not thinking level)
-		borderColor: (text: string) => theme.fg("border", text),
+		// Input box follows the theme accent (same hue as messages/headings)
+		// so it reads correctly on every theme without a light/dark split.
+		borderColor: (text: string) => theme.fg("accent", text),
 		selectList: getSelectListTheme(),
 	};
 }

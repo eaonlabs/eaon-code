@@ -1,7 +1,6 @@
 import type { ThinkingLevel } from "@eaonlabs/eaon-agent-core";
 import { DEFAULT_MAX_AGENT_RETRY_DELAY_MS, type Model, type Transport } from "@eaonlabs/eaon-ai";
 import type { TuiMode as RendererTuiMode, ScrollViewScrollbar, TerminalCapabilities } from "@eaonlabs/eaon-tui";
-import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
@@ -1085,8 +1084,12 @@ export class SettingsManager {
 		this.save();
 	}
 
+	/**
+	 * Install/update telemetry is off by default in Eaon Code (no usage pings).
+	 * Explicit true still honored if a user set it in settings.json.
+	 */
 	getEnableInstallTelemetry(): boolean {
-		return this.settings.enableInstallTelemetry ?? true;
+		return this.settings.enableInstallTelemetry === true;
 	}
 
 	setEnableInstallTelemetry(enabled: boolean): void {
@@ -1095,23 +1098,27 @@ export class SettingsManager {
 		this.save();
 	}
 
+	/**
+	 * Usage analytics are never enabled in Eaon Code.
+	 * Always false — do not store or send usage.
+	 */
 	getEnableAnalytics(): boolean {
-		return this.settings.enableAnalytics ?? false;
+		return false;
 	}
 
 	getTrackingId(): string | undefined {
-		return this.settings.trackingId;
+		return undefined;
 	}
 
-	/** Set the analytics opt-in preference; generates a tracking identifier on first opt-in */
-	setEnableAnalytics(enabled: boolean): void {
-		this.globalSettings.enableAnalytics = enabled;
-		this.markModified("enableAnalytics");
-		if (enabled && !this.globalSettings.trackingId) {
-			this.globalSettings.trackingId = randomUUID();
+	/** No-op: Eaon Code does not collect or store usage analytics. */
+	setEnableAnalytics(_enabled: boolean): void {
+		if (this.globalSettings.enableAnalytics || this.globalSettings.trackingId) {
+			this.globalSettings.enableAnalytics = false;
+			delete this.globalSettings.trackingId;
+			this.markModified("enableAnalytics");
 			this.markModified("trackingId");
+			this.save();
 		}
-		this.save();
 	}
 
 	getPackages(): PackageSource[] {
