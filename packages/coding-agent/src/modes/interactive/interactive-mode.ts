@@ -98,6 +98,9 @@ import type { FullscreenExitOutput, TuiMode } from "../../core/settings-manager.
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
 import { McpClient, mcpToolName, type McpServerConfig } from "../../core/mcp.ts";
 import { PLAN_MODE_PROMPT, toolsForPlanMode } from "../../core/plan-mode.ts";
+import { createCompressTool, createContextStatusTool } from "../../core/long-context.ts";
+import { createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
+import { SetupWizardComponent } from "./components/setup-wizard.ts";
 import { createSwarmSubagentTool, defaultSwarmCliOptions, SWARM_MODE_PROMPT } from "../../core/swarm.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
 import { isInstallTelemetryEnabled } from "../../core/telemetry.ts";
@@ -929,6 +932,12 @@ export class InteractiveMode {
 		if (this.settingsManager.getPlanMode()) this.enablePlanMode();
 		if (this.settingsManager.getSwarmMode()) this.enableSwarmMode();
 		this.refreshModeStatus();
+		this.registerBuiltinEaonTools();
+
+		// First-run setup (no provider saved yet)
+		if (!this.settingsManager.getDefaultProvider() && !this.settingsManager.getQuietStartup()) {
+			queueMicrotask(() => this.showSetupWizard());
+		}
 
 		// Add header with keybindings from config (unless silenced)
 		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
@@ -3061,6 +3070,11 @@ export class InteractiveMode {
 			if (text === "/plan") {
 				this.editor.setText("");
 				this.handlePlanCommand();
+				return;
+			}
+			if (text === "/setup") {
+				this.editor.setText("");
+				this.showSetupWizard();
 				return;
 			}
 			if (text === "/swarm") {
@@ -6610,7 +6624,15 @@ export class InteractiveMode {
 			new Text(theme.fg("muted", "  /swarm  —  delegate work to 2–6 sub-agents (scout/implement/test)"), 1, 1),
 		);
 		this.chatContainer.addChild(
+			new Text(theme.fg("muted", "  /setup  —  provider + theme wizard"), 1, 1),
+		);
+		this.chatContainer.addChild(
 			new Text(theme.fg("muted", "  /mcp    —  optional MCP servers (none by default; not required)"), 1, 1),
+		);
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Built-in tools")), 1, 0));
+		this.chatContainer.addChild(
+			new Text(theme.fg("muted", "  web_search, fetch_content  ·  compress, context_status"), 1, 1),
 		);
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Extensions")), 1, 0));
@@ -6638,6 +6660,71 @@ export class InteractiveMode {
 		if (this.planModeEnabled) parts.push(PLAN_MODE_PROMPT);
 		if (this.swarmModeEnabled) parts.push(SWARM_MODE_PROMPT);
 		this.session.setModeSystemPromptAppendix(parts.join("\n\n"));
+	}
+
+	/** Built-in web access + long-context tools (no extra packages). */
+	private registerBuiltinEaonTools(): void {
+		const session = this.session;
+		const target = {
+			getMessages: () => session.messages as unknown as Array<{ role: string; content?: unknown }>,
+			setMessages: (messages: unknown[]) => {
+				// Best-effort fold: agent state messages
+				(session as unknown as { agent: { state: { messages: unknown[] } } }).agent.state.messages = messages as never;
+			},
+		};
+		const tools = [createWebSearchTool(), createFetchContentTool(), createCompressTool(() => target), createContextStatusTool(() => target)];
+		const active = new Set(session.getActiveToolNames());
+		for (const tool of tools) {
+			session.registerRuntimeTool(tool as never);
+			active.add(tool.name);
+		}
+		session.setActiveToolsByName([...active]);
+	}
+
+	/** /setup — multi-step wizard (provider → theme → privacy). */
+	private showSetupWizard(): void {
+		this.showSelector((done) => {
+			const wizard = new SetupWizardComponent({
+				detectedTheme: this.themeController.getTerminalTheme(),
+				currentThemeName: this.themeController.getThemeSelection() || "ember",
+				onPreviewTheme: (name) => {
+					this.themeController.preview(name);
+				},
+				onSubmit: (result) => {
+					done();
+					const applied = this.themeController.setThemeName(result.themeName);
+					if (applied.success) {
+						this.updateEditorBorderColor();
+					}
+					if (result.shareAnalytics) {
+						this.settingsManager.setEnableAnalytics?.(true);
+					}
+					if (result.provider === "eaon" || result.provider === "other") {
+						this.showStatus(
+							result.provider === "eaon"
+								? "Setup done. Next: /login → Eaon Plan → paste eaon_sk_… from https://ai.eaon.dev"
+								: "Setup done. Next: /login → pick a provider",
+						);
+						// Open login right away for the recommended path
+						if (result.provider === "eaon") {
+							void this.handleLoginCommand("eaon");
+						} else {
+							void this.handleLoginCommand();
+						}
+					} else {
+						this.showStatus(`Setup done. Theme: ${result.themeName}  ·  /login when ready`);
+					}
+					this.footer.invalidate();
+					this.ui.requestRender();
+				},
+				onCancel: () => {
+					done();
+					this.showStatus("Setup skipped");
+					this.ui.requestRender();
+				},
+			});
+			return { component: wizard, focus: wizard };
+		});
 	}
 
 	private enablePlanMode(): void {

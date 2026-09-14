@@ -22,6 +22,7 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 	{ name: "theme", description: "Change TUI colors (messages, text, input box)", argumentHint: "[name]" },
 	{ name: "plan", description: "Toggle plan mode (read-only explore → numbered plan)" },
 	{ name: "swarm", description: "Toggle swarm mode (delegate work to 2–6 sub-agents)" },
+	{ name: "setup", description: "Run setup wizard (provider, theme, privacy)" },
 	{ name: "mcp", description: "Optional MCP servers (none by default)", argumentHint: "[list|add <name> <cmd> [args…]|remove <name>|connect]" },
 	{ name: "tree", description: "Navigate session tree (switch branches)" },
 	{ name: "thinking", description: "Set thinking level", argumentHint: "<level>" },
