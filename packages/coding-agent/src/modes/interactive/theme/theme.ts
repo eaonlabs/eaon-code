@@ -731,8 +731,8 @@ export async function detectTerminalThemeForAuto({
 }
 
 export function getDefaultTheme(): string {
-	// Eaon Code default — ember. One theme family; no light/dark split.
-	return "ember";
+	// Eaon Code default — amber. One theme family; no light/dark split.
+	return "amber";
 }
 
 // ============================================================================

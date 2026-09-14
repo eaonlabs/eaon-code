@@ -29,10 +29,10 @@ export class ThemeSelectorComponent extends Container {
 		this.onPreview = onPreview;
 
 		const themes = options?.themes ?? getAvailableThemes();
-		// Flat list: ember first, then the rest alphabetically
+		// Flat list: amber first, then the rest alphabetically
 		const sorted = [...themes].sort((a, b) => {
-			const aPref = a === "ember" ? 0 : 1;
-			const bPref = b === "ember" ? 0 : 1;
+			const aPref = a === "amber" ? 0 : 1;
+			const bPref = b === "amber" ? 0 : 1;
 			if (aPref !== bPref) return aPref - bPref;
 			return a.localeCompare(b);
 		});

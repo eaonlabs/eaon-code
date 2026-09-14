@@ -35,8 +35,8 @@ type Step = "welcome" | "provider" | "theme" | "done";
 
 function themeListSorted(): string[] {
 	const all = getAvailableThemes();
-	const rest = all.filter((n) => n !== "ember" && n !== "dark" && n !== "light");
-	return ["ember", ...rest];
+	const rest = all.filter((n) => n !== "amber" && n !== "dark" && n !== "light");
+	return ["amber", ...rest];
 }
 
 export class SetupWizardComponent extends Container {
@@ -51,7 +51,7 @@ export class SetupWizardComponent extends Container {
 		this.options = options;
 		this.themes = themeListSorted();
 		const current = options.currentThemeName;
-		const startId = current && this.themes.includes(current) ? current : "ember";
+		const startId = current && this.themes.includes(current) ? current : "amber";
 		this.themePickIndex = Math.max(0, this.themes.indexOf(startId));
 		this.previewSelectedTheme();
 		this.update();
@@ -94,7 +94,7 @@ export class SetupWizardComponent extends Container {
 			this.addChild(new Text(theme.fg("muted", "Changes message and input colors. Body text stays the same."), 1, 0));
 			this.addChild(new Spacer(1));
 			this.renderOptions(
-				this.themes.map((id) => ({ label: id, description: id === "ember" ? "default" : "" })),
+				this.themes.map((id) => ({ label: id, description: id === "amber" ? "default" : "" })),
 				this.themePickIndex,
 			);
 		} else {
@@ -159,7 +159,7 @@ export class SetupWizardComponent extends Container {
 	}
 
 	private finish(): void {
-		const themeId = this.themes[this.themePickIndex] ?? "ember";
+		const themeId = this.themes[this.themePickIndex] ?? "amber";
 		this.options.currentThemeName = themeId;
 		this.step = "done";
 		this.update();
