@@ -54,6 +54,10 @@ export function withRemoteCatalog(
 		...provider,
 		getModels: () => mergeModels(provider.getModels(), dynamicModels),
 		refreshModels: async (context) => {
+			// Provider-owned dynamic catalogs (e.g. Eaon Plan GET /v1/models) must run
+			// first — this wrapper used to replace refreshModels and drop them.
+			await provider.refreshModels?.(context);
+
 			const stored = context.stored;
 			const restored = remoteModels(stored, localGeneratedAt).filter((model) => model.provider === provider.id);
 			if (
