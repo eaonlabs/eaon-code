@@ -106,7 +106,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
 
 ## Upstream
 
-Eaon Code is derived from [Pi](https://github.com/earendil-works/pi) by Mario Zechner / Earendil. Original copyright remains in [LICENSE](LICENSE). Thank you to the Pi maintainers.
 
 ## License
 
