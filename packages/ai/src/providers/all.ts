@@ -28,6 +28,7 @@ import { nvidiaProvider } from "./nvidia.ts";
 import { openaiProvider } from "./openai.ts";
 import { openaiCodexProvider } from "./openai-codex.ts";
 import { opencodeProvider } from "./opencode.ts";
+import { eaonProvider } from "./eaon.ts";
 import { opencodeGoProvider } from "./opencode-go.ts";
 import { openrouterProvider } from "./openrouter.ts";
 import { openrouterImagesProvider } from "./openrouter-images.ts";
@@ -88,6 +89,8 @@ export function getBuiltinModels<TProvider extends BuiltinProvider>(
 /** All built-in providers, freshly constructed. */
 export function builtinProviders(): Provider[] {
 	return [
+		// Recommended first: Eaon Plan (paste key → works)
+		eaonProvider(),
 		amazonBedrockProvider(),
 		antLingProvider(),
 		anthropicProvider(),

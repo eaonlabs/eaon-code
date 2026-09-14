@@ -7,7 +7,6 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { AgentMessage, ThinkingLevel } from "@eaonlabs/eaon-agent-core";
 import type { AuthEvent, AuthPrompt } from "@eaonlabs/eaon-ai";
 import type { AssistantMessage, ImageContent, Message, Model, Usage } from "@eaonlabs/eaon-ai/compat";
@@ -5600,7 +5599,14 @@ export class InteractiveMode {
 				});
 			}
 		}
-		return options.sort((a, b) => a.name.localeCompare(b.name));
+		// Eaon Plan first — recommended
+		const sorted = [...options].sort((a, b) => {
+			const aEaon = a.id === "eaon" ? 0 : 1;
+			const bEaon = b.id === "eaon" ? 0 : 1;
+			if (aEaon !== bEaon) return aEaon - bEaon;
+			return a.name.localeCompare(b.name);
+		});
+		return sorted;
 	}
 
 	private async getLogoutProviderOptions(): Promise<AuthSelectorProvider[]> {
@@ -6662,8 +6668,7 @@ export class InteractiveMode {
 		if (!this.toolsBeforeSwarm) {
 			this.toolsBeforeSwarm = this.session.getActiveToolNames();
 		}
-		const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-		const tool = createSwarmSubagentTool(defaultSwarmCliOptions(repoRoot));
+		const tool = createSwarmSubagentTool(defaultSwarmCliOptions());
 		this.session.registerRuntimeTool(tool as never);
 		const active = new Set(this.session.getActiveToolNames());
 		active.add("subagent");

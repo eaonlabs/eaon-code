@@ -4,8 +4,10 @@
  */
 
 import { spawn } from "node:child_process";
+import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { AgentTool, AgentToolResult } from "@eaonlabs/eaon-agent-core";
 import { Type } from "typebox";
 
@@ -257,12 +259,40 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 	};
 }
 
-export function defaultSwarmCliOptions(repoRoot: string): SwarmSubagentOptions {
+function resolveMonorepoRoot(): string {
+	// packages/coding-agent/src/core/swarm.ts → monorepo root
+	const here = path.dirname(fileURLToPath(import.meta.url));
+	return path.resolve(here, "../../../..");
+}
+
+function firstExisting(...candidates: string[]): string | undefined {
+	for (const c of candidates) {
+		try {
+			if (fs.existsSync(c)) return c;
+		} catch {
+			/* ignore */
+		}
+	}
+	return undefined;
+}
+
+export function defaultSwarmCliOptions(repoRoot?: string): SwarmSubagentOptions {
+	const root = repoRoot ?? resolveMonorepoRoot();
+	const packageRoot = path.join(root, "packages/coding-agent");
+	const tsxBin =
+		firstExisting(
+			path.join(root, "node_modules/.bin/tsx"),
+			path.join(packageRoot, "node_modules/.bin/tsx"),
+		) ?? "tsx";
+	const cliTs = path.join(packageRoot, "src/experimental/cli.ts");
+	const cliJs = path.join(packageRoot, "dist/bundle/cli.js");
+	const useSource = fs.existsSync(cliTs) && tsxBin !== "tsx" ? true : fs.existsSync(cliTs);
+	const cliEntry = useSource ? cliTs : cliJs;
 	return {
 		cwd: process.cwd(),
-		cliEntry: path.join(repoRoot, "packages/coding-agent/src/experimental/cli.ts"),
-		tsconfigPath: path.join(repoRoot, "tsconfig.json"),
-		tsxBin: path.join(repoRoot, "node_modules/.bin/tsx"),
+		cliEntry,
+		tsconfigPath: path.join(root, "tsconfig.json"),
+		tsxBin,
 	};
 }
 
