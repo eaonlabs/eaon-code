@@ -37,8 +37,8 @@ export class UserMessageComponent extends Container {
 
 	private rebuild(): void {
 		this.clear();
-		// Default body text; no tinted fill. Accent is only the frame (like the input box).
-		const contentBox = new Box(this.outputPad, 1, (content: string) => theme.fg("accent", content));
+		// Default body text; no tinted fill. Matches the rest of the transcript.
+		const contentBox = new Box(this.outputPad, 1, (content: string) => theme.bg("userMessageBg", content));
 		contentBox.addChild(
 			new Markdown(
 				this.text,
