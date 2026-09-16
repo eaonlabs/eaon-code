@@ -127,7 +127,7 @@ export function validateThemeJson(label: string, json: unknown): ValidatedThemeJ
 				.map((color) => `  - ${color}`)
 				.join("\n");
 			errorMessage += '\n\nPlease add these colors to your theme\'s "colors" object.';
-			errorMessage += "\nSee the built-in themes (dark.json, light.json) for reference values.";
+			errorMessage += "\nSee the built-in theme files for reference values.";
 		}
 		if (otherErrors.length > 0) {
 			errorMessage += `\n\nOther errors:\n${otherErrors.join("\n")}`;
@@ -138,9 +138,7 @@ export function validateThemeJson(label: string, json: unknown): ValidatedThemeJ
 
 	const themeJson = json as ValidatedThemeJson;
 	if (themeJson.name.includes("/")) {
-		throw new Error(
-			`Invalid theme name "${themeJson.name}": theme names cannot contain "/" because it is reserved for automatic light/dark theme settings.`,
-		);
+		throw new Error(`Invalid theme name "${themeJson.name}": theme names cannot contain "/".`);
 	}
 	return themeJson;
 }

@@ -169,9 +169,14 @@ import { shareSession } from "./session-share.ts";
 import {
 	getAvailableThemes,
 	getAvailableThemesWithPaths,
+	getDarkThemeNames,
+	getDefaultTheme,
 	getEditorTheme,
+	getLightThemeNames,
 	getMarkdownTheme,
+	getSelectListTheme,
 	getThemeByName,
+	isLightTheme,
 	onThemeChange,
 	setRegisteredThemes,
 	stopThemeWatcher,
@@ -852,7 +857,6 @@ export class InteractiveMode {
 		nextUi.setFocus(focus);
 		if (!startRenderer) return true;
 		nextUi.start();
-		this.themeController.rebindTui();
 		this.rebindExtensionTerminalInputListeners();
 		if (
 			restoreProgress &&
@@ -977,7 +981,7 @@ export class InteractiveMode {
 					`Type a message and press Enter. Common commands:`,
 					`  /login   connect a provider (needed to chat)`,
 					`  /model   pick a model`,
-					`  /theme   change colors`,
+					`  /themes  change colors`,
 					`  /help    list all commands`,
 				].join("\n"),
 			);
@@ -3104,8 +3108,12 @@ export class InteractiveMode {
 				this.editor.setText("");
 				return;
 			}
-			if (text === "/theme" || text.startsWith("/theme ")) {
-				const name = text.startsWith("/theme ") ? text.slice(7).trim() : undefined;
+			if (text === "/themes" || text.startsWith("/themes ") || text === "/theme" || text.startsWith("/theme ")) {
+				const name = text.startsWith("/themes ")
+					? text.slice(8).trim()
+					: text.startsWith("/theme ")
+						? text.slice(7).trim()
+						: undefined;
 				this.editor.setText("");
 				this.handleThemeCommand(name);
 				return;
@@ -4027,7 +4035,6 @@ export class InteractiveMode {
 			// which the stdout/stderr error handler turns into emergencyTerminalExit;
 			// the render loop is already idle, so this cannot hot-spin (see #4144).
 			await this.runtimeHost.dispose();
-			this.themeController.disableAutoSync();
 			await this.ui.terminal.drainInput(1000);
 			this.stop();
 			process.exit(0);
@@ -4038,7 +4045,6 @@ export class InteractiveMode {
 		// the final frame while the process is exiting.
 		// Drain any in-flight Kitty key release events before stopping.
 		// This prevents escape sequences from leaking to the parent shell over slow SSH.
-		this.themeController.disableAutoSync();
 		await this.ui.terminal.drainInput(1000);
 
 		this.stop();
@@ -4636,8 +4642,7 @@ export class InteractiveMode {
 					thinkingLevel: this.settingsManager.getDefaultThinkingLevel() ?? DEFAULT_THINKING_LEVEL,
 					availableThinkingLevels: [...THINKING_LEVEL_OPTIONS],
 					modelThinkingLevels: this.settingsManager.getAllModelThinkingLevels(),
-					currentTheme: this.themeController.getThemeSelection() || "orange",
-					terminalTheme: this.themeController.getTerminalTheme(),
+					currentTheme: this.themeController.getThemeSelection() || getDefaultTheme(),
 					availableThemes: getAvailableThemes(),
 					hideThinkingBlock: this.hideThinkingBlock,
 					mermaidRenderingMode: this.settingsManager.getMermaidRenderingMode(),
@@ -4728,10 +4733,8 @@ export class InteractiveMode {
 						}
 					},
 					onThemeChange: (themeSetting) => {
-						this.settingsManager.setTheme(themeSetting);
 						void this.themeController.setThemeSetting(themeSetting);
 					},
-					onThemePreview: (themeName) => this.themeController.preview(themeName),
 					onHideThinkingBlockChange: (hidden) => {
 						this.hideThinkingBlock = hidden;
 						this.settingsManager.setHideThinkingBlock(hidden);
@@ -5046,18 +5049,13 @@ export class InteractiveMode {
 		});
 	}
 
-	/**
-	 * /theme [name]
-	 * - with a name: apply that theme
-	 * - without: one flat list of all themes (ember first)
-	 */
 	private handleThemeCommand(name?: string): void {
 		const applyTheme = (themeName: string) => {
 			const result = this.themeController.setThemeName(themeName);
 			if (result.success) {
 				this.updateEditorBorderColor();
 				this.footer.invalidate();
-				this.showStatus(`Colors: ${themeName}  ·  /theme to switch`);
+				this.showStatus(`Colors: ${themeName}  ·  /themes to switch`);
 			} else {
 				this.showError(result.error ?? `Unknown theme: ${themeName}`);
 			}
@@ -5075,23 +5073,55 @@ export class InteractiveMode {
 			return;
 		}
 
+		const openCategoryList = (category: "dark" | "light") => {
+			const themes = category === "light" ? getLightThemeNames() : getDarkThemeNames();
+			const title = category === "light" ? "Light themes" : "Dark themes";
+			this.showSelector((done) => {
+				const current = this.themeController.getThemeSelection() || getDefaultTheme();
+				const selector = new ThemeSelectorComponent(
+					current,
+					(themeName: string) => {
+						done();
+						applyTheme(themeName);
+					},
+					() => {
+						done();
+						this.handleThemeCommand();
+					},
+					{ themes, title },
+				);
+				return { component: selector, focus: selector.getSelectList() };
+			});
+		};
+
+		const current = this.themeController.getThemeSelection() || getDefaultTheme();
 		this.showSelector((done) => {
-			const current = this.themeController.getThemeSelection() || "ember";
-			const selector = new ThemeSelectorComponent(
-				current,
-				(themeName: string) => {
-					done();
-					applyTheme(themeName);
+			const items = [
+				{
+					value: "dark" as const,
+					label: "Dark themes",
+					description: `${getDarkThemeNames().length} themes`,
 				},
-				() => {
-					done();
-					this.ui.requestRender();
+				{
+					value: "light" as const,
+					label: "Light themes",
+					description: `${getLightThemeNames().length} themes`,
 				},
-				(themeName: string) => {
-					this.themeController.preview(themeName);
-				},
-			);
-			return { component: selector, focus: selector.getSelectList() };
+			];
+			const list = new SelectList(items, 2, getSelectListTheme(), {
+				minPrimaryColumnWidth: 14,
+				maxPrimaryColumnWidth: 20,
+			});
+			list.setSelectedIndex(isLightTheme(current) ? 1 : 0);
+			list.onSelect = (item) => {
+				done();
+				openCategoryList(item.value as "dark" | "light");
+			};
+			list.onCancel = () => {
+				done();
+				this.ui.requestRender();
+			};
+			return { component: list, focus: list };
 		});
 	}
 
@@ -6603,7 +6633,7 @@ export class InteractiveMode {
 		);
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(
-			new Text(theme.fg("dim", "Keyboard: /hotkeys  ·  Colors: /theme  ·  Providers: /login"), 1, 1),
+			new Text(theme.fg("dim", "Keyboard: /hotkeys  ·  Colors: /themes  ·  Providers: /login"), 1, 1),
 		);
 		this.chatContainer.addChild(new DynamicBorder());
 		this.ui.requestRender();
@@ -6640,11 +6670,7 @@ export class InteractiveMode {
 	private showSetupWizard(): void {
 		this.showSelector((done) => {
 			const wizard = new SetupWizardComponent({
-				detectedTheme: this.themeController.getTerminalTheme(),
-				currentThemeName: this.themeController.getThemeSelection() || "ember",
-				onPreviewTheme: (name) => {
-					this.themeController.preview(name);
-				},
+				currentThemeName: this.themeController.getThemeSelection() || getDefaultTheme(),
 				onSubmit: (result) => {
 					done();
 					const applied = this.themeController.setThemeName(result.themeName);
@@ -6685,7 +6711,9 @@ export class InteractiveMode {
 		if (!this.toolsBeforePlanMode) {
 			this.toolsBeforePlanMode = this.session.getActiveToolNames();
 		}
-		const nextTools = toolsForPlanMode(this.toolsBeforePlanMode.length ? this.toolsBeforePlanMode : this.session.getActiveToolNames());
+		const nextTools = toolsForPlanMode(
+			this.toolsBeforePlanMode.length ? this.toolsBeforePlanMode : this.session.getActiveToolNames(),
+		);
 		this.session.setActiveToolsByName(nextTools.length ? nextTools : ["read", "bash", "grep", "find", "ls"]);
 		// Must run AFTER setActiveToolsByName (that rebuilds the base prompt)
 		this.rebuildModeSystemPrompt();
@@ -7048,7 +7076,6 @@ export class InteractiveMode {
 			this.ui.terminal.setProgress(false);
 		}
 		this.clearStatusIndicator();
-		this.themeController.disableAutoSync();
 		this.clearExtensionTerminalInputListeners();
 		this.footer.dispose();
 		this.footerDataProvider.dispose();

@@ -1,24 +1,19 @@
 import { Container, getKeybindings, Spacer, Text } from "@eaonlabs/eaon-tui";
 import { APP_NAME } from "../../../config.ts";
-import { type TerminalTheme, theme } from "../theme/theme.ts";
+import { theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
 export interface FirstTimeSetupResult {
-	theme: TerminalTheme;
+	theme: string;
 }
 
 export interface FirstTimeSetupOptions {
-	detectedTheme: TerminalTheme;
-	onThemePreview: (themeName: TerminalTheme) => void;
+	currentTheme: string;
+	availableThemes: string[];
 	onSubmit: (result: FirstTimeSetupResult) => void;
 	onCancel: () => void;
 }
-
-const THEME_OPTIONS: Array<{ value: TerminalTheme; label: string }> = [
-	{ value: "dark", label: "Dark" },
-	{ value: "light", label: "Light" },
-];
 
 // Block-letter E for Eaon Code (replaces upstream Pi mark)
 const SETUP_LOGO_LINES = ["███████", "██     ", "██████ ", "██     ", "███████"];
@@ -26,19 +21,17 @@ const SETUP_LOGO_LINES = ["███████", "██     ", "████�
 /** First-time setup dialog: theme choice only. No usage collection. */
 export class FirstTimeSetupComponent extends Container {
 	private themeIndex: number;
+	private readonly themes: string[];
 	private readonly options: FirstTimeSetupOptions;
 
 	constructor(options: FirstTimeSetupOptions) {
 		super();
 		this.options = options;
-		this.themeIndex = Math.max(
-			0,
-			THEME_OPTIONS.findIndex((option) => option.value === options.detectedTheme),
-		);
+		this.themes = options.availableThemes.length > 0 ? options.availableThemes : [options.currentTheme];
+		this.themeIndex = Math.max(0, this.themes.indexOf(options.currentTheme));
 		this.update();
 	}
 
-	// Rebuild the whole dialog on every change so theme previews recolor all text.
 	private update(): void {
 		this.clear();
 		this.addChild(new DynamicBorder());
@@ -46,14 +39,11 @@ export class FirstTimeSetupComponent extends Container {
 		this.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
 		this.addChild(new Spacer(1));
 		this.addChild(new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}`)), 1, 0));
-		this.addChild(new Text(theme.fg("muted", "Pick a theme. Change anytime with /theme."), 1, 0));
+		this.addChild(new Text(theme.fg("muted", "Pick a theme. Change anytime with /themes."), 1, 0));
 		this.addChild(new Spacer(1));
 		this.addChild(new Text(theme.fg("text", "Colors"), 1, 0));
 		this.addChild(new Spacer(1));
-		this.addOptionList(
-			THEME_OPTIONS.map((option) => option.label),
-			this.themeIndex,
-		);
+		this.addOptionList(this.themes, this.themeIndex);
 
 		this.addChild(new Spacer(1));
 		this.addChild(
@@ -81,10 +71,9 @@ export class FirstTimeSetupComponent extends Container {
 	}
 
 	private moveSelection(delta: number): void {
-		const next = Math.max(0, Math.min(THEME_OPTIONS.length - 1, this.themeIndex + delta));
+		const next = Math.max(0, Math.min(this.themes.length - 1, this.themeIndex + delta));
 		if (next !== this.themeIndex) {
 			this.themeIndex = next;
-			this.options.onThemePreview(THEME_OPTIONS[this.themeIndex].value);
 		}
 		this.update();
 	}
@@ -97,7 +86,7 @@ export class FirstTimeSetupComponent extends Container {
 			this.moveSelection(1);
 		} else if (kb.matches(keyData, "tui.select.confirm") || keyData === "\n") {
 			this.options.onSubmit({
-				theme: THEME_OPTIONS[this.themeIndex].value,
+				theme: this.themes[this.themeIndex] ?? this.options.currentTheme,
 			});
 		} else if (kb.matches(keyData, "tui.select.cancel")) {
 			this.options.onCancel();

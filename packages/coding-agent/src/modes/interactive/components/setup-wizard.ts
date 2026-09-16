@@ -5,8 +5,7 @@
  */
 
 import { Container, getKeybindings, Spacer, Text } from "@eaonlabs/eaon-tui";
-import { type TerminalTheme, theme } from "../theme/theme.ts";
-import { getAvailableThemes } from "../theme/theme.ts";
+import { getAvailableThemes, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
@@ -16,9 +15,7 @@ export interface SetupResult {
 }
 
 export interface SetupOptions {
-	detectedTheme: TerminalTheme;
 	currentThemeName?: string;
-	onPreviewTheme: (name: string) => void;
 	onSubmit: (result: SetupResult) => void;
 	onCancel: () => void;
 }
@@ -35,8 +32,8 @@ type Step = "welcome" | "provider" | "theme" | "done";
 
 function themeListSorted(): string[] {
 	const all = getAvailableThemes();
-	const rest = all.filter((n) => n !== "amber" && n !== "dark" && n !== "light");
-	return ["amber", ...rest];
+	const rest = all.filter((n) => n !== "amber");
+	return all.includes("amber") ? ["amber", ...rest] : all;
 }
 
 export class SetupWizardComponent extends Container {
@@ -53,13 +50,7 @@ export class SetupWizardComponent extends Container {
 		const current = options.currentThemeName;
 		const startId = current && this.themes.includes(current) ? current : "amber";
 		this.themePickIndex = Math.max(0, this.themes.indexOf(startId));
-		this.previewSelectedTheme();
 		this.update();
-	}
-
-	private previewSelectedTheme(): void {
-		const id = this.themes[this.themePickIndex];
-		if (id) this.options.onPreviewTheme(id);
 	}
 
 	private update(): void {
@@ -73,16 +64,20 @@ export class SetupWizardComponent extends Container {
 
 		if (this.step === "welcome") {
 			this.addChild(new Text(theme.fg("text", "Two quick choices, then you're in."), 1, 0));
-			this.addChild(new Text(theme.fg("muted", "You can change everything later with /login and /theme."), 1, 0));
+			this.addChild(new Text(theme.fg("muted", "You can change everything later with /login and /themes."), 1, 0));
 			this.addChild(new Text(theme.fg("dim", "No usage is collected or stored."), 1, 0));
 			this.addChild(new Spacer(1));
 			this.addChild(
-				new Text(rawKeyHint("Enter", "start") + "  " + keyHint("tui.select.cancel", "skip setup"), 1, 0),
+				new Text(`${rawKeyHint("Enter", "start")}  ${keyHint("tui.select.cancel", "skip setup")}`, 1, 0),
 			);
 		} else if (this.step === "provider") {
 			this.addChild(new Text(theme.fg("text", "1/2  Provider"), 1, 0));
 			this.addChild(
-				new Text(theme.fg("muted", "Eaon Plan: paste one key, get frontier models. Get a key at ai.eaon.dev"), 1, 0),
+				new Text(
+					theme.fg("muted", "Eaon Plan: paste one key, get frontier models. Get a key at ai.eaon.dev"),
+					1,
+					0,
+				),
 			);
 			this.addChild(new Spacer(1));
 			this.renderOptions(
@@ -91,7 +86,9 @@ export class SetupWizardComponent extends Container {
 			);
 		} else if (this.step === "theme") {
 			this.addChild(new Text(theme.fg("text", "2/2  Theme"), 1, 0));
-			this.addChild(new Text(theme.fg("muted", "Changes message and input colors. Body text stays the same."), 1, 0));
+			this.addChild(
+				new Text(theme.fg("muted", "Changes message and input colors. Body text stays the same."), 1, 0),
+			);
 			this.addChild(new Spacer(1));
 			this.renderOptions(
 				this.themes.map((id) => ({ label: id, description: id === "amber" ? "default" : "" })),
@@ -136,7 +133,6 @@ export class SetupWizardComponent extends Container {
 		} else if (this.step === "theme") {
 			const n = this.themes.length;
 			this.themePickIndex = (this.themePickIndex + delta + n) % n;
-			this.previewSelectedTheme();
 		}
 		this.update();
 	}

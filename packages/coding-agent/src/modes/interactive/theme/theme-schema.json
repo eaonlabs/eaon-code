@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"title": "Eaon Code Theme",
-	"description": "Theme schema for Eaon Code",
+	"description": "Pi-compatible theme schema for Eaon Code",
 	"type": "object",
 	"required": ["name", "colors"],
 	"properties": {
@@ -12,7 +12,7 @@
 		"name": {
 			"type": "string",
 			"pattern": "^[^/]+$",
-			"description": "Theme name. Must not contain '/' because it is reserved for automatic light/dark theme settings."
+			"description": "Theme name. Must not contain '/'."
 		},
 		"vars": {
 			"type": "object",

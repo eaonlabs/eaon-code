@@ -1,5 +1,5 @@
-import { Container, type SelectItem, SelectList, type SelectListLayoutOptions } from "@eaonlabs/eaon-tui";
-import { getAvailableThemes, getSelectListTheme } from "../theme/theme.ts";
+import { Container, type SelectItem, SelectList, type SelectListLayoutOptions, Spacer, Text } from "@eaonlabs/eaon-tui";
+import { getAvailableThemes, getSelectListTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 
 const THEME_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
@@ -7,36 +7,22 @@ const THEME_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 	maxPrimaryColumnWidth: 32,
 };
 
-/**
- * Theme picker for one category (light or dark).
- * Pass `themes` to filter; defaults to every available theme.
- */
 export class ThemeSelectorComponent extends Container {
 	private selectList: SelectList;
-	private onPreview: (themeName: string) => void;
 
 	constructor(
 		currentTheme: string,
 		onSelect: (themeName: string) => void,
 		onCancel: () => void,
-		onPreview: (themeName: string) => void,
 		options?: {
 			themes?: string[];
 			title?: string;
 		},
 	) {
 		super();
-		this.onPreview = onPreview;
 
 		const themes = options?.themes ?? getAvailableThemes();
-		// Flat list: amber first, then the rest alphabetically
-		const sorted = [...themes].sort((a, b) => {
-			const aPref = a === "amber" ? 0 : 1;
-			const bPref = b === "amber" ? 0 : 1;
-			if (aPref !== bPref) return aPref - bPref;
-			return a.localeCompare(b);
-		});
-		const themeItems: SelectItem[] = sorted.map((name) => ({
+		const themeItems: SelectItem[] = themes.map((name) => ({
 			value: name,
 			label: name,
 			description: name === currentTheme ? "(current)" : undefined,
@@ -44,13 +30,13 @@ export class ThemeSelectorComponent extends Container {
 
 		this.addChild(new DynamicBorder());
 		if (options?.title) {
-			// Title is rendered by the parent SelectList's surrounding DynamicBorder style;
-			// keep it as a hint via first item description when needed.
+			this.addChild(new Text(theme.bold(theme.fg("accent", options.title)), 1, 0));
+			this.addChild(new Spacer(1));
 		}
 
 		this.selectList = new SelectList(themeItems, 10, getSelectListTheme(), THEME_SELECT_LIST_LAYOUT);
 
-		const currentIndex = sorted.indexOf(currentTheme);
+		const currentIndex = themes.indexOf(currentTheme);
 		if (currentIndex !== -1) {
 			this.selectList.setSelectedIndex(currentIndex);
 		}
@@ -61,10 +47,6 @@ export class ThemeSelectorComponent extends Container {
 
 		this.selectList.onCancel = () => {
 			onCancel();
-		};
-
-		this.selectList.onSelectionChange = (item) => {
-			this.onPreview(item.value);
 		};
 
 		this.addChild(this.selectList);

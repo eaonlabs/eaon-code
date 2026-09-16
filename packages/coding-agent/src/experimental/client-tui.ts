@@ -757,7 +757,6 @@ export async function runClientTui(command: ClientCommand, options: RunClientTui
 		let finish!: () => void;
 		const finished = new Promise<void>((resolve) => {
 			finish = () => {
-				themeController.disableAutoSync();
 				if (tuiStarted) {
 					tui.stop();
 					tuiStarted = false;

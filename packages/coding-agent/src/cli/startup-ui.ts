@@ -12,14 +12,11 @@ import {
 	type FirstTimeSetupResult,
 } from "../modes/interactive/components/first-time-setup.ts";
 import {
-	detectTerminalBackgroundFromEnv,
-	detectTerminalThemeForAuto,
+	getAvailableThemes,
+	getDefaultTheme,
 	initTheme,
 	loadThemeFromPath,
-	parseAutoThemeSetting,
-	resolveThemeSetting,
 	setRegisteredThemes,
-	setTheme,
 	type Theme,
 } from "../modes/interactive/theme/theme.ts";
 
@@ -77,27 +74,15 @@ async function loadStartupThemes(settingsManager: SettingsManager): Promise<Them
 export async function createStartupTui(settingsManager: SettingsManager): Promise<TUI> {
 	setCapabilityOverrides(settingsManager.getTerminalCapabilityOverrides());
 	setRegisteredThemes(await loadStartupThemes(settingsManager));
-	const terminalTheme = detectTerminalBackgroundFromEnv().theme;
-	initTheme(resolveThemeSetting(settingsManager.getThemeSetting(), terminalTheme) ?? terminalTheme);
+	initTheme(settingsManager.getTheme() ?? getDefaultTheme());
 	setKeybindings(KeybindingsManager.create());
 	const ui: TUI = new TuiMainScreen(new ProcessTerminal(), settingsManager.getShowHardwareCursor(), getAgentDir());
 	ui.setClearOnShrink(settingsManager.getClearOnShrink());
 	return ui;
 }
 
-export function startStartupTui(ui: TUI, settingsManager: SettingsManager): void {
+export function startStartupTui(ui: TUI): void {
 	ui.start();
-	void applyDetectedStartupTheme(ui, settingsManager);
-}
-
-async function applyDetectedStartupTheme(ui: TUI, settingsManager: SettingsManager): Promise<void> {
-	const themeSetting = settingsManager.getThemeSetting();
-	if (themeSetting && !parseAutoThemeSetting(themeSetting)) return;
-
-	const terminalTheme = await detectTerminalThemeForAuto({ ui, timeoutMs: 100 });
-	setTheme(resolveThemeSetting(themeSetting, terminalTheme) ?? terminalTheme);
-	ui.invalidate();
-	ui.requestRender();
 }
 
 async function clearStartupTui(ui: TUI): Promise<void> {
@@ -159,7 +144,7 @@ export async function showStartupSelector<T>(
 		);
 		ui.addChild(selector);
 		ui.setFocus(selector);
-		startStartupTui(ui, settingsManager);
+		startStartupTui(ui);
 	});
 }
 
@@ -182,16 +167,11 @@ export async function showFirstTimeSetup(settingsManager: SettingsManager): Prom
 			resolve();
 		};
 
-		const showSetup = async () => {
+		const showSetup = () => {
 			ui.start();
-			const detectedTheme = await detectTerminalThemeForAuto({ ui, timeoutMs: 100 });
-			setTheme(detectedTheme);
 			const component = new FirstTimeSetupComponent({
-				detectedTheme,
-				onThemePreview: (themeName) => {
-					setTheme(themeName);
-					ui.requestRender();
-				},
+				currentTheme: settingsManager.getTheme() ?? getDefaultTheme(),
+				availableThemes: getAvailableThemes(),
 				onSubmit: (result) => void finish(result),
 				onCancel: () => void finish(undefined),
 			});
@@ -200,7 +180,7 @@ export async function showFirstTimeSetup(settingsManager: SettingsManager): Prom
 			ui.requestRender();
 		};
 
-		void showSetup();
+		showSetup();
 	});
 }
 
@@ -234,6 +214,6 @@ export async function showStartupInput(
 		);
 		ui.addChild(input);
 		ui.setFocus(input);
-		startStartupTui(ui, settingsManager);
+		startStartupTui(ui);
 	});
 }

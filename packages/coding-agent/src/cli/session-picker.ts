@@ -50,6 +50,6 @@ export async function selectSession(
 
 		ui.addChild(selector);
 		ui.setFocus(selector.getSessionList());
-		startStartupTui(ui, settingsManager);
+		startStartupTui(ui);
 	});
 }

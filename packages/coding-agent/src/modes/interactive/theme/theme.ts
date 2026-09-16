@@ -5,7 +5,6 @@ import {
 	type EditorTheme,
 	getCapabilities,
 	type MarkdownTheme,
-	type RgbColor,
 	type SelectListTheme,
 	type SettingsListTheme,
 } from "@eaonlabs/eaon-tui";
@@ -420,6 +419,18 @@ export function getAvailableThemes(): string[] {
 	return getAvailableThemesWithPaths().map(({ name }) => name);
 }
 
+export function isLightTheme(themeName?: string): boolean {
+	return themeName === "light" || themeName?.startsWith("light-") === true;
+}
+
+export function getDarkThemeNames(): string[] {
+	return getAvailableThemes().filter((name) => !isLightTheme(name));
+}
+
+export function getLightThemeNames(): string[] {
+	return getAvailableThemes().filter((name) => isLightTheme(name));
+}
+
 export interface ThemeInfo {
 	name: string;
 	path: string | undefined;
@@ -481,9 +492,7 @@ function getCustomThemeInfos(): ThemeInfo[] {
 
 function assertThemeNameIsValid(name: string): void {
 	if (name.includes("/")) {
-		throw new Error(
-			`Invalid theme name "${name}": theme names cannot contain "/" because it is reserved for automatic light/dark theme settings.`,
-		);
+		throw new Error(`Invalid theme name "${name}": theme names cannot contain "/".`);
 	}
 }
 
@@ -577,159 +586,6 @@ export function getThemeByName(name: string): Theme | undefined {
 	}
 }
 
-export type TerminalTheme = "dark" | "light";
-
-export function parseAutoThemeSetting(
-	themeSetting: string | undefined,
-): { lightTheme: string; darkTheme: string } | undefined {
-	if (!themeSetting) return undefined;
-	const slashIndex = themeSetting.indexOf("/");
-	if (slashIndex === -1 || themeSetting.indexOf("/", slashIndex + 1) !== -1) {
-		return undefined;
-	}
-
-	const lightTheme = themeSetting.slice(0, slashIndex).trim();
-	const darkTheme = themeSetting.slice(slashIndex + 1).trim();
-	if (!lightTheme || !darkTheme) {
-		return undefined;
-	}
-	return { lightTheme, darkTheme };
-}
-
-export function resolveThemeSetting(
-	themeSetting: string | undefined,
-	terminalTheme: TerminalTheme,
-): string | undefined {
-	const autoTheme = parseAutoThemeSetting(themeSetting);
-	if (autoTheme) {
-		return terminalTheme === "light" ? autoTheme.lightTheme : autoTheme.darkTheme;
-	}
-	if (themeSetting?.includes("/")) return undefined;
-	if (typeof themeSetting === "string") return themeSetting;
-	return undefined;
-}
-
-export interface TerminalThemeDetection {
-	theme: TerminalTheme;
-	source: "terminal background" | "COLORFGBG" | "fallback";
-	detail: string;
-	confidence: "high" | "low";
-}
-
-export interface TerminalThemeDetectionOptions {
-	env?: NodeJS.ProcessEnv;
-}
-
-export interface TerminalBackgroundThemeDetector {
-	queryTerminalBackgroundColor({ timeoutMs }: { timeoutMs: number }): Promise<RgbColor | undefined>;
-}
-
-export interface TerminalAutoThemeDetector extends TerminalBackgroundThemeDetector {
-	queryTerminalColorScheme?({ timeoutMs }: { timeoutMs: number }): Promise<TerminalTheme | undefined>;
-}
-
-export interface TerminalBackgroundThemeDetectionOptions extends TerminalThemeDetectionOptions {
-	ui: TerminalBackgroundThemeDetector;
-	timeoutMs: number;
-}
-
-export interface TerminalAutoThemeDetectionOptions extends TerminalThemeDetectionOptions {
-	ui: TerminalAutoThemeDetector;
-	timeoutMs: number;
-}
-
-function getColorFgBgBackgroundIndex(colorfgbg: string): number | undefined {
-	const parts = colorfgbg.split(";");
-	for (let i = parts.length - 1; i >= 0; i--) {
-		const bg = parseInt(parts[i].trim(), 10);
-		if (Number.isInteger(bg) && bg >= 0 && bg <= 255) {
-			return bg;
-		}
-	}
-	return undefined;
-}
-
-function getRgbColorLuminance({ r, g, b }: RgbColor): number {
-	const toLinear = (channel: number) => {
-		const value = channel / 255;
-		return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-	};
-	return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-}
-
-function getAnsiColorLuminance(index: number): number {
-	return getRgbColorLuminance(hexToRgb(ansi256ToHex(index)));
-}
-
-export function getThemeForRgbColor(rgb: RgbColor): TerminalTheme {
-	return getRgbColorLuminance(rgb) >= 0.5 ? "light" : "dark";
-}
-
-export function detectTerminalBackgroundFromEnv(options: TerminalThemeDetectionOptions = {}): TerminalThemeDetection {
-	const env = options.env ?? process.env;
-	const colorfgbg = env.COLORFGBG || "";
-	const bg = getColorFgBgBackgroundIndex(colorfgbg);
-	if (bg !== undefined) {
-		return {
-			theme: getAnsiColorLuminance(bg) >= 0.5 ? "light" : "dark",
-			source: "COLORFGBG",
-			detail: `background color index ${bg}`,
-			confidence: "high",
-		};
-	}
-
-	return {
-		theme: "dark",
-		source: "fallback",
-		detail: "no terminal background hint found",
-		confidence: "low",
-	};
-}
-
-export async function detectTerminalBackgroundTheme({
-	ui,
-	timeoutMs,
-	env,
-}: TerminalBackgroundThemeDetectionOptions): Promise<TerminalThemeDetection> {
-	try {
-		const rgb = await ui.queryTerminalBackgroundColor({ timeoutMs });
-		if (rgb) {
-			return {
-				theme: getThemeForRgbColor(rgb),
-				source: "terminal background",
-				detail: `OSC 11 background rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-				confidence: "high",
-			};
-		}
-	} catch {
-		// Fall back to environment-based detection when the terminal query fails.
-	}
-
-	return detectTerminalBackgroundFromEnv({ env });
-}
-
-export async function detectTerminalThemeForAuto({
-	ui,
-	timeoutMs,
-	env,
-}: TerminalAutoThemeDetectionOptions): Promise<TerminalTheme> {
-	let colorSchemePromise: Promise<TerminalTheme | undefined> | undefined;
-	try {
-		colorSchemePromise = ui.queryTerminalColorScheme?.({ timeoutMs });
-	} catch {
-		// Fall back to OSC 11 / COLORFGBG detection when starting the color-scheme query fails.
-	}
-	const backgroundThemePromise = detectTerminalBackgroundTheme({ ui, timeoutMs, env });
-
-	try {
-		const colorScheme = await colorSchemePromise;
-		if (colorScheme) return colorScheme;
-	} catch {
-		// Fall back to the concurrently queried OSC 11 / COLORFGBG detection.
-	}
-	return (await backgroundThemePromise).theme;
-}
-
 export function getDefaultTheme(): string {
 	// Eaon Code default — amber. One theme family; no light/dark split.
 	return "amber";
@@ -783,10 +639,8 @@ export function initTheme(themeName?: string, enableWatcher: boolean = false): v
 			startThemeWatcher();
 		}
 	} catch (_error) {
-		// Theme is invalid - fall back to ember
-		currentThemeName = "ember";
-		setGlobalTheme(loadTheme("ember"));
-		// Don't start watcher for fallback theme
+		currentThemeName = getDefaultTheme();
+		setGlobalTheme(loadTheme(getDefaultTheme()));
 	}
 }
 
@@ -802,10 +656,8 @@ export function setTheme(name: string, enableWatcher: boolean = false): { succes
 		}
 		return { success: true };
 	} catch (error) {
-		// Theme is invalid - fall back to ember
-		currentThemeName = "ember";
-		setGlobalTheme(loadTheme("ember"));
-		// Don't start watcher for fallback theme
+		currentThemeName = getDefaultTheme();
+		setGlobalTheme(loadTheme(getDefaultTheme()));
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : String(error),
@@ -983,27 +835,6 @@ export function getResolvedThemeColors(themeName?: string): Record<string, strin
 		}
 	}
 	return cssColors;
-}
-
-/**
- * Check if a theme is a "light" theme (for CSS that needs light/dark variants).
- */
-/**
- * Light/dark theme families were removed. Body text is pinned to the same
- * neutrals in every theme; themes only recolor accent, messages, and input.
- */
-export function isLightTheme(themeName?: string): boolean {
-	return false;
-}
-
-/** Themes designed for dark terminal backgrounds (product default family). */
-export function getDarkThemeNames(): string[] {
-	return getAvailableThemes();
-}
-
-/** Themes designed for light terminal backgrounds (none — single family). */
-export function getLightThemeNames(): string[] {
-	return [];
 }
 
 /**

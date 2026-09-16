@@ -57,54 +57,39 @@ describe("SettingsSelectorComponent", () => {
 		expect(onCopyOnSelectChange.mock.calls.flat()).toEqual([false, true]);
 	});
 
-	it("keeps the configured fixed theme marked while browsing", () => {
+	it("opens the theme category and palette lists", () => {
 		const config = {
 			defaultModel: "not set",
 			availableDefaultModels: [],
 			modelThinkingLevels: {},
 			currentTheme: "dark",
-			terminalTheme: "dark",
 			availableThemes: ["dark", "light"],
 			warnings: {},
 		} as unknown as SettingsConfig;
-		const callbacks = { onThemePreview: vi.fn(), onCancel: () => {} } as unknown as SettingsCallbacks;
+		const onThemeChange = vi.fn();
+		const callbacks = { onThemeChange, onCancel: () => {} } as unknown as SettingsCallbacks;
 		const list = new SettingsSelectorComponent(config, callbacks).getSettingsList();
 
 		list.selectItem("theme");
 		list.handleInput("\r");
 		let output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("    Automatic");
-		expect(output).toContain("→ ✓ dark");
+		expect(output).toContain("Theme category");
+		expect(output).toContain("Dark themes");
 
-		list.handleInput("\x1b[B");
-		output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("  ✓ dark");
-		expect(output).toContain("→   light");
-	});
-
-	it("keeps a configured automatic theme marked while browsing", () => {
-		const config = {
-			defaultModel: "not set",
-			availableDefaultModels: [],
-			modelThinkingLevels: {},
-			currentTheme: "light/dark",
-			terminalTheme: "dark",
-			availableThemes: ["dark", "light", "other"],
-			warnings: {},
-		} as unknown as SettingsConfig;
-		const callbacks = { onThemePreview: vi.fn(), onCancel: () => {} } as unknown as SettingsCallbacks;
-		const list = new SettingsSelectorComponent(config, callbacks).getSettingsList();
-
-		list.selectItem("theme");
 		list.handleInput("\r");
-		list.handleInput("\r");
-		let output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("→ ✓ light");
-
-		list.handleInput("\x1b[B");
 		output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("  ✓ light");
-		expect(output).toContain("→   other");
+		expect(output).toContain("Dark themes");
+		expect(output).toContain("amber");
+		expect(output).not.toContain("light-amber");
+
+		list.handleInput("\x1b");
+		list.handleInput("\x1b[B");
+		list.handleInput("\r");
+		output = stripAnsi(list.render(120).join("\n"));
+		expect(output).toContain("Light themes");
+		expect(output).toContain("light-amber");
+		list.handleInput("\r");
+		expect(onThemeChange).toHaveBeenCalledWith("light");
 	});
 
 	it("keeps the configured per-model thinking level marked while browsing", async () => {
