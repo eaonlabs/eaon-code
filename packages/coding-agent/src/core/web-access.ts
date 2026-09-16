@@ -6,8 +6,7 @@
 import type { AgentTool, AgentToolResult } from "@eaonlabs/eaon-agent-core";
 import { Type } from "typebox";
 
-const USER_AGENT =
-	"EaonCode/0.85 (https://github.com/eaonlabs/eaon-code; coding agent web access)";
+const USER_AGENT = "EaonCode/0.85 (https://github.com/eaonlabs/eaon-code; coding agent web access)";
 const MAX_BODY = 80_000;
 
 function stripTags(html: string): string {
@@ -24,7 +23,10 @@ function stripTags(html: string): string {
 		.replace(/&gt;/g, ">")
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'");
-	s = s.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+	s = s
+		.replace(/[ \t]+/g, " ")
+		.replace(/\n{3,}/g, "\n\n")
+		.trim();
 	return s.length > MAX_BODY ? `${s.slice(0, MAX_BODY)}\n\n[truncated]` : s;
 }
 
@@ -52,11 +54,16 @@ export async function webSearchDdg(query: string, numResults: number): Promise<s
 	const results: string[] = [];
 	const re =
 		/<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?(?:class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>)?/gi;
-	let m: RegExpExecArray | null;
-	while ((m = re.exec(html)) && results.length < numResults) {
-		const href = decodeDdgHref(m[1] ?? "");
-		const title = stripTags(m[2] ?? "").replace(/\s+/g, " ").trim();
-		const snippet = stripTags(m[3] ?? "").replace(/\s+/g, " ").trim();
+	while (results.length < numResults) {
+		const match = re.exec(html);
+		if (!match) break;
+		const href = decodeDdgHref(match[1] ?? "");
+		const title = stripTags(match[2] ?? "")
+			.replace(/\s+/g, " ")
+			.trim();
+		const snippet = stripTags(match[3] ?? "")
+			.replace(/\s+/g, " ")
+			.trim();
 		if (!title && !href) continue;
 		results.push(`${results.length + 1}. ${title}\n   ${href}${snippet ? `\n   ${snippet}` : ""}`);
 	}

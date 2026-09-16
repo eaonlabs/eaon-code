@@ -12,7 +12,7 @@
  *   }
  */
 
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 
 export interface McpServerConfig {
 	command: string;

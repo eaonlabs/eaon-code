@@ -30,10 +30,13 @@ function toEaonModel(entry: EaonModelEntry): Model<"openai-completions"> | undef
 	const id = entry.id;
 	if (!id || id.length === 0) return undefined;
 	const tier = entry.eaon?.cost_tier?.toLowerCase() ?? "";
-	const reasoning =
-		id === "eaon/auto" ? false : (TIER_REASONING[tier] ?? /sol|astra|opus|grok|pro|reason/i.test(id));
-	const contextWindow = typeof entry.context_window === "number" && entry.context_window > 0 ? entry.context_window : 200000;
-	const maxTokens = typeof entry.eaon?.max_output_tokens === "number" && entry.eaon.max_output_tokens > 0 ? entry.eaon.max_output_tokens : 16000;
+	const reasoning = id === "eaon/auto" ? false : (TIER_REASONING[tier] ?? /sol|astra|opus|grok|pro|reason/i.test(id));
+	const contextWindow =
+		typeof entry.context_window === "number" && entry.context_window > 0 ? entry.context_window : 200000;
+	const maxTokens =
+		typeof entry.eaon?.max_output_tokens === "number" && entry.eaon.max_output_tokens > 0
+			? entry.eaon.max_output_tokens
+			: 16000;
 	const owner = entry.owned_by ? ` · ${entry.owned_by}` : "";
 	const tierLabel = tier ? ` · ${tier}` : "";
 	return {
@@ -83,7 +86,9 @@ async function fetchEaonModels(context: RefreshModelsContext): Promise<Model<"op
 	});
 	if (!response.ok) {
 		const body = await response.text().catch(() => "");
-		throw new Error(`Eaon Plan GET /v1/models failed: HTTP ${response.status}${body ? ` ${body.slice(0, 160)}` : ""}`);
+		throw new Error(
+			`Eaon Plan GET /v1/models failed: HTTP ${response.status}${body ? ` ${body.slice(0, 160)}` : ""}`,
+		);
 	}
 	const body = (await response.json()) as EaonModelsResponse;
 	const models: Model<"openai-completions">[] = [];
@@ -113,7 +118,10 @@ export function eaonProvider(): Provider<"openai-completions"> {
 		name: "Eaon Plan",
 		baseUrl: EAON_BASE,
 		auth: {
-			apiKey: envApiKeyAuth("Eaon Plan API key (eaon_sk_… from https://ai.eaon.dev)", ["EAON_API_KEY", "OPENAI_API_KEY"]),
+			apiKey: envApiKeyAuth("Eaon Plan API key (eaon_sk_… from https://ai.eaon.dev)", [
+				"EAON_API_KEY",
+				"OPENAI_API_KEY",
+			]),
 		},
 		// Baseline: auto-router only; full plan catalogue arrives via fetchModels
 		models: [EAON_AUTO],

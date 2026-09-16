@@ -37,7 +37,6 @@ export class UserMessageComponent extends Container {
 
 	private rebuild(): void {
 		this.clear();
-		// Default body text; no tinted fill. Matches the rest of the transcript.
 		const contentBox = new Box(this.outputPad, 1, (content: string) => theme.bg("userMessageBg", content));
 		contentBox.addChild(
 			new Markdown(
@@ -46,7 +45,7 @@ export class UserMessageComponent extends Container {
 				0,
 				this.markdownTheme,
 				{
-					color: (content: string) => theme.fg("text", content),
+					color: (content: string) => theme.fg("userMessageText", content),
 				},
 				{
 					preserveOrderedListMarkers: true,

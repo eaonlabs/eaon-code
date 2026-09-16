@@ -25,6 +25,8 @@ function createSession(options: {
 	compactionUsage?: AssistantUsage;
 	toolUsage?: AssistantUsage;
 	usingSubscription?: boolean;
+	planMode?: boolean;
+	swarmMode?: boolean;
 }): AgentSession {
 	const usage = options.usage;
 	const entries: Array<Record<string, unknown>> = [];
@@ -81,6 +83,10 @@ function createSession(options: {
 		getContextUsage: () => ({ contextWindow: 200_000, percent: 12.3 }),
 		modelRuntime: {
 			isUsingSubscription: () => options.usingSubscription ?? false,
+		},
+		settingsManager: {
+			getPlanMode: () => options.planMode ?? false,
+			getSwarmMode: () => options.swarmMode ?? false,
 		},
 	};
 
@@ -248,5 +254,13 @@ describe("FooterComponent width handling", () => {
 
 		expect(stats).toContain("$1.234");
 		expect(stats).not.toContain(" sub ");
+	});
+
+	it("shows compact mode indicators", () => {
+		const session = createSession({ sessionName: "", planMode: true, swarmMode: true });
+		const stats = stripAnsi(new FooterComponent(session, createFooterData(1)).render(120)[1]);
+
+		expect(stats).toContain("plan");
+		expect(stats).toContain("swarm");
 	});
 });

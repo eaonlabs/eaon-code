@@ -157,6 +157,10 @@ export class FooterComponent implements Component {
 			contextPercentStr = contextPercentDisplay;
 		}
 		statsParts.push(contextPercentStr);
+		const modeParts: string[] = [];
+		if (this.session.settingsManager.getPlanMode()) modeParts.push(theme.fg("warning", "plan"));
+		if (this.session.settingsManager.getSwarmMode()) modeParts.push(theme.fg("accent", "swarm"));
+		if (modeParts.length > 0) statsParts.push(modeParts.join(" "));
 		if (areExperimentalFeaturesEnabled()) {
 			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
 		}

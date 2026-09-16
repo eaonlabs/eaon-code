@@ -533,7 +533,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
 			expect(stderr).toContain('Unknown option --unknown for "install".');
-			expect(stderr).toContain('Use "eaon-code --help" or "eaon-code install <source> [-l] [--approve|--no-approve]".');
+			expect(stderr).toContain(
+				'Use "eaon-code --help" or "eaon-code install <source> [-l] [--approve|--no-approve]".',
+			);
 			expect(process.exitCode).toBe(1);
 		} finally {
 			errorSpy.mockRestore();

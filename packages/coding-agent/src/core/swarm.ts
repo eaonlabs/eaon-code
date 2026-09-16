@@ -5,7 +5,6 @@
 
 import { spawn } from "node:child_process";
 import * as fs from "node:fs";
-import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AgentTool, AgentToolResult } from "@eaonlabs/eaon-agent-core";
@@ -69,9 +68,7 @@ function resolveCliInvocation(opts: SwarmSubagentOptions): { command: string; ar
 	if (opts.cliEntry.endsWith(".ts") && opts.tsxBin) {
 		return {
 			command: opts.tsxBin,
-			argsPrefix: opts.tsconfigPath
-				? ["--tsconfig", opts.tsconfigPath, opts.cliEntry]
-				: [opts.cliEntry],
+			argsPrefix: opts.tsconfigPath ? ["--tsconfig", opts.tsconfigPath, opts.cliEntry] : [opts.cliEntry],
 		};
 	}
 	return { command: process.execPath, argsPrefix: [opts.cliEntry] };
@@ -177,7 +174,7 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 				),
 			}),
 		]),
-		async execute(toolCallId: string, params: unknown, signal: AbortSignal): Promise<AgentToolResult> {
+		async execute(_toolCallId: string, params: unknown, signal: AbortSignal): Promise<AgentToolResult> {
 			const p = params as
 				| { mode: "single"; agent: string; task: string; model?: string }
 				| { mode: "parallel"; tasks: SwarmTask[] }
@@ -251,7 +248,9 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 				};
 			} catch (error) {
 				return {
-					content: [{ type: "text", text: `Swarm error: ${error instanceof Error ? error.message : String(error)}` }],
+					content: [
+						{ type: "text", text: `Swarm error: ${error instanceof Error ? error.message : String(error)}` },
+					],
 					isError: true,
 				};
 			}
@@ -280,10 +279,7 @@ export function defaultSwarmCliOptions(repoRoot?: string): SwarmSubagentOptions 
 	const root = repoRoot ?? resolveMonorepoRoot();
 	const packageRoot = path.join(root, "packages/coding-agent");
 	const tsxBin =
-		firstExisting(
-			path.join(root, "node_modules/.bin/tsx"),
-			path.join(packageRoot, "node_modules/.bin/tsx"),
-		) ?? "tsx";
+		firstExisting(path.join(root, "node_modules/.bin/tsx"), path.join(packageRoot, "node_modules/.bin/tsx")) ?? "tsx";
 	const cliTs = path.join(packageRoot, "src/experimental/cli.ts");
 	const cliJs = path.join(packageRoot, "dist/bundle/cli.js");
 	const useSource = fs.existsSync(cliTs) && tsxBin !== "tsx" ? true : fs.existsSync(cliTs);
