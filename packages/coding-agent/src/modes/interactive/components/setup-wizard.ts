@@ -1,11 +1,11 @@
 /**
  * First-run / reusable setup wizard.
- * Steps: welcome → provider (Eaon Plan recommended) → theme → done.
- * One theme list. No light/dark split. No usage collection.
+ * Steps: welcome → provider (Eaon Plan recommended) → theme category → theme → done.
+ * No usage collection.
  */
 
 import { Container, getKeybindings, Spacer, Text } from "@eaonlabs/eaon-tui";
-import { getAvailableThemes, theme } from "../theme/theme.ts";
+import { getDarkThemeNames, getDefaultTheme, getLightThemeNames, isLightTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
@@ -29,16 +29,19 @@ const PROVIDERS: Array<{ value: SetupResult["provider"]; label: string; descript
 const LOGO = ["███████", "██     ", "██████ ", "██     ", "███████"];
 
 type Step = "welcome" | "provider" | "theme" | "done";
+type ThemeCategory = "dark" | "light";
+type ThemeMenu = "categories" | "themes";
 
-function themeListSorted(): string[] {
-	const all = getAvailableThemes();
-	const rest = all.filter((n) => n !== "amber");
-	return all.includes("amber") ? ["amber", ...rest] : all;
+function getThemeNames(category: ThemeCategory): string[] {
+	return category === "light" ? getLightThemeNames() : getDarkThemeNames();
 }
 
 export class SetupWizardComponent extends Container {
 	private step: Step = "welcome";
 	private providerIndex = 0;
+	private themeCategoryIndex = 0;
+	private themeMenu: ThemeMenu = "categories";
+	private themeCategory: ThemeCategory = "dark";
 	private themePickIndex = 0;
 	private themes: string[];
 	private readonly options: SetupOptions;
@@ -46,9 +49,11 @@ export class SetupWizardComponent extends Container {
 	constructor(options: SetupOptions) {
 		super();
 		this.options = options;
-		this.themes = themeListSorted();
+		this.themeCategory = isLightTheme(options.currentThemeName) ? "light" : "dark";
+		this.themeCategoryIndex = this.themeCategory === "light" ? 1 : 0;
+		this.themes = getThemeNames(this.themeCategory);
 		const current = options.currentThemeName;
-		const startId = current && this.themes.includes(current) ? current : "amber";
+		const startId = current && this.themes.includes(current) ? current : getDefaultTheme();
 		this.themePickIndex = Math.max(0, this.themes.indexOf(startId));
 		this.update();
 	}
@@ -86,14 +91,26 @@ export class SetupWizardComponent extends Container {
 			);
 		} else if (this.step === "theme") {
 			this.addChild(new Text(theme.fg("text", "2/2  Theme"), 1, 0));
-			this.addChild(
-				new Text(theme.fg("muted", "Changes message and input colors. Body text stays the same."), 1, 0),
-			);
+			this.addChild(new Text(theme.fg("muted", "Choose a category, then a theme. Body text stays the same."), 1, 0));
 			this.addChild(new Spacer(1));
-			this.renderOptions(
-				this.themes.map((id) => ({ label: id, description: id === "amber" ? "default" : "" })),
-				this.themePickIndex,
-			);
+			if (this.themeMenu === "categories") {
+				this.renderOptions(
+					[
+						{ label: "Dark themes", description: `${getDarkThemeNames().length} themes` },
+						{ label: "Light themes", description: `${getLightThemeNames().length} themes` },
+					],
+					this.themeCategoryIndex,
+				);
+			} else {
+				this.addChild(
+					new Text(theme.fg("muted", this.themeCategory === "light" ? "Light themes" : "Dark themes"), 1, 0),
+				);
+				this.addChild(new Spacer(1));
+				this.renderOptions(
+					this.themes.map((id) => ({ label: id, description: id === getDefaultTheme() ? "default" : "" })),
+					this.themePickIndex,
+				);
+			}
 		} else {
 			this.addChild(new Text(theme.fg("success", "Setup complete."), 1, 0));
 			this.addChild(new Spacer(1));
@@ -131,8 +148,18 @@ export class SetupWizardComponent extends Container {
 		if (this.step === "provider") {
 			this.providerIndex = Math.max(0, Math.min(PROVIDERS.length - 1, this.providerIndex + delta));
 		} else if (this.step === "theme") {
-			const n = this.themes.length;
-			this.themePickIndex = (this.themePickIndex + delta + n) % n;
+			if (this.themeMenu === "categories") {
+				this.themeCategoryIndex = (this.themeCategoryIndex + delta + 2) % 2;
+				this.themeCategory = this.themeCategoryIndex === 1 ? "light" : "dark";
+				this.themes = getThemeNames(this.themeCategory);
+				const currentIndex = this.options.currentThemeName
+					? this.themes.indexOf(this.options.currentThemeName)
+					: -1;
+				this.themePickIndex = currentIndex >= 0 ? currentIndex : 0;
+			} else {
+				const n = this.themes.length;
+				this.themePickIndex = (this.themePickIndex + delta + n) % n;
+			}
 		}
 		this.update();
 	}
@@ -148,6 +175,11 @@ export class SetupWizardComponent extends Container {
 			}
 			this.step = "theme";
 		} else if (this.step === "theme") {
+			if (this.themeMenu === "categories") {
+				this.themeMenu = "themes";
+				this.update();
+				return;
+			}
 			this.finish();
 			return;
 		}
@@ -174,7 +206,12 @@ export class SetupWizardComponent extends Container {
 		} else if (kb.matches(keyData, "tui.select.confirm") || keyData === "\n" || keyData === "\r") {
 			this.advance();
 		} else if (kb.matches(keyData, "tui.select.cancel") || keyData === "\x1b") {
-			this.options.onCancel();
+			if (this.step === "theme" && this.themeMenu === "themes") {
+				this.themeMenu = "categories";
+				this.update();
+			} else {
+				this.options.onCancel();
+			}
 		}
 	}
 }
