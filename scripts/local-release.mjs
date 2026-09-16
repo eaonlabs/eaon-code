@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// Release script for eaon-code.
+
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
@@ -118,7 +120,7 @@ function isInsidePath(child, parent) {
 
 function prepareOutputDirectory(options, repoRoot) {
 	if (!options.outDir) {
-		return mkdtempSync(join(tmpdir(), "pi-local-release-"));
+		return mkdtempSync(join(tmpdir(), "eaon-code-local-release-"));
 	}
 
 	const outDir = resolve(options.outDir);
@@ -161,31 +163,31 @@ function buildBunBinaryRelease(targetDirectory, archiveDirectory) {
 	]);
 	rmSync(targetDirectory, { force: true, recursive: true });
 	cpSync(join(binaryBuildDirectory, platform), targetDirectory, { recursive: true });
-	const archiveName = platform.startsWith("windows-") ? `pi-${platform}.zip` : `pi-${platform}.tar.gz`;
+	const archiveName = platform.startsWith("windows-") ? `eaon-code-${platform}.zip` : `eaon-code-${platform}.tar.gz`;
 	cpSync(join(binaryBuildDirectory, archiveName), join(archiveDirectory, archiveName));
 	return platform;
 }
 
-function createPiShim(installDirectory) {
+function createEaonCodeShim(installDirectory) {
 	const binDirectory = join(installDirectory, "node_modules", ".bin");
 	if (process.platform === "win32") {
-		if (existsSync(join(binDirectory, "pi.cmd"))) {
-			writeFileSync(join(installDirectory, "pi.cmd"), '@ECHO off\r\n"%~dp0node_modules\\.bin\\pi.cmd" %*\r\n');
-			writeFileSync(join(installDirectory, "pi.ps1"), '& "$PSScriptRoot/node_modules/.bin/pi.ps1" @args\n');
+		if (existsSync(join(binDirectory, "eaon-code.cmd"))) {
+			writeFileSync(join(installDirectory, "eaon-code.cmd"), '@ECHO off\r\n"%~dp0node_modules\\.bin\\eaon-code.cmd" %*\r\n');
+			writeFileSync(join(installDirectory, "eaon-code.ps1"), '& "$PSScriptRoot/node_modules/.bin/eaon-code.ps1" @args\n');
 			return;
 		}
-		writeFileSync(join(installDirectory, "pi.cmd"), '@ECHO off\r\n"%~dp0node_modules\\.bin\\pi.exe" %*\r\n');
-		writeFileSync(join(installDirectory, "pi.ps1"), '& "$PSScriptRoot/node_modules/.bin/pi.exe" @args\n');
+		writeFileSync(join(installDirectory, "eaon-code.cmd"), '@ECHO off\r\n"%~dp0node_modules\\.bin\\eaon-code.exe" %*\r\n');
+		writeFileSync(join(installDirectory, "eaon-code.ps1"), '& "$PSScriptRoot/node_modules/.bin/eaon-code.exe" @args\n');
 		return;
 	}
-	symlinkSync(join("node_modules", ".bin", "pi"), join(installDirectory, "pi"));
+	symlinkSync(join("node_modules", ".bin", "eaon-code"), join(installDirectory, "eaon-code"));
 }
 
 const options = parseArgs();
 const repoRoot = process.cwd();
 const rootPackageJson = readPackageJson(repoRoot);
 
-if (rootPackageJson.name !== "pi-monorepo") {
+if (rootPackageJson.name !== "eaon-code-monorepo") {
 	throw new Error("Run this script from the repository root");
 }
 
@@ -221,7 +223,7 @@ if (!options.skipInstall) {
 
 	installCodingAgentConsumer(nodeInstallDirectory, tarballs);
 	smokeTestCodingAgentConsumer(nodeInstallDirectory);
-	createPiShim(nodeInstallDirectory);
+	createEaonCodeShim(nodeInstallDirectory);
 
 	if (!options.skipBunInstall) {
 		if (!commandExists("bun")) {
@@ -229,7 +231,7 @@ if (!options.skipInstall) {
 		}
 		installCodingAgentConsumer(bunInstallDirectory, tarballs, "bun");
 		smokeTestCodingAgentConsumer(bunInstallDirectory, "bun");
-		createPiShim(bunInstallDirectory);
+		createEaonCodeShim(bunInstallDirectory);
 	}
 }
 
@@ -243,19 +245,19 @@ for (const tarball of tarballs.values()) {
 if (!options.skipInstall) {
 	console.log("\nLocal Bun binary release:");
 	console.log(`  ${binaryDirectory}`);
-	console.log(`  ${join(outDir, `pi-${binaryPlatform}.${String(binaryPlatform).startsWith("windows-") ? "zip" : "tar.gz"}`)}`);
+	console.log(`  ${join(outDir, `eaon-code-${binaryPlatform}.${String(binaryPlatform).startsWith("windows-") ? "zip" : "tar.gz"}`)}`);
 	console.log("\nRun the local Bun binary release from outside the repository:");
-	console.log(`  ${join(binaryDirectory, String(binaryPlatform).startsWith("windows-") ? "pi.exe" : "pi")} --help`);
+	console.log(`  ${join(binaryDirectory, String(binaryPlatform).startsWith("windows-") ? "eaon-code.exe" : "eaon-code")} --help`);
 
 	console.log("\nIsolated npm install:");
 	console.log(`  ${nodeInstallDirectory}`);
 	console.log("\nRun the locally packed npm CLI from outside the repository:");
-	console.log(`  ${join(nodeInstallDirectory, process.platform === "win32" ? "pi.cmd" : "pi")} --help`);
+	console.log(`  ${join(nodeInstallDirectory, process.platform === "win32" ? "eaon-code.cmd" : "eaon-code")} --help`);
 
 	if (!options.skipBunInstall) {
 		console.log("\nIsolated Bun package install:");
 		console.log(`  ${bunInstallDirectory}`);
 		console.log("\nRun the locally packed Bun package CLI from outside the repository:");
-		console.log(`  ${join(bunInstallDirectory, process.platform === "win32" ? "pi.cmd" : "pi")} --help`);
+		console.log(`  ${join(bunInstallDirectory, process.platform === "win32" ? "eaon-code.cmd" : "eaon-code")} --help`);
 	}
 }

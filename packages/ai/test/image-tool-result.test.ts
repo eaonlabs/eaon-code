@@ -331,7 +331,7 @@ describe("Tool Results with Images", () => {
 			await handleToolWithImageResult(llm);
 		});
 
-		// FIXME(xiaomi): when a tool_result contains both a descriptive text block
+		// FIXME: when a tool_result contains both a descriptive text block
 		// and an image block, MiMo locks onto the text and ignores the image (it
 		// reports the text-derived diameter but never mentions the image's color).
 		// The image-only case above proves the image reaches the model, and the
@@ -352,7 +352,7 @@ describe("Tool Results with Images", () => {
 				await handleToolWithImageResult(llm);
 			});
 
-			// FIXME(xiaomi): see the API-billing block above — same multimodal-fusion
+			// FIXME: see the API-billing block above — same multimodal-fusion
 			// limitation applies to Token Plan endpoints (same model behind both).
 			it.skip("should handle tool result with text and image", { retry: 3, timeout: 30000 }, async () => {
 				await handleToolWithTextAndImageResult(llm);
@@ -369,7 +369,7 @@ describe("Tool Results with Images", () => {
 				await handleToolWithImageResult(llm);
 			});
 
-			// FIXME(xiaomi): see the API-billing block above — same multimodal-fusion
+			// FIXME: see the API-billing block above — same multimodal-fusion
 			// limitation applies to Token Plan endpoints (same model behind both).
 			it.skip("should handle tool result with text and image", { retry: 3, timeout: 30000 }, async () => {
 				await handleToolWithTextAndImageResult(llm);
@@ -386,7 +386,7 @@ describe("Tool Results with Images", () => {
 				await handleToolWithImageResult(llm);
 			});
 
-			// FIXME(xiaomi): see the API-billing block above — same multimodal-fusion
+			// FIXME: see the API-billing block above — same multimodal-fusion
 			// limitation applies to Token Plan endpoints (same model behind both).
 			it.skip("should handle tool result with text and image", { retry: 3, timeout: 30000 }, async () => {
 				await handleToolWithTextAndImageResult(llm);

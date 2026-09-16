@@ -1,12 +1,12 @@
 # Development
 
-See [AGENTS.md](https://github.com/earendil-works/pi/blob/main/AGENTS.md) for additional guidelines.
+See [AGENTS.md](https://github.com/eaonlabs/eaon-code/blob/main/AGENTS.md) for additional guidelines.
 
 ## Setup
 
 ```bash
-git clone https://github.com/earendil-works/pi
-cd pi
+git clone https://github.com/eaonlabs/eaon-code
+cd eaon-code
 npm install
 npm run build
 ```
@@ -14,7 +14,7 @@ npm run build
 Run from source:
 
 ```bash
-/path/to/pi/pi-test.sh
+/path/to/eaon-code/pi-test.sh
 ```
 
 The script can be run from any directory. Pi keeps the caller's current working directory.
@@ -27,6 +27,8 @@ The remote harness server/client integration is development-only. Run it from th
 PI_EXPERIMENTAL=1 ./pi-test.sh server
 PI_EXPERIMENTAL=1 ./pi-test.sh client
 ```
+
+`PI_EXPERIMENTAL` is retained for compatibility with the upstream Pi runtime.
 
 `PI_SERVER_DIR` overrides the server profile and socket directory (default: `~/.pi/server`). `PI_SERVER_ID` selects the logical server ID when `--server-id` is omitted.
 
