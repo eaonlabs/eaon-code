@@ -1,6 +1,6 @@
 /**
  * First-run / reusable setup wizard.
- * Steps: welcome → provider (Eaon Plan recommended) → theme category → theme → done.
+ * Steps: welcome → provider → theme category → theme → done.
  * No usage collection.
  */
 
@@ -10,21 +10,21 @@ import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
 
 export interface SetupResult {
-	provider: "eaon" | "other" | "skip";
+	provider: string | "skip";
 	themeName: string;
+}
+
+export interface SetupProviderOption {
+	readonly id: string;
+	readonly name: string;
 }
 
 export interface SetupOptions {
 	currentThemeName?: string;
+	providers: readonly SetupProviderOption[];
 	onSubmit: (result: SetupResult) => void;
 	onCancel: () => void;
 }
-
-const PROVIDERS: Array<{ value: SetupResult["provider"]; label: string; description: string }> = [
-	{ value: "eaon", label: "Eaon Plan (recommended)", description: "One key · https://ai.eaon.dev · paste eaon_sk_…" },
-	{ value: "other", label: "Other provider", description: "Anthropic, OpenAI, Google, local, …" },
-	{ value: "skip", label: "Skip for now", description: "Configure later with /login" },
-];
 
 const LOGO = ["███████", "██     ", "██████ ", "██     ", "███████"];
 
@@ -45,10 +45,12 @@ export class SetupWizardComponent extends Container {
 	private themePickIndex = 0;
 	private themes: string[];
 	private readonly options: SetupOptions;
+	private readonly providers: readonly SetupProviderOption[];
 
 	constructor(options: SetupOptions) {
 		super();
 		this.options = options;
+		this.providers = options.providers;
 		this.themeCategory = isLightTheme(options.currentThemeName) ? "light" : "dark";
 		this.themeCategoryIndex = this.themeCategory === "light" ? 1 : 0;
 		this.themes = getThemeNames(this.themeCategory);
@@ -77,16 +79,13 @@ export class SetupWizardComponent extends Container {
 			);
 		} else if (this.step === "provider") {
 			this.addChild(new Text(theme.fg("text", "1/2  Provider"), 1, 0));
-			this.addChild(
-				new Text(
-					theme.fg("muted", "Eaon Plan: paste one key, get frontier models. Get a key at ai.eaon.dev"),
-					1,
-					0,
-				),
-			);
+			this.addChild(new Text(theme.fg("muted", "Choose a provider now, or skip and configure one later."), 1, 0));
 			this.addChild(new Spacer(1));
 			this.renderOptions(
-				PROVIDERS.map((p) => ({ label: p.label, description: p.description })),
+				[
+					...this.providers.map((provider) => ({ label: provider.name, description: provider.id })),
+					{ label: "Skip for now", description: "Configure later with /login" },
+				],
 				this.providerIndex,
 			);
 		} else if (this.step === "theme") {
@@ -127,10 +126,8 @@ export class SetupWizardComponent extends Container {
 	}
 
 	private selectedProviderLabel(): string {
-		const p = PROVIDERS[this.providerIndex];
-		if (!p) return "";
-		if (p.value === "eaon") return "Next: /login → Eaon Plan → paste eaon_sk_…";
-		if (p.value === "other") return "Next: /login → pick a provider";
+		const provider = this.providers[this.providerIndex];
+		if (provider) return `Next: /login → ${provider.name}`;
 		return "Provider skipped — /login when ready";
 	}
 
@@ -146,7 +143,8 @@ export class SetupWizardComponent extends Container {
 
 	private move(delta: number): void {
 		if (this.step === "provider") {
-			this.providerIndex = Math.max(0, Math.min(PROVIDERS.length - 1, this.providerIndex + delta));
+			const optionCount = this.providers.length + 1;
+			this.providerIndex = Math.max(0, Math.min(optionCount - 1, this.providerIndex + delta));
 		} else if (this.step === "theme") {
 			if (this.themeMenu === "categories") {
 				this.themeCategoryIndex = (this.themeCategoryIndex + delta + 2) % 2;
@@ -168,7 +166,7 @@ export class SetupWizardComponent extends Container {
 		if (this.step === "welcome") {
 			this.step = "provider";
 		} else if (this.step === "provider") {
-			const choice = PROVIDERS[this.providerIndex]?.value ?? "skip";
+			const choice = this.providers[this.providerIndex]?.id ?? "skip";
 			if (choice === "skip") {
 				this.finish();
 				return;
@@ -187,12 +185,12 @@ export class SetupWizardComponent extends Container {
 	}
 
 	private finish(): void {
-		const themeId = this.themes[this.themePickIndex] ?? "amber";
+		const themeId = this.themes[this.themePickIndex] ?? getDefaultTheme();
 		this.options.currentThemeName = themeId;
 		this.step = "done";
 		this.update();
 		this.options.onSubmit({
-			provider: PROVIDERS[this.providerIndex]?.value ?? "skip",
+			provider: this.providers[this.providerIndex]?.id ?? "skip",
 			themeName: themeId,
 		});
 	}

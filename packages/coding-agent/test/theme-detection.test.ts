@@ -13,16 +13,16 @@ afterEach(() => {
 });
 
 describe("theme documents", () => {
-	it("keeps amber as the default theme", () => {
-		expect(getDefaultTheme()).toBe("amber");
-		expect(getThemeByName("amber")?.name).toBe("amber");
+	it("keeps dark amber as the default theme and accepts the legacy alias", () => {
+		expect(getDefaultTheme()).toBe("dark-amber");
+		expect(getThemeByName("amber")?.name).toBe("dark-amber");
 	});
 
 	it("partitions the available documents into explicit dark and light lists", () => {
-		expect(getDarkThemeNames()).toContain("amber");
+		expect(getDarkThemeNames()).toContain("dark-amber");
 		expect(getDarkThemeNames()).not.toContain("light-amber");
 		expect(getLightThemeNames()).toContain("light-amber");
-		expect(getLightThemeNames()).not.toContain("amber");
+		expect(getLightThemeNames()).not.toContain("dark-amber");
 		expect(getAvailableThemes()).toContain("light");
 	});
 
@@ -35,13 +35,13 @@ describe("theme documents", () => {
 
 	it("uses terminal capabilities for ANSI encoding without changing the palette", () => {
 		setCapabilities({ images: null, trueColor: false, hyperlinks: false });
-		const ansi256Theme = getThemeByName("amber");
-		if (!ansi256Theme) throw new Error("amber theme not found");
+		const ansi256Theme = getThemeByName("dark-amber");
+		if (!ansi256Theme) throw new Error("dark-amber theme not found");
 		expect(ansi256Theme.getColorMode()).toBe("256color");
 
 		setCapabilities({ images: null, trueColor: true, hyperlinks: false });
-		const truecolorTheme = getThemeByName("amber");
-		if (!truecolorTheme) throw new Error("amber theme not found");
+		const truecolorTheme = getThemeByName("dark-amber");
+		if (!truecolorTheme) throw new Error("dark-amber theme not found");
 		expect(truecolorTheme.getColorMode()).toBe("truecolor");
 	});
 });

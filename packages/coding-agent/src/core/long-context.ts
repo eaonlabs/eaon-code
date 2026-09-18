@@ -36,24 +36,25 @@ function messageText(content: unknown): string {
 export function createCompressTool(getTarget: () => CompressTarget | undefined): AgentTool {
 	return {
 		name: "compress",
+		label: "compress",
 		description:
 			"Fold older conversation turns into a compact summary block so long sessions stay under the context window. Keeps the most recent turns intact.",
 		parameters: Type.Object({
 			reason: Type.Optional(Type.String({ description: "Why compress now (e.g. context is near limit)" })),
 			keepTail: Type.Optional(Type.Number({ minimum: 2, maximum: 40, default: KEEP_TAIL })),
 		}),
-		async execute(_id: string, params: unknown): Promise<AgentToolResult> {
+		async execute(_id: string, params: unknown): Promise<AgentToolResult<undefined>> {
 			const p = params as { reason?: string; keepTail?: number };
 			const target = getTarget();
 			if (!target) {
-				return { content: [{ type: "text", text: "compress: no session target" }], isError: true };
+				throw new Error("compress: no session target");
 			}
 			const messages = target.getMessages();
 			const keep = Math.max(2, Math.min(40, p.keepTail ?? KEEP_TAIL));
 			if (messages.length <= keep + 2) {
 				return {
 					content: [{ type: "text", text: "Nothing to compress — conversation is already short." }],
-					isError: false,
+					details: undefined,
 				};
 			}
 			const head = messages.slice(0, Math.max(0, messages.length - keep));
@@ -83,8 +84,7 @@ export function createCompressTool(getTarget: () => CompressTarget | undefined):
 						text: `Compressed ${head.length} older turns into a summary. Kept last ${tail.length} turns. Summary length: ${summary.length} chars.`,
 					},
 				],
-				isError: false,
-				details: { folded: head.length, kept: tail.length, summaryChars: summary.length },
+				details: undefined,
 			};
 		},
 	};
@@ -93,12 +93,13 @@ export function createCompressTool(getTarget: () => CompressTarget | undefined):
 export function createContextStatusTool(getTarget: () => CompressTarget | undefined): AgentTool {
 	return {
 		name: "context_status",
+		label: "context_status",
 		description: "Report conversation size (message count) so you know when to call compress.",
 		parameters: Type.Object({}),
-		async execute(): Promise<AgentToolResult> {
+		async execute(): Promise<AgentToolResult<undefined>> {
 			const target = getTarget();
 			if (!target) {
-				return { content: [{ type: "text", text: "context_status: no session" }], isError: true };
+				throw new Error("context_status: no session");
 			}
 			const messages = target.getMessages();
 			let chars = 0;
@@ -110,8 +111,7 @@ export function createContextStatusTool(getTarget: () => CompressTarget | undefi
 						text: `Messages: ${messages.length}\nApprox characters: ${chars}\nWhen context grows large, call compress (keepTail 8–16).`,
 					},
 				],
-				isError: false,
-				details: { messages: messages.length, chars },
+				details: undefined,
 			};
 		},
 	};

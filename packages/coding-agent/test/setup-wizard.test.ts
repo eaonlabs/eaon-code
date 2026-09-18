@@ -15,13 +15,20 @@ describe("SetupWizardComponent", () => {
 		const onSubmit = vi.fn();
 		const wizard = new SetupWizardComponent({
 			currentThemeName: "amber",
+			providers: [
+				{ id: "anthropic", name: "Anthropic" },
+				{ id: "eaon", name: "Eaon Plan" },
+			],
 			onSubmit,
 			onCancel: vi.fn(),
 		});
 
 		wizard.handleInput("\r");
-		wizard.handleInput("\r");
 		let output = stripAnsi(wizard.render(120).join("\n"));
+		expect(output).toContain("Eaon Plan");
+
+		wizard.handleInput("\r");
+		output = stripAnsi(wizard.render(120).join("\n"));
 		expect(output).toContain("Dark themes");
 		expect(output).toContain("Light themes");
 		expect(output).not.toContain("light-amber");
@@ -42,6 +49,6 @@ describe("SetupWizardComponent", () => {
 
 		wizard.handleInput("\x1b[B");
 		wizard.handleInput("\r");
-		expect(onSubmit).toHaveBeenCalledWith({ provider: "eaon", themeName: "light-amber" });
+		expect(onSubmit).toHaveBeenCalledWith({ provider: "anthropic", themeName: "light-amber" });
 	});
 });

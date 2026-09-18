@@ -83,6 +83,8 @@ import type {
 import { FooterDataProvider, type ReadonlyFooterDataProvider } from "../../core/footer-data-provider.ts";
 import { configureHttpDispatcher, formatHttpIdleTimeoutMs } from "../../core/http-dispatcher.ts";
 import { type AppKeybinding, KeybindingsManager } from "../../core/keybindings.ts";
+import { createCompressTool, createContextStatusTool } from "../../core/long-context.ts";
+import { McpClient, type McpServerConfig, mcpToolName } from "../../core/mcp.ts";
 import { createCompactionSummaryMessage } from "../../core/messages.ts";
 import {
 	defaultModelPerProvider,
@@ -91,23 +93,20 @@ import {
 } from "../../core/model-resolver.ts";
 import { CredentialSynchronizationError } from "../../core/model-runtime.ts";
 import { DefaultPackageManager } from "../../core/package-manager.ts";
+import { PLAN_MODE_PROMPT, toolsForPlanMode } from "../../core/plan-mode.ts";
 import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
 import { type SessionEntry, SessionManager, sessionEntryToContextMessages } from "../../core/session-manager.ts";
 import type { FullscreenExitOutput, TuiMode } from "../../core/settings-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
-import { McpClient, mcpToolName, type McpServerConfig } from "../../core/mcp.ts";
-import { PLAN_MODE_PROMPT, toolsForPlanMode } from "../../core/plan-mode.ts";
-import { createCompressTool, createContextStatusTool } from "../../core/long-context.ts";
-import { createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
-import { SetupWizardComponent } from "./components/setup-wizard.ts";
-import { createSwarmSubagentTool, defaultSwarmCliOptions, SWARM_MODE_PROMPT } from "../../core/swarm.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
+import { createSwarmSubagentTool, defaultSwarmCliOptions, SWARM_MODE_PROMPT } from "../../core/swarm.ts";
 import { isInstallTelemetryEnabled } from "../../core/telemetry.ts";
 import { withBuiltInRenderers } from "../../core/tools/renderers/index.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
 import { getUsageCostBreakdown } from "../../core/usage-totals.ts";
+import { createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
 import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
 import { copyToClipboard, readClipboardText } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
@@ -146,6 +145,7 @@ import {
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.ts";
 import { SessionSelectorComponent } from "./components/session-selector.ts";
 import { SettingsSelectorComponent } from "./components/settings-selector.ts";
+import { type SetupProviderOption, SetupWizardComponent } from "./components/setup-wizard.ts";
 import { SkillInvocationMessageComponent } from "./components/skill-invocation-message.ts";
 import {
 	BranchSummaryStatusIndicator,
@@ -177,6 +177,7 @@ import {
 	getSelectListTheme,
 	getThemeByName,
 	isLightTheme,
+	normalizeThemeName,
 	onThemeChange,
 	setRegisteredThemes,
 	stopThemeWatcher,
@@ -4867,7 +4868,7 @@ export class InteractiveMode {
 		this.selectThinkingLevel(level, false);
 	}
 
-	private selectThinkingLevel(level: ThinkingLevel, persist: boolean): void {
+	private selectThinkingLevel(level: ThinkingLevel, _persist: boolean): void {
 		try {
 			// Always persist so the next session starts at the last-used level.
 			this.session.setThinkingLevel(level, { persist: true });
@@ -5064,7 +5065,8 @@ export class InteractiveMode {
 		const allThemes = getAvailableThemes();
 
 		if (name) {
-			const match = allThemes.find((t) => t.toLowerCase() === name.toLowerCase());
+			const canonicalName = normalizeThemeName(name);
+			const match = allThemes.find((t) => t.toLowerCase() === canonicalName.toLowerCase());
 			if (!match) {
 				this.showError(`Unknown theme "${name}". Available: ${allThemes.join(", ")}`);
 				return;
@@ -5127,7 +5129,7 @@ export class InteractiveMode {
 
 	private showModelSelector(initialSearchInput?: string): void {
 		this.showSelector((done) => {
-			const selectModel = async (model: Model<any>, persist: boolean) => {
+			const selectModel = async (model: Model<any>, _persist: boolean) => {
 				try {
 					// Always remember the last-used model so it comes back next session.
 					// persist=true is the explicit "set as default" path (same result today).
@@ -5598,14 +5600,7 @@ export class InteractiveMode {
 				});
 			}
 		}
-		// Eaon Plan first — recommended
-		const sorted = [...options].sort((a, b) => {
-			const aEaon = a.id === "eaon" ? 0 : 1;
-			const bEaon = b.id === "eaon" ? 0 : 1;
-			if (aEaon !== bEaon) return aEaon - bEaon;
-			return a.name.localeCompare(b.name);
-		});
-		return sorted;
+		return options.sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	private async getLogoutProviderOptions(): Promise<AuthSelectorProvider[]> {
@@ -6608,9 +6603,7 @@ export class InteractiveMode {
 		this.chatContainer.addChild(
 			new Text(theme.fg("muted", "  /swarm  —  delegate work to 2–6 sub-agents (scout/implement/test)"), 1, 1),
 		);
-		this.chatContainer.addChild(
-			new Text(theme.fg("muted", "  /setup  —  provider + theme wizard"), 1, 1),
-		);
+		this.chatContainer.addChild(new Text(theme.fg("muted", "  /setup  —  provider + theme wizard"), 1, 1));
 		this.chatContainer.addChild(
 			new Text(theme.fg("muted", "  /mcp    —  optional MCP servers (none by default; not required)"), 1, 1),
 		);
@@ -6654,10 +6647,16 @@ export class InteractiveMode {
 			getMessages: () => session.messages as unknown as Array<{ role: string; content?: unknown }>,
 			setMessages: (messages: unknown[]) => {
 				// Best-effort fold: agent state messages
-				(session as unknown as { agent: { state: { messages: unknown[] } } }).agent.state.messages = messages as never;
+				(session as unknown as { agent: { state: { messages: unknown[] } } }).agent.state.messages =
+					messages as never;
 			},
 		};
-		const tools = [createWebSearchTool(), createFetchContentTool(), createCompressTool(() => target), createContextStatusTool(() => target)];
+		const tools = [
+			createWebSearchTool(),
+			createFetchContentTool(),
+			createCompressTool(() => target),
+			createContextStatusTool(() => target),
+		];
 		const active = new Set(session.getActiveToolNames());
 		for (const tool of tools) {
 			session.registerRuntimeTool(tool as never);
@@ -6668,27 +6667,27 @@ export class InteractiveMode {
 
 	/** /setup — multi-step wizard (provider → theme → privacy). */
 	private showSetupWizard(): void {
+		const setupProviders = Array.from(
+			new Map(
+				this.getLoginProviderOptions().map((provider) => [
+					provider.id,
+					{ id: provider.id, name: provider.name } satisfies SetupProviderOption,
+				]),
+			).values(),
+		).sort((a, b) => a.name.localeCompare(b.name));
 		this.showSelector((done) => {
 			const wizard = new SetupWizardComponent({
 				currentThemeName: this.themeController.getThemeSelection() || getDefaultTheme(),
+				providers: setupProviders,
 				onSubmit: (result) => {
 					done();
 					const applied = this.themeController.setThemeName(result.themeName);
 					if (applied.success) {
 						this.updateEditorBorderColor();
 					}
-					if (result.provider === "eaon" || result.provider === "other") {
-						this.showStatus(
-							result.provider === "eaon"
-								? "Setup done. Next: /login → Eaon Plan → paste eaon_sk_… from https://ai.eaon.dev"
-								: "Setup done. Next: /login → pick a provider",
-						);
-						// Open login right away for the recommended path
-						if (result.provider === "eaon") {
-							void this.handleLoginCommand("eaon");
-						} else {
-							void this.handleLoginCommand();
-						}
+					if (result.provider !== "skip") {
+						this.showStatus(`Setup done. Next: /login → ${result.provider}`);
+						void this.handleLoginCommand(result.provider);
 					} else {
 						this.showStatus(`Setup done. Theme: ${result.themeName}  ·  /login when ready`);
 					}

@@ -49,6 +49,7 @@ If the user asked for something small (single file tweak), say so and use 0–1 
 export interface SwarmTask {
 	agent: string;
 	task: string;
+	model?: string;
 }
 
 export interface SwarmSubagentOptions {
@@ -142,6 +143,7 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number
 export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 	return {
 		name: "subagent",
+		label: "subagent",
 		description:
 			"Spawn 2–6 specialized sub-agents (scout, implementer, tester, reviewer). Use parallel for independent work; chain for dependent steps. Each task must be self-contained.",
 		parameters: Type.Union([
@@ -174,7 +176,7 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 				),
 			}),
 		]),
-		async execute(_toolCallId: string, params: unknown, signal: AbortSignal): Promise<AgentToolResult> {
+		async execute(_toolCallId: string, params: unknown, signal?: AbortSignal): Promise<AgentToolResult<unknown>> {
 			const p = params as
 				| { mode: "single"; agent: string; task: string; model?: string }
 				| { mode: "parallel"; tasks: SwarmTask[] }
@@ -184,8 +186,8 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 				`### Sub-agent: ${t.agent}\n\nYou are a ${t.agent} sub-agent for Eaon Code. Work only on the task below. Use read/bash/grep/find/ls. Do not ask the user questions. Reply with a concise result.\n\n${t.task}\n`;
 
 			try {
-				if (signal.aborted) {
-					return { content: [{ type: "text", text: "Subagent cancelled." }], isError: true };
+				if (signal?.aborted) {
+					throw new Error("Subagent cancelled.");
 				}
 
 				if (p.mode === "single") {
@@ -197,7 +199,6 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 					const text = `## ${p.agent}\n\n${r.output || r.stderr || "(no output)"}`;
 					return {
 						content: [{ type: "text", text }],
-						isError: r.exitCode !== 0,
 						details: { exitCode: r.exitCode, mode: "single", agents: [p.agent] },
 					};
 				}
@@ -212,11 +213,11 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 					const failed = results.some((x) => x.r.exitCode !== 0);
 					return {
 						content: [{ type: "text", text: parts.join("\n\n---\n\n") }],
-						isError: failed,
 						details: {
 							mode: "parallel",
 							agents: tasks.map((t) => t.agent),
 							exitCodes: results.map((x) => x.r.exitCode),
+							failed,
 						},
 					};
 				}
@@ -227,7 +228,7 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 				const parts: string[] = [];
 				let failed = false;
 				for (const step of chain) {
-					if (signal.aborted) {
+					if (signal?.aborted) {
 						failed = true;
 						parts.push(`## ${step.agent}\n\n[cancelled]`);
 						break;
@@ -243,16 +244,10 @@ export function createSwarmSubagentTool(opts: SwarmSubagentOptions): AgentTool {
 				}
 				return {
 					content: [{ type: "text", text: parts.join("\n\n---\n\n") }],
-					isError: failed,
-					details: { mode: "chain", agents: chain.map((s) => s.agent) },
+					details: { mode: "chain", agents: chain.map((s) => s.agent), failed },
 				};
 			} catch (error) {
-				return {
-					content: [
-						{ type: "text", text: `Swarm error: ${error instanceof Error ? error.message : String(error)}` },
-					],
-					isError: true,
-				};
+				throw new Error(`Swarm error: ${error instanceof Error ? error.message : String(error)}`);
 			}
 		},
 	};

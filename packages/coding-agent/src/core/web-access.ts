@@ -83,7 +83,7 @@ export async function webSearchDdg(query: string, numResults: number): Promise<s
 	return `Web search: ${query}\n\n${results.join("\n\n")}`;
 }
 
-export async function fetchUrlAsText(url: string): Promise<string> {
+async function fetchUrlAsTextFallback(url: string): Promise<string> {
 	// Jina Reader is keyless and renders many JS pages
 	const jina = `https://r.jina.ai/${url}`;
 	try {
@@ -115,26 +115,24 @@ export async function fetchUrlAsText(url: string): Promise<string> {
 	return body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}\n\n[truncated]` : body;
 }
 
+export async function fetchUrlAsText(url: string): Promise<string> {
+	return fetchUrlAsTextFallback(url);
+}
+
 export function createWebSearchTool(): AgentTool {
 	return {
 		name: "web_search",
+		label: "web_search",
 		description:
-			"Search the web (keyless DuckDuckGo). Returns titles, URLs, and short snippets. Use fetch_content to read a full page.",
+			"Search the live web through keyless DuckDuckGo. Returns titles, URLs, and short snippets. Use fetch_content to read a full page.",
 		parameters: Type.Object({
 			query: Type.String({ description: "Search query" }),
 			numResults: Type.Optional(Type.Number({ minimum: 1, maximum: 10, default: 5 })),
 		}),
-		async execute(_id: string, params: unknown): Promise<AgentToolResult> {
+		async execute(_id: string, params: unknown): Promise<AgentToolResult<undefined>> {
 			const p = params as { query: string; numResults?: number };
-			try {
-				const text = await webSearchDdg(p.query, p.numResults ?? 5);
-				return { content: [{ type: "text", text }], isError: false };
-			} catch (e) {
-				return {
-					content: [{ type: "text", text: `web_search failed: ${e instanceof Error ? e.message : String(e)}` }],
-					isError: true,
-				};
-			}
+			const text = await webSearchDdg(p.query, p.numResults ?? 5);
+			return { content: [{ type: "text", text }], details: undefined };
 		},
 	};
 }
@@ -142,31 +140,17 @@ export function createWebSearchTool(): AgentTool {
 export function createFetchContentTool(): AgentTool {
 	return {
 		name: "fetch_content",
+		label: "fetch_content",
 		description:
-			"Fetch a URL and return readable text/markdown. Handles normal pages; GitHub raw and docs work well.",
+			"Fetch a URL through Jina Reader when available, with direct-fetch fallback, and return readable text/markdown.",
 		parameters: Type.Object({
 			url: Type.String({ description: "http(s) URL to fetch" }),
 		}),
-		async execute(_id: string, params: unknown): Promise<AgentToolResult> {
+		async execute(_id: string, params: unknown): Promise<AgentToolResult<undefined>> {
 			const p = params as { url: string };
-			try {
-				if (!/^https?:\/\//i.test(p.url)) {
-					return {
-						content: [{ type: "text", text: "fetch_content requires an http(s) URL." }],
-						isError: true,
-					};
-				}
-				const text = await fetchUrlAsText(p.url);
-				return {
-					content: [{ type: "text", text: `# ${p.url}\n\n${text}` }],
-					isError: false,
-				};
-			} catch (e) {
-				return {
-					content: [{ type: "text", text: `fetch_content failed: ${e instanceof Error ? e.message : String(e)}` }],
-					isError: true,
-				};
-			}
+			if (!/^https?:\/\//i.test(p.url)) throw new Error("fetch_content requires an http(s) URL.");
+			const text = await fetchUrlAsText(p.url);
+			return { content: [{ type: "text", text: `# ${p.url}\n\n${text}` }], details: undefined };
 		},
 	};
 }

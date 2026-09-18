@@ -400,6 +400,23 @@ export class Theme {
 
 let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 
+const LEGACY_DARK_THEME_ALIASES = {
+	amber: "dark-amber",
+	copper: "dark-copper",
+	ember: "dark-ember",
+	forest: "dark-forest",
+	midnight: "dark-midnight",
+	mono: "dark-mono",
+	ocean: "dark-ocean",
+	orange: "dark-orange",
+	sunset: "dark-sunset",
+	violet: "dark-violet",
+} as const;
+
+export function normalizeThemeName(name: string): string {
+	return LEGACY_DARK_THEME_ALIASES[name as keyof typeof LEGACY_DARK_THEME_ALIASES] ?? name;
+}
+
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
@@ -420,7 +437,8 @@ export function getAvailableThemes(): string[] {
 }
 
 export function isLightTheme(themeName?: string): boolean {
-	return themeName === "light" || themeName?.startsWith("light-") === true;
+	const canonicalName = themeName ? normalizeThemeName(themeName) : undefined;
+	return canonicalName === "light" || canonicalName?.startsWith("light-") === true;
 }
 
 export function getDarkThemeNames(): string[] {
@@ -515,6 +533,7 @@ function parseThemeJsonContent(label: string, content: string): ThemeJson {
 }
 
 function loadThemeJson(name: string): ThemeJson {
+	name = normalizeThemeName(name);
 	const builtinThemes = getBuiltinThemes();
 	if (name in builtinThemes) {
 		return builtinThemes[name];
@@ -570,11 +589,12 @@ export function loadThemeFromPath(themePath: string, mode?: ColorMode): Theme {
 }
 
 function loadTheme(name: string, mode?: ColorMode): Theme {
-	const registeredTheme = registeredThemes.get(name);
+	const canonicalName = normalizeThemeName(name);
+	const registeredTheme = registeredThemes.get(canonicalName);
 	if (registeredTheme) {
 		return registeredTheme;
 	}
-	const themeJson = loadThemeJson(name);
+	const themeJson = loadThemeJson(canonicalName);
 	return createTheme(themeJson, mode);
 }
 
@@ -587,8 +607,7 @@ export function getThemeByName(name: string): Theme | undefined {
 }
 
 export function getDefaultTheme(): string {
-	// Eaon Code default — amber. One theme family; no light/dark split.
-	return "amber";
+	return "dark-amber";
 }
 
 // ============================================================================
@@ -631,7 +650,7 @@ export function setRegisteredThemes(themes: Theme[]): void {
 }
 
 export function initTheme(themeName?: string, enableWatcher: boolean = false): void {
-	const name = themeName ?? getDefaultTheme();
+	const name = normalizeThemeName(themeName ?? getDefaultTheme());
 	currentThemeName = name;
 	try {
 		setGlobalTheme(loadTheme(name));
@@ -645,6 +664,7 @@ export function initTheme(themeName?: string, enableWatcher: boolean = false): v
 }
 
 export function setTheme(name: string, enableWatcher: boolean = false): { success: boolean; error?: string } {
+	name = normalizeThemeName(name);
 	currentThemeName = name;
 	try {
 		setGlobalTheme(loadTheme(name));
@@ -815,8 +835,8 @@ function ansi256ToHex(index: number): string {
  * Used by HTML export to generate CSS custom properties.
  */
 export function getResolvedThemeColors(themeName?: string): Record<string, string> {
-	const name = themeName ?? currentThemeName ?? getDefaultTheme();
-	const isLight = name === "light";
+	const name = normalizeThemeName(themeName ?? currentThemeName ?? getDefaultTheme());
+	const isLight = isLightTheme(name);
 	const themeJson = loadThemeJson(name);
 	const resolved = resolveThemeColors(withThemeColorFallbacks(themeJson.colors), themeJson.vars);
 

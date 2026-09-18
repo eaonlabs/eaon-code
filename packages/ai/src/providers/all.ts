@@ -89,8 +89,6 @@ export function getBuiltinModels<TProvider extends BuiltinProvider>(
 /** All built-in providers, freshly constructed. */
 export function builtinProviders(): Provider[] {
 	return [
-		// Recommended first: Eaon Plan (paste key → works)
-		eaonProvider(),
 		amazonBedrockProvider(),
 		antLingProvider(),
 		anthropicProvider(),
@@ -100,6 +98,7 @@ export function builtinProviders(): Provider[] {
 		cloudflareAIGatewayProvider(),
 		cloudflareWorkersAIProvider(),
 		deepseekProvider(),
+		eaonProvider(),
 		fireworksProvider(),
 		githubCopilotProvider(),
 		googleProvider(),

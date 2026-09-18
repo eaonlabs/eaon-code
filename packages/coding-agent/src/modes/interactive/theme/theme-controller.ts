@@ -1,6 +1,6 @@
 import type { TUI } from "@eaonlabs/eaon-tui";
 import type { SettingsManager } from "../../../core/settings-manager.ts";
-import { getDefaultTheme, initTheme, setTheme, setThemeInstance, type Theme } from "./theme.ts";
+import { getDefaultTheme, initTheme, normalizeThemeName, setTheme, setThemeInstance, type Theme } from "./theme.ts";
 
 type ThemeResult = { success: boolean; error?: string };
 
@@ -9,6 +9,7 @@ export class InteractiveThemeController {
 	private readonly getSettingsManager: () => SettingsManager;
 	private readonly showError: (message: string) => void;
 	private readonly onChanged: () => void;
+	private readonly fixedThemeSetting: boolean;
 	private currentThemeSetting: string | undefined;
 	private activeThemeName: string | undefined;
 
@@ -25,6 +26,7 @@ export class InteractiveThemeController {
 		this.getSettingsManager = options.getSettingsManager;
 		this.showError = options.showError;
 		this.onChanged = options.onChanged;
+		this.fixedThemeSetting = options.initialThemeSetting !== undefined;
 		this.currentThemeSetting = options.initialThemeSetting;
 		const initialThemeSetting = this.currentThemeSetting ?? this.getSettingsManager().getThemeSetting();
 		this.activeThemeName = initialThemeSetting?.includes("/") ? undefined : initialThemeSetting;
@@ -33,10 +35,15 @@ export class InteractiveThemeController {
 
 	async applyFromSettings(): Promise<void> {
 		const settingsManager = this.getSettingsManager();
-		const themeSetting = this.currentThemeSetting ?? settingsManager.getThemeSetting();
+		const themeSetting = this.fixedThemeSetting ? this.currentThemeSetting : settingsManager.getThemeSetting();
 		if (themeSetting && !themeSetting.includes("/")) {
-			const result = this.applyThemeName(themeSetting, true);
-			if (result.success) return;
+			const canonicalName = normalizeThemeName(themeSetting);
+			const result = this.applyThemeName(canonicalName, true);
+			if (result.success) {
+				if (this.fixedThemeSetting) this.currentThemeSetting = canonicalName;
+				if (canonicalName !== themeSetting) settingsManager.setTheme(canonicalName);
+				return;
+			}
 		}
 
 		const fallback = getDefaultTheme();
@@ -52,16 +59,17 @@ export class InteractiveThemeController {
 	}
 
 	setThemeName(themeName: string, showError = false): ThemeResult {
-		const result = this.applyThemeName(themeName, showError);
+		const canonicalName = normalizeThemeName(themeName);
+		const result = this.applyThemeName(canonicalName, showError);
 		if (result.success) {
-			this.currentThemeSetting = themeName;
-			this.getSettingsManager().setTheme(themeName);
+			if (this.fixedThemeSetting) this.currentThemeSetting = canonicalName;
+			this.getSettingsManager().setTheme(canonicalName);
 		}
 		return result;
 	}
 
 	async setThemeSetting(themeSetting: string): Promise<void> {
-		this.currentThemeSetting = themeSetting;
+		if (this.fixedThemeSetting) this.currentThemeSetting = themeSetting;
 		this.getSettingsManager().setTheme(themeSetting);
 		await this.applyFromSettings();
 	}

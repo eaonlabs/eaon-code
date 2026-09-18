@@ -1,6 +1,7 @@
 import { openAICompletionsApi } from "../api/openai-completions.lazy.ts";
 import { envApiKeyAuth } from "../auth/helpers.ts";
-import { createProvider, type Model, type Provider, type RefreshModelsContext } from "../models.ts";
+import { createProvider, type Provider, type RefreshModelsContext } from "../models.ts";
+import type { Model } from "../types.ts";
 
 export const EAON_BASE = "https://ai.eaon.dev/v1";
 

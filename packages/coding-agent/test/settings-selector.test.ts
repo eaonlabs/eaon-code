@@ -79,7 +79,7 @@ describe("SettingsSelectorComponent", () => {
 		list.handleInput("\r");
 		output = stripAnsi(list.render(120).join("\n"));
 		expect(output).toContain("Dark themes");
-		expect(output).toContain("amber");
+		expect(output).toContain("dark-amber");
 		expect(output).not.toContain("light-amber");
 
 		list.handleInput("\x1b");

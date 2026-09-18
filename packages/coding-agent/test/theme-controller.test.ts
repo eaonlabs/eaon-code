@@ -50,8 +50,8 @@ describe("InteractiveThemeController", () => {
 
 		await controller.applyFromSettings();
 
-		expect(theme.name).toBe("amber");
-		expect(manager.getTheme()).toBe("amber");
+		expect(theme.name).toBe("dark-amber");
+		expect(manager.getTheme()).toBe("dark-amber");
 		expect(ui.setTerminalColorSchemeNotifications as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
 	});
 
