@@ -20,6 +20,7 @@
 
 ### Fixed
 
+- Made swarm sub-agents visible while they run, including named task status, live output, per-agent click expansion, Ctrl+O expansion, and interrupt-driven child-process cancellation.
 - Prevent failed shell-extension handlers from falling through to local command execution.
 - Capped agent-level retry backoff at `retry.maxAgentDelayMs` (60s by default) so long retry runs stay responsive during prolonged transient outages ([#8826](https://github.com/earendil-works/pi/issues/8826)).
 - Fixed direct RPC `steer` and `follow_up` commands bypassing extension `input` handlers ([#8718](https://github.com/earendil-works/pi/issues/8718)).

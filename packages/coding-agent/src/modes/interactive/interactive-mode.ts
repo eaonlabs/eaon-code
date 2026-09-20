@@ -6710,7 +6710,14 @@ export class InteractiveMode {
 		if (!this.toolsBeforeSwarm) {
 			this.toolsBeforeSwarm = this.session.getActiveToolNames();
 		}
-		const tool = createSwarmSubagentTool(defaultSwarmCliOptions());
+		const tool = createSwarmSubagentTool({
+			...defaultSwarmCliOptions(),
+			resolveModelSelection: () => ({
+				provider: this.session.model?.provider,
+				model: this.session.model?.id,
+				thinking: this.session.thinkingLevel,
+			}),
+		});
 		this.session.registerRuntimeTool(tool as never);
 		const active = new Set(this.session.getActiveToolNames());
 		active.add("subagent");
