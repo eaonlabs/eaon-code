@@ -45,7 +45,7 @@ export interface ClientRuntime {
 }
 
 export interface OpenClientRuntimeOptions {
-	/** Directory searched when --connect is omitted. Defaults to PI_SERVER_DIR or ~/.pi/server. */
+	/** Directory searched when --connect is omitted. Defaults to EAON_CODE_SERVER_DIR or ~/.eaon/server; existing legacy paths remain supported. */
 	readonly directory?: string;
 }
 

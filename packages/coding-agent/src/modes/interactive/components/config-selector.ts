@@ -3,7 +3,7 @@
  */
 
 import { homedir } from "node:os";
-import { basename, dirname, join, relative } from "node:path";
+import { basename, dirname, relative } from "node:path";
 import {
 	type Component,
 	Container,
@@ -15,7 +15,7 @@ import {
 	truncateToWidth,
 	visibleWidth,
 } from "@eaonlabs/eaon-tui";
-import { CONFIG_DIR_NAME } from "../../../config.ts";
+import { getProjectConfigDir } from "../../../config.ts";
 import type { PathMetadata, ResolvedPaths, ResolvedResource } from "../../../core/package-manager.ts";
 import type { PackageSource, SettingsManager } from "../../../core/settings-manager.ts";
 import { canonicalizePath, isLocalPath, resolvePath } from "../../../utils/paths.ts";
@@ -80,7 +80,7 @@ function formatBaseDir(baseDir: string): string {
 	return displayPath.endsWith("/") ? displayPath : `${displayPath}/`;
 }
 
-function getGroupLabel(metadata: PathMetadata, agentDir: string): string {
+function getGroupLabel(metadata: PathMetadata, agentDir: string, cwd: string): string {
 	if (metadata.origin === "package") {
 		return `${metadata.source} (${metadata.scope})`;
 	}
@@ -91,12 +91,14 @@ function getGroupLabel(metadata: PathMetadata, agentDir: string): string {
 				? `User (${formatBaseDir(metadata.baseDir)})`
 				: `Project (${formatBaseDir(metadata.baseDir)})`;
 		}
-		return metadata.scope === "user" ? `User (${formatBaseDir(agentDir)})` : `Project (${CONFIG_DIR_NAME}/)`;
+		return metadata.scope === "user"
+			? `User (${formatBaseDir(agentDir)})`
+			: `Project (${formatBaseDir(getProjectConfigDir(cwd))})`;
 	}
 	return metadata.scope === "user" ? "User settings" : "Project settings";
 }
 
-function buildGroups(resolved: ResolvedPaths, agentDir: string): ResourceGroup[] {
+function buildGroups(resolved: ResolvedPaths, agentDir: string, cwd: string): ResourceGroup[] {
 	const groupMap = new Map<string, ResourceGroup>();
 
 	const addToGroup = (resources: ResolvedResource[], resourceType: ResourceType) => {
@@ -107,7 +109,7 @@ function buildGroups(resolved: ResolvedPaths, agentDir: string): ResourceGroup[]
 			if (!groupMap.has(groupKey)) {
 				groupMap.set(groupKey, {
 					key: groupKey,
-					label: getGroupLabel(metadata, agentDir),
+					label: getGroupLabel(metadata, agentDir, cwd),
 					scope: metadata.scope,
 					origin: metadata.origin,
 					source: metadata.source,
@@ -187,10 +189,14 @@ type FlatEntry =
 class ConfigSelectorHeader implements Component {
 	private writeScope: ConfigWriteScope;
 	private projectModeAvailable: boolean;
+	private agentDir: string;
+	private cwd: string;
 
-	constructor(writeScope: ConfigWriteScope, projectModeAvailable: boolean) {
+	constructor(writeScope: ConfigWriteScope, projectModeAvailable: boolean, agentDir: string, cwd: string) {
 		this.writeScope = writeScope;
 		this.projectModeAvailable = projectModeAvailable;
+		this.agentDir = agentDir;
+		this.cwd = cwd;
 	}
 
 	setWriteScope(writeScope: ConfigWriteScope): void {
@@ -209,8 +215,11 @@ class ConfigSelectorHeader implements Component {
 		const spacing = Math.max(1, width - visibleWidth(title) - visibleWidth(hint));
 		const scopeHint =
 			this.writeScope === "project"
-				? theme.fg("muted", `${CONFIG_DIR_NAME}/settings.json · inherited global resources are dimmed`)
-				: theme.fg("muted", `~/${CONFIG_DIR_NAME}/agent/settings.json`);
+				? theme.fg(
+						"muted",
+						`${basename(getProjectConfigDir(this.cwd))}/settings.json · inherited global resources are dimmed`,
+					)
+				: theme.fg("muted", `${formatBaseDir(this.agentDir)}settings.json`);
 
 		return [
 			truncateToWidth(`${title}${" ".repeat(spacing)}${hint}`, width, ""),
@@ -848,7 +857,7 @@ class ResourceList implements Component, Focusable {
 	}
 
 	private getTopLevelBaseDir(scope: "user" | "project"): string {
-		return scope === "project" ? join(this.cwd, CONFIG_DIR_NAME) : this.agentDir;
+		return scope === "project" ? getProjectConfigDir(this.cwd) : this.agentDir;
 	}
 
 	private getResourcePattern(item: ResourceItem): string {
@@ -893,15 +902,15 @@ export class ConfigSelectorComponent extends Container implements Focusable {
 
 		this.writeScope = writeScope;
 		const groupsByScope = {
-			global: buildGroups(resolvedPaths.global, agentDir),
-			project: buildGroups(resolvedPaths.project, agentDir),
+			global: buildGroups(resolvedPaths.global, agentDir, cwd),
+			project: buildGroups(resolvedPaths.project, agentDir, cwd),
 		};
 
 		// Add header
 		this.addChild(new Spacer(1));
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
-		this.header = new ConfigSelectorHeader(this.writeScope, projectModeAvailable);
+		this.header = new ConfigSelectorHeader(this.writeScope, projectModeAvailable, agentDir, cwd);
 		this.addChild(this.header);
 		this.addChild(new Spacer(1));
 

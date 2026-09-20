@@ -7,7 +7,7 @@ import {
 } from "@eaonlabs/chord/node";
 
 const PRESENTATION_FACET_BUNDLES_KEY = "presentationFacetBundles";
-const PI_PLUGIN_API = "@eaonlabs/eaon-code/experimental/plugin";
+const EAON_CODE_PLUGIN_API = "@eaonlabs/eaon-code/experimental/plugin";
 
 export function createSessionPluginFacetLoader(manifestPaths: readonly string[]): FacetLoader | undefined {
 	if (manifestPaths.length === 0) return undefined;
@@ -49,7 +49,7 @@ export function createPresentationFacetLoaders(data: JsonValue): readonly FacetL
 }
 
 function resolvePluginExternal(specifier: string): string | undefined {
-	if (specifier !== PI_PLUGIN_API) return undefined;
+	if (specifier !== EAON_CODE_PLUGIN_API) return undefined;
 	const extension = import.meta.url.endsWith(".ts") ? "ts" : "js";
 	return new URL(`../plugin.${extension}`, import.meta.url).href;
 }

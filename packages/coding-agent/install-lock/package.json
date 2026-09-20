@@ -2,7 +2,7 @@
 	"name": "@eaonlabs/eaon-code-install",
 	"version": "0.85.1",
 	"private": true,
-	"description": "Lockfile root used by the Pi installer and updater.",
+	"description": "Lockfile root used by the Eaon Code installer and updater.",
 	"dependencies": {
 		"@eaonlabs/eaon-code": "0.85.1"
 	},

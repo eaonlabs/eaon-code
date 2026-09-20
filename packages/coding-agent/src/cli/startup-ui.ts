@@ -22,7 +22,7 @@ import {
 
 const OFFICIAL_PACKAGE_NAME = "@eaonlabs/eaon-code";
 const OFFICIAL_APP_NAME = "eaon-code";
-const OFFICIAL_CONFIG_DIR_NAME = ".pi";
+const OFFICIAL_CONFIG_DIR_NAME = ".eaon";
 
 interface DistributionMetadata {
 	packageName: string;
@@ -94,7 +94,7 @@ async function clearStartupTui(ui: TUI): Promise<void> {
 /**
  * First-time setup runs when all of these hold:
  * - this is the official Eaon Code distribution
- * - experimental features are enabled (PI_EXPERIMENTAL=1)
+ * - experimental features are enabled (EAON_CODE_EXPERIMENTAL=1)
  * - the default agent directory is used (no custom agent dir override)
  * - setup was not completed before (settings.json does not exist)
  */

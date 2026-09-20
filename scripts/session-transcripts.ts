@@ -4,7 +4,7 @@
  * optionally spawns subagents to analyze patterns.
  *
  * Usage: node scripts/session-transcripts.ts [--analyze] [--output <dir>] [cwd]
- *   --analyze      Spawn pi subagents to analyze each transcript file
+ *   --analyze      Spawn Eaon Code subagents to analyze each transcript file
  *   --output <dir> Output directory for transcript files (defaults to ./session-transcripts)
  *   cwd            Working directory to extract sessions for (defaults to current)
  */
@@ -77,7 +77,7 @@ interface JsonEvent {
 
 function runSubagent(prompt: string, cwd: string): Promise<{ success: boolean }> {
 	return new Promise((resolve) => {
-		const child = spawn("pi", ["--mode", "json", "--tools", "read,write", "-p", prompt], {
+		const child = spawn("eaon-code", ["--mode", "json", "--tools", "read,write", "-p", prompt], {
 			cwd,
 			stdio: ["ignore", "pipe", "pipe"],
 		});
@@ -134,7 +134,7 @@ function runSubagent(prompt: string, cwd: string): Promise<{ success: boolean }>
 		});
 
 		child.on("error", (err) => {
-			console.error(chalk.red(`  Failed to spawn pi: ${err.message}`));
+			console.error(chalk.red(`  Failed to spawn Eaon Code: ${err.message}`));
 			resolve({ success: false });
 		});
 	});
@@ -162,9 +162,11 @@ async function main() {
 	const cwd = resolve(cwdArg || process.cwd());
 
 	mkdirSync(outputDir, { recursive: true });
-	const sessionsBase = join(homedir(), ".pi/agent/sessions");
+	const sessionsBase = join(homedir(), ".eaon/agent/sessions");
+	const legacySessionsBase = join(homedir(), ".pi/agent/sessions");
+	const resolvedSessionsBase = existsSync(sessionsBase) ? sessionsBase : legacySessionsBase;
 	const sessionDirName = cwdToSessionDir(cwd);
-	const sessionDir = join(sessionsBase, sessionDirName);
+	const sessionDir = join(resolvedSessionsBase, sessionDirName);
 
 	if (!existsSync(sessionDir)) {
 		console.error(`No sessions found for ${cwd}`);

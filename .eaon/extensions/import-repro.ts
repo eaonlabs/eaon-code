@@ -10,7 +10,7 @@
  *   /ir b4d100022aefb12f25dd2d8485e0a82a
  *   /ir https://gist.github.com/mitsuhiko/b4d100022aefb12f25dd2d8485e0a82a
  *   /ir https://pi.dev/session/#b4d100022aefb12f25dd2d8485e0a82a
- *   /ir https://github.com/earendil-works/pi/issues/123
+ *   /ir https://github.com/eaonlabs/eaon-code/issues/123
  *
  *   pi "/ir <gist-id>"
  */

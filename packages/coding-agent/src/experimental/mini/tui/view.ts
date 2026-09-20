@@ -399,7 +399,7 @@ function runLogin(
 	const dialog = new LoginDialogComponent(view.ui, account.id, () => view.restoreEditor(), account.name);
 	view.mount(dialog, dialog);
 	if (!account.interactive) {
-		dialog.showInfo(`${account.methodName ?? "Authentication"} is configured outside pi.`, [], true);
+		dialog.showInfo(`${account.methodName ?? "Authentication"} is configured outside Eaon Code.`, [], true);
 		return Promise.resolve({ ok: true });
 	}
 	setUi({

@@ -16,7 +16,7 @@ import { isDeepStrictEqual } from "node:util";
 const CATALOG_SCHEMA_VERSION = 1;
 const CATALOG_PREFIX = `models/v${CATALOG_SCHEMA_VERSION}`;
 const CATALOG_INDEX_KEY = `${CATALOG_PREFIX}/index.json`;
-// Bump this only when generated model metadata requires behavior unavailable in older pi clients.
+// Bump this only when generated model metadata requires behavior unavailable in older Eaon Code clients.
 const MINIMUM_PI_VERSION = "0.80.7";
 const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -260,7 +260,7 @@ async function main() {
 		return;
 	}
 
-	const temporaryDir = mkdtempSync(join(tmpdir(), "pi-model-catalog-"));
+	const temporaryDir = mkdtempSync(join(tmpdir(), "eaon-model-catalog-"));
 	try {
 		const currentIndexPath = join(temporaryDir, "index-current.json");
 		const hasCurrentIndex = downloadIndex(options.bucket, options.endpoint, currentIndexPath);

@@ -14,6 +14,6 @@ function loadNodeOs(): typeof NodeOs | null {
 // Keep runtime OS loading browser-safe. A top-level runtime import of node:os breaks browser/Vite builds.
 const nodeOs = loadNodeOs();
 
-export function getPiUserAgent(): string {
-	return nodeOs ? `pi (${nodeOs.platform()} ${nodeOs.release()}; ${nodeOs.arch()})` : "pi (browser)";
+export function getEaonUserAgent(): string {
+	return nodeOs ? `eaon-code (${nodeOs.platform()} ${nodeOs.release()}; ${nodeOs.arch()})` : "eaon-code (browser)";
 }

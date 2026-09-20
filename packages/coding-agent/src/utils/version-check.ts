@@ -51,7 +51,7 @@ export async function getLatestRelease(
 	currentVersion: string,
 	options: { timeoutMs?: number; retry?: boolean } = {},
 ): Promise<LatestRelease | undefined> {
-	if (process.env.PI_OFFLINE) return undefined;
+	if (process.env.EAON_CODE_OFFLINE || process.env.PI_OFFLINE) return undefined;
 
 	const response = await fetchWithRetry(
 		LATEST_VERSION_URL,
@@ -90,7 +90,7 @@ export async function getLatestVersion(
 }
 
 export async function checkForNewVersion(currentVersion: string): Promise<LatestRelease | undefined> {
-	if (process.env.PI_SKIP_VERSION_CHECK) return undefined;
+	if (process.env.EAON_CODE_SKIP_VERSION_CHECK || process.env.PI_SKIP_VERSION_CHECK) return undefined;
 
 	try {
 		const latestRelease = await getLatestRelease(currentVersion);

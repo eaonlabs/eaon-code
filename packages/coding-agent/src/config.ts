@@ -390,8 +390,7 @@ export function findNodePackageDir(startDir: string): string {
 }
 
 export function getPackageDir(): string {
-	// Allow override via environment variable (useful for Nix/Guix where store paths tokenize poorly)
-	const envDir = process.env.PI_PACKAGE_DIR;
+	const envDir = process.env.EAON_CODE_PACKAGE_DIR ?? process.env.PI_PACKAGE_DIR;
 	if (envDir) {
 		return normalizePath(envDir);
 	}
@@ -505,7 +504,8 @@ export const PACKAGE_NAME: string = pkg.name || "@eaonlabs/eaon-code";
 export const EAON_CODE_PACKAGE_NAME = "@eaonlabs/eaon-code";
 export const APP_NAME: string = eaonConfigName || "eaon-code";
 export const APP_TITLE: string = eaonConfigName ? APP_NAME : "Eaon Code";
-export const CONFIG_DIR_NAME: string = pkg.eaonConfig?.configDir || ".pi";
+export const CONFIG_DIR_NAME: string = pkg.eaonConfig?.configDir || ".eaon";
+export const LEGACY_CONFIG_DIR_NAME = ".pi";
 export const VERSION: string = pkg.version || "0.0.0";
 
 // e.g., EAON_CODE_CODING_AGENT_DIR — sanitize hyphens so the name is a valid env var
@@ -517,26 +517,39 @@ export function expandTildePath(path: string): string {
 	return normalizePath(path);
 }
 
-const DEFAULT_SHARE_VIEWER_URL = "https://pi.dev/session/";
-
 /** Get the share viewer URL for a gist ID. */
 export function getShareViewerUrl(gistId: string): string {
-	const baseUrl = process.env.PI_SHARE_VIEWER_URL || DEFAULT_SHARE_VIEWER_URL;
-	return `${baseUrl}#${gistId}`;
+	const baseUrl = process.env.EAON_CODE_SHARE_VIEWER_URL ?? process.env.PI_SHARE_VIEWER_URL;
+	return baseUrl ? `${baseUrl}#${gistId}` : `https://gist.github.com/${gistId}`;
 }
 
 // =============================================================================
-// User Config Paths (~/.pi/agent/*)
+// User Config Paths (~/.eaon/agent/*)
 // =============================================================================
 
-/** Get the agent config directory (e.g., ~/.pi/agent/) */
+/** Get the project config directory, preferring the Eaon name and preserving an existing legacy directory. */
+export function getProjectConfigDir(cwd: string): string {
+	const projectDir = resolve(cwd, CONFIG_DIR_NAME);
+	if (existsSync(projectDir) || CONFIG_DIR_NAME === LEGACY_CONFIG_DIR_NAME) {
+		return projectDir;
+	}
+	const legacyProjectDir = resolve(cwd, LEGACY_CONFIG_DIR_NAME);
+	return existsSync(legacyProjectDir) ? legacyProjectDir : projectDir;
+}
+
+/** Get the agent config directory (e.g., ~/.eaon/agent/). */
 export function getAgentDir(): string {
-	// Prefer the Eaon env var; still honor upstream PI_CODING_AGENT_DIR for compatibility.
+	// Prefer the Eaon env var; continue honoring the old override and directory until users migrate.
 	const envDir = process.env[ENV_AGENT_DIR] ?? process.env.PI_CODING_AGENT_DIR;
 	if (envDir) {
 		return expandTildePath(envDir);
 	}
-	return join(homedir(), CONFIG_DIR_NAME, "agent");
+	const agentDir = join(homedir(), CONFIG_DIR_NAME, "agent");
+	if (CONFIG_DIR_NAME === LEGACY_CONFIG_DIR_NAME || existsSync(agentDir)) {
+		return agentDir;
+	}
+	const legacyAgentDir = join(homedir(), LEGACY_CONFIG_DIR_NAME, "agent");
+	return existsSync(legacyAgentDir) ? legacyAgentDir : agentDir;
 }
 
 /** Get path to user's custom themes directory */

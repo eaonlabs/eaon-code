@@ -2,8 +2,8 @@
  * Print mode (single-shot): Send prompts, output result, exit.
  *
  * Used for:
- * - `pi -p "prompt"` - text output
- * - `pi --mode json "prompt"` - JSON event stream
+ * - `eaon-code -p "prompt"` - text output
+ * - `eaon-code --mode json "prompt"` - JSON event stream
  */
 
 import type { AssistantMessage, ImageContent } from "@eaonlabs/eaon-ai";

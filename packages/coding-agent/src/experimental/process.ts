@@ -37,7 +37,7 @@ export interface InternalProcessSpawnOptions {
 	readonly env?: NodeJS.ProcessEnv;
 }
 
-/** Spawn a detached Pi-owned process consistently across Node and compiled Bun. */
+/** Spawn a detached Eaon Code-owned process consistently across Node and compiled Bun. */
 export function spawnInternalProcess(
 	role: InternalProcessRole,
 	args: readonly string[],

@@ -6,12 +6,12 @@ import { BACKGROUND_CONTEXT } from "@eaonlabs/chord/context";
 import { Client, ServerError as ClientServerError } from "@eaonlabs/eaon-client";
 import { createUnixTransportFactory } from "@eaonlabs/eaon-client/unix";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ExampleFacetService } from "../examples/plugins/pi-example-plugin/src/contract.ts";
+import { ExampleFacetService } from "../examples/plugins/eaon-example-plugin/src/contract.ts";
 import { runClient } from "../src/experimental/client.ts";
 import { activateBuiltinClientServices, openClientRuntime } from "../src/experimental/client-runtime.ts";
 import { createPresentationFacetLoaders } from "../src/experimental/plugins/bundled.ts";
 import * as processRuntime from "../src/experimental/process.ts";
-import { type RunningServer, startServer } from "../src/experimental/server.ts";
+import { type RunningServer, resolveServerDirectory, startServer } from "../src/experimental/server.ts";
 import { AgentController } from "../src/experimental/services/agent-controller.ts";
 import { createSessionServiceSource, type SessionAttachmentState } from "../src/experimental/services/connection.ts";
 import { Models } from "../src/experimental/services/models.ts";
@@ -82,12 +82,32 @@ afterEach(async () => {
 });
 
 describe("experimental durable server composition", () => {
-	test("uses PI_SERVER_DIR and PI_SERVER_ID", async () => {
+	test("uses Eaon server storage by default and reuses an existing legacy directory", async () => {
+		const home = await mkdtemp(join("/tmp", "eaon-server-home-"));
+		directories.add(home);
+		vi.stubEnv("HOME", home);
+		vi.stubEnv("EAON_CODE_SERVER_DIR", undefined);
+		vi.stubEnv("PI_SERVER_DIR", undefined);
+
+		const eaonDirectory = join(home, ".eaon", "server");
+		const legacyDirectory = join(home, ".pi", "server");
+		expect(resolveServerDirectory()).toBe(eaonDirectory);
+
+		await mkdir(legacyDirectory, { recursive: true });
+		expect(resolveServerDirectory()).toBe(legacyDirectory);
+
+		await mkdir(eaonDirectory, { recursive: true });
+		expect(resolveServerDirectory()).toBe(eaonDirectory);
+	});
+
+	test("prefers Eaon server variables over legacy Pi aliases", async () => {
 		const directory = await mkdtemp(join("/tmp", "pi-server-dir-"));
 		directories.add(directory);
 		const serverId = "00000000-0000-4000-8000-000000000001";
-		vi.stubEnv("PI_SERVER_DIR", directory);
-		vi.stubEnv("PI_SERVER_ID", serverId);
+		vi.stubEnv("EAON_CODE_SERVER_DIR", directory);
+		vi.stubEnv("EAON_CODE_SERVER_ID", serverId);
+		vi.stubEnv("PI_SERVER_DIR", join(directory, "legacy"));
+		vi.stubEnv("PI_SERVER_ID", "00000000-0000-4000-8000-000000000002");
 		const runtime = await startServer();
 		servers.add(runtime);
 
@@ -197,7 +217,7 @@ describe("experimental durable server composition", () => {
 		const directory = await mkdtemp(join("/tmp", "pi-auto-plugin-"));
 		directories.add(directory);
 		const serverId = "00000000-0000-4000-8000-000000000001";
-		const packagePath = fileURLToPath(new URL("../examples/plugins/pi-example-plugin", import.meta.url));
+		const packagePath = fileURLToPath(new URL("../examples/plugins/eaon-example-plugin", import.meta.url));
 		vi.stubEnv("PI_SERVER_DIR", directory);
 		vi.stubEnv("PI_SERVER_ID", serverId);
 
@@ -408,7 +428,7 @@ describe("experimental durable server composition", () => {
 			{
 				sessionId: "demo-1",
 				packagePaths: [
-					fileURLToPath(new URL("../examples/plugins/pi-example-plugin", import.meta.url)),
+					fileURLToPath(new URL("../examples/plugins/eaon-example-plugin", import.meta.url)),
 					secondPackagePath,
 				],
 			},

@@ -15,7 +15,7 @@ export type ClientResult =
 	| { readonly kind: "prompted"; readonly serverId: string; readonly sessionId: string; readonly text: string };
 
 export interface RunClientOptions {
-	/** Directory searched when --connect is omitted. Defaults to PI_SERVER_DIR or ~/.pi/server. */
+	/** Directory searched when --connect is omitted. Defaults to EAON_CODE_SERVER_DIR or ~/.eaon/server; existing legacy paths remain supported. */
 	readonly directory?: string;
 	/** Receives snapshot-ordered main-lane events while a prompt is active. */
 	readonly onEvent?: (event: LaneWatchEvent) => void | Promise<void>;

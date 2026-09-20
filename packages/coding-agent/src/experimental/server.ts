@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { chmod, lstat, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
@@ -48,11 +49,20 @@ import { createExperimentalServerServices } from "./services/server.ts";
 import type { SessionCreateOptions, SessionSummary } from "./services/sessions.ts";
 import { SessionPluginSelectionConflictError, SessionWorkerManager } from "./session-worker-manager.ts";
 
-export const ENV_SERVER_DIR = "PI_SERVER_DIR";
-export const ENV_SERVER_ID = "PI_SERVER_ID";
+export const ENV_SERVER_DIR = "EAON_CODE_SERVER_DIR";
+export const ENV_SERVER_ID = "EAON_CODE_SERVER_ID";
+const LEGACY_ENV_SERVER_DIR = "PI_SERVER_DIR";
+const LEGACY_ENV_SERVER_ID = "PI_SERVER_ID";
 
 export function resolveServerDirectory(directory?: string): string {
-	return resolvePath(directory ?? process.env[ENV_SERVER_DIR] ?? join(homedir(), ".pi", "server"));
+	if (directory !== undefined) return resolvePath(directory);
+	const environmentDirectory = process.env[ENV_SERVER_DIR] ?? process.env[LEGACY_ENV_SERVER_DIR];
+	if (environmentDirectory !== undefined) return resolvePath(environmentDirectory);
+
+	const eaonDirectory = join(homedir(), ".eaon", "server");
+	if (existsSync(eaonDirectory)) return resolvePath(eaonDirectory);
+	const legacyDirectory = join(homedir(), ".pi", "server");
+	return resolvePath(existsSync(legacyDirectory) ? legacyDirectory : eaonDirectory);
 }
 
 export async function ensurePrivateServerDirectory(directory: string): Promise<void> {
@@ -141,7 +151,7 @@ export interface ActivateServerOptions {
 	readonly model?: string;
 }
 
-/** Ensure the selected logical server is reachable, launching the current Pi installation if needed. */
+/** Ensure the selected logical server is reachable, launching the current Eaon Code installation if needed. */
 export async function activateServer(options: ActivateServerOptions): Promise<ActivatedServer> {
 	if (options.provider !== undefined && options.model === undefined) {
 		throw new Error("Server model provider requires a model");
@@ -331,9 +341,9 @@ export interface RunningServer {
 }
 
 export interface StartServerOptions {
-	/** Server profile and socket directory. Defaults to PI_SERVER_DIR or ~/.pi/server. */
+	/** Server profile and socket directory. Defaults to EAON_CODE_SERVER_DIR or ~/.eaon/server; existing legacy paths remain supported. */
 	readonly directory?: string;
-	/** Logical service ID. Defaults to PI_SERVER_ID or the directory's default-server-id. */
+	/** Logical service ID. Defaults to EAON_CODE_SERVER_ID, its legacy alias, or the directory's default-server-id. */
 	readonly serverId?: ServerId;
 	/** Durable session directory. Defaults to the experimental directory under the configured agent directory. */
 	readonly sessionDir?: string;
@@ -527,7 +537,10 @@ export async function startServer(options: StartServerOptions = {}): Promise<Run
 			? undefined
 			: { ...(options.provider === undefined ? {} : { provider: options.provider }), model: options.model };
 	const directory = resolveServerDirectory(options.directory);
-	const { serverId, release } = await acquireServerProfile(directory, options.serverId ?? process.env[ENV_SERVER_ID]);
+	const { serverId, release } = await acquireServerProfile(
+		directory,
+		options.serverId ?? process.env[ENV_SERVER_ID] ?? process.env[LEGACY_ENV_SERVER_ID],
+	);
 	const lifetime = new ServerLifetime(options.keepAlive ?? true);
 	let backend: RunningServerBackend | undefined;
 	let coordinator: CoordinatorConnection | undefined;
@@ -712,7 +725,10 @@ export async function startForegroundServer(
 ): Promise<RunningServer> {
 	const directory = resolveServerDirectory(options.directory);
 	await ensurePrivateServerDirectory(directory);
-	const profile = await acquireServerProfile(directory, options.serverId ?? process.env[ENV_SERVER_ID]);
+	const profile = await acquireServerProfile(
+		directory,
+		options.serverId ?? process.env[ENV_SERVER_ID] ?? process.env[LEGACY_ENV_SERVER_ID],
+	);
 	const serverId = profile.serverId;
 	await profile.release();
 	const release = await acquireServerActivation(directory, serverId);

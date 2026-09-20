@@ -4,7 +4,6 @@
 #   curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 #
 # Clones eaonlabs/eaon-code, installs workspace deps without lifecycle scripts,
-# builds the coding-agent package, and links `eaon-code` (and `pi`) into ~/.local/bin.
 set -euo pipefail
 
 REPO="${EAON_CODE_REPO:-eaonlabs/eaon-code}"
@@ -59,21 +58,19 @@ CLI="$AGENT_DIR/dist/bundle/cli.js"
 [ -f "$CLI" ] || die "build finished but $CLI is missing"
 
 mkdir -p "$BIN_DIR"
-# Product command is Eaon Code; upstream binary is still `pi`.
 cat >"$BIN_DIR/eaon-code" <<EOF
 #!/bin/sh
 exec node "$CLI" "\$@"
 EOF
 chmod +x "$BIN_DIR/eaon-code"
-ln -sf "$BIN_DIR/eaon-code" "$BIN_DIR/pi"
 
-if ! "$BIN_DIR/eaon-code" --help >/dev/null 2>&1 && ! "$BIN_DIR/pi" --help >/dev/null 2>&1; then
+if ! "$BIN_DIR/eaon-code" --help >/dev/null 2>&1; then
   die "installed, but the CLI did not run"
 fi
 
 echo "Eaon Code installed."
 echo "  source:  $PREFIX"
-echo "  command: $BIN_DIR/eaon-code  (alias: pi)"
+echo "  command: $BIN_DIR/eaon-code"
 
 if ! echo ":$PATH:" | grep -q ":$BIN_DIR:"; then
   echo ""

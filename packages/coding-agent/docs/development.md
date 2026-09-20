@@ -14,25 +14,25 @@ npm run build
 Run from source:
 
 ```bash
-/path/to/eaon-code/pi-test.sh
+/path/to/eaon-code/eaon-code-test.sh
 ```
 
-The script can be run from any directory. Pi keeps the caller's current working directory.
+The script can be run from any directory. Eaon Code keeps the caller's current working directory.
 
 ### Experimental remote harness
 
 The remote harness server/client integration is development-only. Run it from the repository with:
 
 ```bash
-PI_EXPERIMENTAL=1 ./pi-test.sh server
-PI_EXPERIMENTAL=1 ./pi-test.sh client
+EAON_CODE_EXPERIMENTAL=1 ./eaon-code-test.sh server
+EAON_CODE_EXPERIMENTAL=1 ./eaon-code-test.sh client
 ```
 
-`PI_EXPERIMENTAL` is retained for compatibility with the upstream Pi runtime.
+`PI_EXPERIMENTAL` remains a supported legacy alias for `EAON_CODE_EXPERIMENTAL`.
 
-`PI_SERVER_DIR` overrides the server profile and socket directory (default: `~/.pi/server`). `PI_SERVER_ID` selects the logical server ID when `--server-id` is omitted.
+`EAON_CODE_SERVER_DIR` overrides the server profile and socket directory (default: `~/.eaon/server`). `EAON_CODE_SERVER_ID` selects the logical server ID when `--server-id` is omitted.
 
-The `client` and `experimental/plugin` package subpaths resolve only under the `source` condition in a checkout. Their implementations and the server/client commands are excluded from npm packages and standalone binaries. `pi-client`, `pi-protocol`, and `pi-server` are development dependencies of coding-agent, not runtime dependencies. The local SDK and stdio RPC API are unchanged.
+The `client` and `experimental/plugin` package subpaths resolve only under the `source` condition in a checkout. Their implementations and the server/client commands are excluded from npm packages and standalone binaries. The client, protocol, and server workspaces are development dependencies of the coding-agent package, not runtime dependencies. The local SDK and stdio RPC API are unchanged.
 
 ## Forking / Rebranding
 
@@ -41,8 +41,8 @@ Configure via `package.json`:
 ```json
 {
   "eaonConfig": {
-    "name": "pi",
-    "configDir": ".pi"
+    "name": "eaon-code",
+    "configDir": ".eaon"
   }
 }
 ```
@@ -63,7 +63,7 @@ Never use `__dirname` directly for package assets.
 
 ## Debug Command
 
-`/debug` (hidden) writes to `~/.pi/agent/pi-debug.log`:
+`/debug` (hidden) writes to `~/.eaon/agent/eaon-code-debug.log`:
 - Rendered TUI lines with ANSI codes
 - Last messages sent to the LLM
 

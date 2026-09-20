@@ -1,6 +1,6 @@
 {
 	"name": "eaon-code-monorepo",
-	"description": "Eaon Code — Eaon's official coding agent, built atop the Pi agent harness",
+	"description": "Eaon Code — Eaon's full-screen terminal coding agent",
 	"private": true,
 	"type": "module",
 	"workspaces": [

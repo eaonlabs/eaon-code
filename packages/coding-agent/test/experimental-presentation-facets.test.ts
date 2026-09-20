@@ -54,7 +54,7 @@ describe("server-selected presentation facets", () => {
 		const directory = await mkdtemp("/tmp/pi-presentation-package-");
 		directories.add(directory);
 		const serverId = randomUUID();
-		const packagePath = join(directory, "pi-example-plugin");
+		const packagePath = join(directory, "eaon-example-plugin");
 		await mkdir(join(packagePath, "src"), { recursive: true });
 		await writeFile(
 			join(packagePath, "package.json"),
@@ -77,7 +77,7 @@ describe("server-selected presentation facets", () => {
 		const first = await plugin.build();
 		expect(first).toHaveLength(1);
 		expect(plugin.manifestPath).toMatch(
-			new RegExp(`/plugin-builds/${serverId}/pi-example-plugin-[a-f0-9]{12}/chord-facets\\.json$`, "u"),
+			new RegExp(`/plugin-builds/${serverId}/eaon-example-plugin-[a-f0-9]{12}/chord-facets\\.json$`, "u"),
 		);
 		expect(first[0]?.plugin).toEqual({ id: "@eaonlabs/test-plugin", version: "1.0.0" });
 		const firstLoaded = await createPresentationFacetLoaders(createPresentationFacetData(first))[0]!.load();
@@ -156,10 +156,10 @@ describe("server-selected presentation facets", () => {
 	});
 
 	test("builds the example plugin package without a package-owned build script", async () => {
-		const directory = await mkdtemp("/tmp/pi-example-plugin-");
+		const directory = await mkdtemp("/tmp/eaon-example-plugin-");
 		directories.add(directory);
 		const serverId = randomUUID();
-		const packagePath = fileURLToPath(new URL("../examples/plugins/pi-example-plugin", import.meta.url));
+		const packagePath = fileURLToPath(new URL("../examples/plugins/eaon-example-plugin", import.meta.url));
 		const plugin = createServerPluginPackage(directory, serverId, packagePath);
 
 		const artifacts = await plugin.build();

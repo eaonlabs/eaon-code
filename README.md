@@ -25,9 +25,17 @@
 
 ---
 
-Eaon Code is a self-extensible coding agent CLI. It ships a minimal core — read, bash, edit, write, session management — and gets its workflow features from extensions and skills you install.
+Eaon Code is a full-screen coding agent for the terminal, with multi-provider model access, durable sessions, and an extension system for adapting it to a project or team.
 
-Built atop the [Pi agent harness](https://github.com/earendil-works/pi), retuned for Eaon: same proven runtime, branded and packaged for the Eaon ecosystem.
+## What Eaon Code adds
+
+- **Plan mode** (`/plan`) restricts the agent to read-only exploration and shows a small mode indicator.
+- **Swarm mode** (`/swarm`) enables delegated work across 2–6 sub-agents and shows when it is active.
+- **Eaon Plan** is a regular provider in the provider list. It is optional and does not override your selected provider or model.
+- **Full-screen TUI by default**, with Amber as the default theme and separate dark- and light-theme lists in the theme picker and setup.
+- **Eaon configuration paths** use `~/.eaon/agent` and project `.eaon/` directories. Existing `.pi` configuration directories remain usable as a compatibility path; Eaon Code does not move or delete them.
+
+The core agent also includes file and shell tools, streaming responses, session branching and compaction, provider login and API-key auth, skills, prompts, extensions, themes, package management, and print/JSON/RPC/SDK interfaces.
 
 ## Install
 
@@ -45,7 +53,7 @@ npm install -g --ignore-scripts @eaonlabs/eaon-code
 
 Requires Node.js ≥ 22.19.
 
-The CLI is `eaon-code` (`pi` remains as an alias):
+The CLI command is `eaon-code`:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...   # or another provider
@@ -65,7 +73,7 @@ eaon-code
 git clone https://github.com/eaonlabs/eaon-code.git
 cd eaon-code
 npm install --ignore-scripts
-./pi-test.sh --help
+npm run build
 ```
 
 ## Packages
@@ -79,7 +87,7 @@ npm install --ignore-scripts
 | **[@eaonlabs/eaon-telemetry](packages/telemetry)** | Telemetry contracts, adapters, and typed schemas |
 | **[@eaonlabs/chord](packages/chord)** | Application-composition runtime for services, RPC, and plugins |
 
-Config still lives under `~/.pi` / `.pi/` for compatibility with existing installs.
+New installs use `~/.eaon/agent/` for user settings, credentials, sessions, and resources, and `.eaon/` for project-local settings and resources. Existing `.pi` directories are still recognized when no corresponding `.eaon` directory exists, so upgrading does not strand or rewrite existing data.
 
 ## Permissions & containerization
 
@@ -99,7 +107,6 @@ npm run build                 # Refresh model data, then build all packages
 npm run build:offline         # Rebuild using existing model data without network access
 npm run check                 # Lint, format, and type check
 ./test.sh                     # Run tests (skips LLM-dependent tests without API keys)
-./pi-test.sh                  # Run the agent from sources (can be run from any directory)
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).

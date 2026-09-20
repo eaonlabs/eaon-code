@@ -1,10 +1,10 @@
 # Terminal Setup
 
-Pi uses the [Kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) for reliable modifier key detection. Most modern terminals support this protocol, but some require configuration.
+Eaon Code uses the [Kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) for reliable modifier key detection. Most modern terminals support this protocol, but some require configuration.
 
 ## Capability Overrides
 
-Pi auto-detects OSC 8 hyperlinks, inline image protocols, and truecolor. If detection fails behind a terminal proxy or multiplexer, use these advanced overrides:
+Eaon Code auto-detects OSC 8 hyperlinks, inline image protocols, and truecolor. If detection fails behind a terminal proxy or multiplexer, use these advanced overrides:
 
 | Capability | Environment variable | JSON setting |
 |------------|----------------------|--------------|
@@ -26,7 +26,7 @@ Works out of the box.
 
 ### Fullscreen TUI mode
 
-Pi owns the viewport, so iTerm2 sends mouse-wheel reports instead of scrolling its native scrollback. With iTerm2's default fast-trackpad behavior, those reports can lose most of an accelerated wheel delta, making fullscreen scrolling much slower than regular scrolling.
+Eaon Code owns the viewport, so iTerm2 sends mouse-wheel reports instead of scrolling its native scrollback. With iTerm2's default fast-trackpad behavior, those reports can lose most of an accelerated wheel delta, making fullscreen scrolling much slower than regular scrolling.
 
 If fast mouse-wheel gestures move only about one line at a time in fullscreen mode:
 
@@ -37,9 +37,9 @@ This is an iTerm2-wide workaround and may also change native trackpad scrolling.
 
 ## Apple Terminal
 
-Pi enables enhanced key reporting when available. If Terminal.app still sends plain Return for `Shift+Enter`, pi uses a local macOS modifier fallback to treat that Return as `Shift+Enter`.
+Eaon Code enables enhanced key reporting when available. If Terminal.app still sends plain Return for `Shift+Enter`, Eaon Code uses a local macOS modifier fallback to treat that Return as `Shift+Enter`.
 
-This fallback only works when pi runs on the same Mac as Terminal.app. It cannot detect the local keyboard over remote SSH.
+This fallback only works when Eaon Code runs on the same Mac as Terminal.app. It cannot detect the local keyboard over remote SSH.
 
 ## Ghostty
 
@@ -55,15 +55,15 @@ Older Claude Code versions may have added this Ghostty mapping:
 keybind = shift+enter=text:\n
 ```
 
-That mapping sends a raw linefeed byte. Inside pi, that is indistinguishable from `Ctrl+J`, so tmux and pi no longer see a real `shift+enter` key event.
+That mapping sends a raw linefeed byte. Inside Eaon Code, that is indistinguishable from `Ctrl+J`, so tmux and Eaon Code no longer see a real `shift+enter` key event.
 
 If Claude Code 2.x or newer is the only reason you added that mapping, you can remove it, unless you want to use Claude Code in tmux, where it still requires that Ghostty mapping.
 
-Pi binds `Ctrl+J` as a default newline alias, so `Shift+Enter` keeps working in tmux via that remap without extra pi configuration.
+Eaon Code binds `Ctrl+J` as a default newline alias, so `Shift+Enter` keeps working in tmux via that remap without extra Eaon Code configuration.
 
 ### Fullscreen TUI mode
 
-In fullscreen mode, links remain clickable, but Ghostty does not show its hover underline or lower-left URL preview while pi captures mouse input. Hold `Shift+Command` on macOS or `Shift+Ctrl` on Linux to use Ghostty's native link handling.
+In fullscreen mode, links remain clickable, but Ghostty does not show its hover underline or lower-left URL preview while Eaon Code captures mouse input. Hold `Shift+Command` on macOS or `Shift+Ctrl` on Linux to use Ghostty's native link handling.
 
 ## WezTerm
 
@@ -76,7 +76,7 @@ config.enable_kitty_keyboard = true
 return config
 ```
 
-On macOS, WezTerm binds `Option+Enter` to fullscreen by default. To use `Option+Enter` for pi follow-up queueing, add this key override:
+On macOS, WezTerm binds `Option+Enter` to fullscreen by default. To use `Option+Enter` for Eaon Code follow-up queueing, add this key override:
 
 ```lua
 local wezterm = require 'wezterm'
@@ -93,11 +93,11 @@ return config
 
 If you already have a `config.keys` table, add the entry to it.
 
-On WSL, WezTerm may require a visible hardware cursor for IME candidate window positioning. If CJK IME candidates do not follow the text cursor, set `PI_HARDWARE_CURSOR=1` before running pi or set `showHardwareCursor` to `true` in settings.
+On WSL, WezTerm may require a visible hardware cursor for IME candidate window positioning. If CJK IME candidates do not follow the text cursor, set `PI_HARDWARE_CURSOR=1` before running Eaon Code or set `showHardwareCursor` to `true` in settings.
 
 ## Alacritty
 
-Alacritty usually works out of the box for `Shift+Enter`. On macOS, `Option+Enter` may arrive as plain `Enter`. To use `Option+Enter` for pi follow-up queueing, add to `~/.config/alacritty/alacritty.toml`:
+Alacritty usually works out of the box for `Shift+Enter`. On macOS, `Option+Enter` may arrive as plain `Enter`. To use `Option+Enter` for Eaon Code follow-up queueing, add to `~/.config/alacritty/alacritty.toml`:
 
 ```toml
 [[keyboard.bindings]]
@@ -147,12 +147,12 @@ Add these key bindings to your Zed `keymap.json`:
 
 ## Windows Terminal
 
-Pi uses Windows-style keybindings when running natively on Windows or in WSL:
+Eaon Code uses Windows-style keybindings when running natively on Windows or in WSL:
 
 - `Alt+V` pastes an image or clipboard text.
 - `Ctrl+F` searches the transcript in fullscreen mode, and `Ctrl+Up`/`Ctrl+Down` jump between marked messages.
 - `Alt+P` cycles to the previous model.
-- `Ctrl+Z` undoes editing on native Windows; WSL uses `Alt+Z` so `Ctrl+Z` can suspend pi.
+- `Ctrl+Z` undoes editing on native Windows; WSL uses `Alt+Z` so `Ctrl+Z` can suspend Eaon Code.
 - `Ctrl+Q` queues a follow-up message and `Alt+Q` restores queued messages.
 
 Add to `settings.json` (Ctrl+Shift+, or Settings → Open JSON file) to forward `Shift+Enter` for inserting a new line:
@@ -168,7 +168,7 @@ Add to `settings.json` (Ctrl+Shift+, or Settings → Open JSON file) to forward 
 }
 ```
 
-Windows Terminal binds `Alt+Enter` to fullscreen by default. To use it instead of pi's `Ctrl+Q` default for follow-up queueing, configure Windows Terminal to send the key and bind `app.message.followUp` to `alt+enter` in pi.
+Windows Terminal binds `Alt+Enter` to fullscreen by default. To use it instead of Eaon Code's `Ctrl+Q` default for follow-up queueing, configure Windows Terminal to send the key and bind `app.message.followUp` to `alt+enter` in Eaon Code.
 
 If you already have an `actions` array, add the object to it. Fully close and reopen Windows Terminal after changing its settings.
 
@@ -187,6 +187,6 @@ For the best experience, use a terminal that supports the Kitty keyboard protoco
 
 The built-in terminal has limited escape sequence support. Shift+Enter cannot be distinguished from Enter in IntelliJ's terminal.
 
-If you want the hardware cursor visible, set `PI_HARDWARE_CURSOR=1` before running pi (disabled by default for compatibility).
+If you want the hardware cursor visible, set `PI_HARDWARE_CURSOR=1` before running Eaon Code (disabled by default for compatibility).
 
 Consider using a dedicated terminal emulator for the best experience.

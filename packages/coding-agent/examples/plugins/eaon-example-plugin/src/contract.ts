@@ -10,4 +10,4 @@ export interface ExampleFacetService {
 	greet(input: { readonly name: string }, context: Context): Promise<ExampleFacetReply>;
 }
 
-export const ExampleFacetService = defineService<ExampleFacetService>("pi.example-plugin.greeting");
+export const ExampleFacetService = defineService<ExampleFacetService>("eaon.example-plugin.greeting");
