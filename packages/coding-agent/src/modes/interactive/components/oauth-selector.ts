@@ -46,6 +46,7 @@ export class OAuthSelectorComponent extends Container implements Focusable {
 	private mode: "login" | "logout";
 	private onSelectCallback: (providerId: string, authType: AuthSelectorProvider["authType"]) => void;
 	private onCancelCallback: () => void;
+	private onToggleToolsExpanded: (() => void) | undefined;
 	private showAuthTypeLabels: boolean;
 
 	constructor(
@@ -54,6 +55,7 @@ export class OAuthSelectorComponent extends Container implements Focusable {
 		onSelect: (providerId: string, authType: AuthSelectorProvider["authType"]) => void,
 		onCancel: () => void,
 		initialSearchInput?: string,
+		onToggleToolsExpanded?: () => void,
 	) {
 		super();
 
@@ -63,6 +65,7 @@ export class OAuthSelectorComponent extends Container implements Focusable {
 		this.showAuthTypeLabels = new Set(providers.map((provider) => provider.authType)).size > 1;
 		this.onSelectCallback = onSelect;
 		this.onCancelCallback = onCancel;
+		this.onToggleToolsExpanded = onToggleToolsExpanded;
 
 		// Add top border
 		this.addChild(new DynamicBorder());
@@ -182,6 +185,10 @@ export class OAuthSelectorComponent extends Container implements Focusable {
 
 	handleInput(keyData: string): void {
 		const kb = getKeybindings();
+		if (kb.matches(keyData, "app.tools.expand")) {
+			this.onToggleToolsExpanded?.();
+			return;
+		}
 		// Up arrow
 		if (kb.matches(keyData, "tui.select.up")) {
 			if (this.filteredProviders.length === 0) return;

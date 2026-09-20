@@ -5733,6 +5733,7 @@ export class InteractiveMode {
 					}
 				},
 				initialSearchInput,
+				() => this.toggleToolOutputExpansion(),
 			);
 			return { component: selector, focus: selector };
 		});
@@ -5793,6 +5794,8 @@ export class InteractiveMode {
 					done();
 					this.ui.requestRender();
 				},
+				undefined,
+				() => this.toggleToolOutputExpansion(),
 			);
 			return { component: selector, focus: selector };
 		});

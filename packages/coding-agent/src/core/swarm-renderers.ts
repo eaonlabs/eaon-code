@@ -18,7 +18,10 @@ function taskPreview(task: string): string {
 }
 
 function safeTerminalText(text: string): string {
-	const normalizedC1 = text
+	const withoutStringControls = text
+		.replaceAll(/[\u0090\u0098\u009d\u009e\u009f][\s\S]*?(?:\u0007|\u009c)/g, "")
+		.replaceAll(/\x1b(?:P|X|\^|_)[\s\S]*?(?:\u0007|\x1b\\)/g, "");
+	const normalizedC1 = withoutStringControls
 		.replaceAll("\u0090", "\x1bP")
 		.replaceAll("\u0098", "\x1bX")
 		.replaceAll("\u009b", "\x1b[")

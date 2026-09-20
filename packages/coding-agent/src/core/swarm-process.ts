@@ -11,8 +11,8 @@ import { truncateTail } from "./tools/truncate.ts";
 
 const SUBAGENT_TIMEOUT_MS = 8 * 60 * 1000;
 const LIVE_UPDATE_INTERVAL_MS = 50;
-const MAX_SUBAGENT_OUTPUT_BYTES = 64 * 1024;
-const MAX_SUBAGENT_OUTPUT_LINES = 1000;
+const MAX_STREAM_OUTPUT_BYTES = 32 * 1024;
+const MAX_STREAM_OUTPUT_LINES = 500;
 const TRUNCATION_NOTICE = "[... earlier sub-agent output truncated ...]\n";
 
 export type SwarmProcessStatus = "completed" | "failed" | "cancelled" | "timed_out";
@@ -29,8 +29,8 @@ export type SwarmProcessUpdate = (output: string, stderr: string) => void;
 function appendOutput(current: string, chunk: string): { text: string; truncated: boolean } {
 	const combined = current + sanitizeBinaryOutput(chunk);
 	const truncated = truncateTail(combined, {
-		maxBytes: MAX_SUBAGENT_OUTPUT_BYTES,
-		maxLines: MAX_SUBAGENT_OUTPUT_LINES,
+		maxBytes: MAX_STREAM_OUTPUT_BYTES,
+		maxLines: MAX_STREAM_OUTPUT_LINES,
 	});
 	return { text: truncated.content, truncated: truncated.truncated };
 }

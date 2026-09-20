@@ -238,7 +238,7 @@ setTimeout(() => process.exit(0), 1000);
 		if (!renderCall) throw new Error("Expected swarm call renderer");
 		const args = {
 			mode: "single" as const,
-			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007\u009d52;c;YzEtc2VjcmV0\u009cscout",
+			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007\u009d52;c;YzEtc2VjcmV0\u009c\u0090YzEtZGNz\u009cscout",
 			task: "\u0085\u009b31mInspect files\u009b0m",
 		};
 
@@ -263,6 +263,7 @@ setTimeout(() => process.exit(0), 1000);
 		// Then: terminal instructions and their payloads never reach the rendered bytes.
 		expect(rendered).not.toContain("c2VjcmV0LWNsaXBib2FyZA==");
 		expect(rendered).not.toContain("YzEtc2VjcmV0");
+		expect(rendered).not.toContain("YzEtZGNz");
 		expect(rendered).not.toContain("52;c;");
 		expect(rendered).not.toContain("\u009b31m");
 		expect(rendered).not.toContain("\u009d");
