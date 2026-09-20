@@ -238,7 +238,7 @@ setTimeout(() => process.exit(0), 1000);
 		if (!renderCall) throw new Error("Expected swarm call renderer");
 		const args = {
 			mode: "single" as const,
-			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007\u009d52;c;YzEtc2VjcmV0\u009c\u0090YzEtZGNz\x1b\\scout",
+			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007\u009d52;c;YzEtc2VjcmV0\u009c\u0090YzEtZGNz\x1b\\\x1bPZGNzLWJlZm9yZQ==\u0007ZGNzLWFmdGVy\x1b\\scout",
 			task: "\u0085\u009b31mInspect files\u009b0m\u0090dGFpbA==",
 		};
 
@@ -264,6 +264,8 @@ setTimeout(() => process.exit(0), 1000);
 		expect(rendered).not.toContain("c2VjcmV0LWNsaXBib2FyZA==");
 		expect(rendered).not.toContain("YzEtc2VjcmV0");
 		expect(rendered).not.toContain("YzEtZGNz");
+		expect(rendered).not.toContain("ZGNzLWJlZm9yZQ==");
+		expect(rendered).not.toContain("ZGNzLWFmdGVy");
 		expect(rendered).not.toContain("dGFpbA==");
 		expect(rendered).not.toContain("52;c;");
 		expect(rendered).not.toContain("\u009b31m");
@@ -329,6 +331,7 @@ setTimeout(() => process.exit(0), 1000);
 		const collapsedLines = component.render(width);
 		const scoutRow = collapsedLines.findIndex((line) => stripAnsi(line).includes("completed  scout"));
 		expect(scoutRow).toBeGreaterThanOrEqual(0);
+		expect(stripAnsi(collapsedLines[scoutRow] ?? "")).toContain("▸");
 
 		// When: the user clicks the scout row.
 		const event: TuiMouseEvent = {
@@ -349,6 +352,7 @@ setTimeout(() => process.exit(0), 1000);
 
 		// Then: only that sub-agent reveals its full activity.
 		const clicked = stripAnsi(component.render(width).join("\n"));
+		expect(clicked).toContain("▾ ✓ completed  scout");
 		expect(clicked).toContain("scout first detail");
 		expect(clicked).not.toContain("review first detail");
 

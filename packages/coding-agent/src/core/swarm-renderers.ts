@@ -21,17 +21,20 @@ function stripTerminalStringControls(text: string): string {
 	let result = "";
 	let index = 0;
 	while (index < text.length) {
-		const c1Opener = /[\u0090\u0098\u009d\u009e\u009f]/.test(text[index] ?? "");
-		const escOpener = text[index] === "\x1b" && /[PX\]^_]/.test(text[index + 1] ?? "");
+		const opener = text[index];
+		const escType = text[index + 1];
+		const c1Opener = /[\u0090\u0098\u009d\u009e\u009f]/.test(opener ?? "");
+		const escOpener = opener === "\x1b" && /[PX\]^_]/.test(escType ?? "");
 		if (!c1Opener && !escOpener) {
 			result += text[index];
 			index++;
 			continue;
 		}
+		const allowBelTerminator = opener === "\u009d" || escType === "]";
 		index += c1Opener ? 1 : 2;
 		while (
 			index < text.length &&
-			text[index] !== "\u0007" &&
+			(!allowBelTerminator || text[index] !== "\u0007") &&
 			text[index] !== "\u009c" &&
 			!(text[index] === "\x1b" && text[index + 1] === "\\")
 		) {
@@ -91,10 +94,13 @@ function statusLabel(status: SwarmToolDetails["agents"][number]["status"], theme
 }
 
 function formatAgent(agent: SwarmToolDetails["agents"][number], expanded: boolean, theme: Theme): string {
-	let text = `${statusLabel(agent.status, theme)}  ${theme.fg("toolTitle", theme.bold(safeTerminalText(agent.agent)))}`;
+	let text = `${theme.fg("dim", expanded ? "▾" : "▸")} ${statusLabel(agent.status, theme)}  ${theme.fg("toolTitle", theme.bold(safeTerminalText(agent.agent)))}`;
 	if (expanded) text += `\n    ${theme.fg("muted", taskPreview(agent.task))}`;
 	const output = safeTerminalText(agent.output).trim();
-	if (!output) return text;
+	if (!output) {
+		if (!expanded) text += `\n    ${theme.fg("dim", `click or ${keyText("app.tools.expand")} to expand`)}`;
+		return text;
+	}
 	const lines = output.split("\n");
 	const visibleLines = expanded ? lines : lines.slice(-COLLAPSED_OUTPUT_LINES);
 	if (lines.length > visibleLines.length) {
