@@ -28,10 +28,18 @@ fi
 echo "Installing Eaon Code…"
 
 if [ -d "$PREFIX/.git" ]; then
+  if ! checkout_status="$(git -C "$PREFIX" status --porcelain --untracked-files=normal)"; then
+    die "could not inspect the existing checkout at $PREFIX"
+  fi
+  if [ -n "$checkout_status" ]; then
+    die "$PREFIX contains local changes. Move them or choose another EAON_CODE_PREFIX before updating."
+  fi
   git -C "$PREFIX" fetch --depth 1 origin "$REF" -q
   git -C "$PREFIX" reset --hard "origin/$REF" -q
 else
-  rm -rf "$PREFIX"
+  if [ -e "$PREFIX" ]; then
+    die "$PREFIX exists and is not an Eaon Code Git checkout. Move it or choose another EAON_CODE_PREFIX."
+  fi
   mkdir -p "$(dirname "$PREFIX")"
   git clone --depth 1 --branch "$REF" -q "https://github.com/${REPO}" "$PREFIX"
 fi
