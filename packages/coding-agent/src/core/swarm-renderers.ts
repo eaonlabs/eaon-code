@@ -1,7 +1,6 @@
-import { Container, MouseRegion, Text, truncateToWidth } from "@eaonlabs/eaon-tui";
+import { Container, MouseRegion, stripTerminalSequences, Text, truncateToWidth } from "@eaonlabs/eaon-tui";
 import { keyText } from "../modes/interactive/components/keybinding-hints.ts";
 import type { Theme } from "../modes/interactive/theme/theme.ts";
-import { stripAnsi } from "../utils/ansi.ts";
 import { sanitizeBinaryOutput } from "../utils/shell.ts";
 import type { ToolDefinition, ToolRenderResultOptions } from "./extensions/types.ts";
 import type { SwarmInvocation, SwarmParamsSchema, SwarmTask, SwarmToolDetails } from "./swarm.ts";
@@ -19,7 +18,15 @@ function taskPreview(task: string): string {
 }
 
 function safeTerminalText(text: string): string {
-	return sanitizeBinaryOutput(stripAnsi(text)).replaceAll("\r", "");
+	const normalizedC1 = text
+		.replaceAll("\u0090", "\x1bP")
+		.replaceAll("\u0098", "\x1bX")
+		.replaceAll("\u009b", "\x1b[")
+		.replaceAll("\u009d", "\x1b]")
+		.replaceAll("\u009e", "\x1b^")
+		.replaceAll("\u009f", "\x1b_")
+		.replaceAll("\u009c", "\x1b\\");
+	return sanitizeBinaryOutput(stripTerminalSequences(normalizedC1)).replaceAll("\r", "");
 }
 
 function listTasks(args: SwarmInvocation): readonly SwarmTask[] {

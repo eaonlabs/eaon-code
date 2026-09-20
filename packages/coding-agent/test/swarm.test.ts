@@ -113,6 +113,26 @@ process.stderr.write("warning: partial result\\n");
 		expect(Buffer.byteLength(output, "utf8")).toBeLessThan(66 * 1024);
 	});
 
+	it("preserves UTF-8 characters split across process chunks", async () => {
+		// Given: a child that writes one UTF-8 character across two chunks.
+		const { directory, script } = await createChildScript(`
+process.stdout.write(Buffer.from([0xf0, 0x9f]));
+setTimeout(() => process.stdout.write(Buffer.from([0x98, 0x80])), 20);
+`);
+		const tool = wrapToolDefinition(createSwarmSubagentTool({ cwd: directory, cliEntry: script }));
+
+		// When: the child completes.
+		const result = await tool.execute(
+			"tool-split-utf8",
+			{ mode: "single", agent: "reviewer", task: "Produce unicode output" },
+			undefined,
+			undefined,
+		);
+
+		// Then: streaming preserves the original code point.
+		expect(result.details.agents[0]?.output).toBe("😀");
+	});
+
 	it("terminates a running child when the parent turn is cancelled", async () => {
 		// Given: a long-running child agent that exits cleanly on SIGTERM.
 		const { directory, script } = await createChildScript(`
@@ -218,7 +238,7 @@ setTimeout(() => process.exit(0), 1000);
 		if (!renderCall) throw new Error("Expected swarm call renderer");
 		const args = {
 			mode: "single" as const,
-			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007scout",
+			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007\u009d52;c;YzEtc2VjcmV0\u009cscout",
 			task: "\u009b31mInspect files\u009b0m",
 		};
 
@@ -242,8 +262,10 @@ setTimeout(() => process.exit(0), 1000);
 
 		// Then: terminal instructions and their payloads never reach the rendered bytes.
 		expect(rendered).not.toContain("c2VjcmV0LWNsaXBib2FyZA==");
+		expect(rendered).not.toContain("YzEtc2VjcmV0");
 		expect(rendered).not.toContain("52;c;");
 		expect(rendered).not.toContain("\u009b31m");
+		expect(rendered).not.toContain("\u009d");
 		expect(stripAnsi(rendered)).toContain("scout");
 		expect(stripAnsi(rendered)).toContain("Inspect files");
 	});

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { StringDecoder } from "node:string_decoder";
 import {
 	killProcessTree,
 	sanitizeBinaryOutput,
@@ -87,8 +88,11 @@ export async function runSwarmSubagent(
 		if (child.pid) trackDetachedChildPid(child.pid);
 		let stdout = "";
 		let stderr = "";
+		const stdoutDecoder = new StringDecoder("utf8");
+		const stderrDecoder = new StringDecoder("utf8");
 		let stdoutTruncated = false;
 		let stderrTruncated = false;
+		let decodersFlushed = false;
 		let requestedStatus: "cancelled" | "timed_out" | undefined;
 		let settled = false;
 		let updateTimer: NodeJS.Timeout | undefined;
@@ -100,6 +104,22 @@ export async function runSwarmSubagent(
 		const scheduleUpdate = () => {
 			updateTimer ??= setTimeout(emitUpdate, LIVE_UPDATE_INTERVAL_MS);
 		};
+		const appendStdout = (chunk: string) => {
+			const next = appendOutput(stdout, chunk);
+			stdout = next.text;
+			stdoutTruncated ||= next.truncated;
+		};
+		const appendStderr = (chunk: string) => {
+			const next = appendOutput(stderr, chunk);
+			stderr = next.text;
+			stderrTruncated ||= next.truncated;
+		};
+		const flushDecoders = () => {
+			if (decodersFlushed) return;
+			decodersFlushed = true;
+			appendStdout(stdoutDecoder.end());
+			appendStderr(stderrDecoder.end());
+		};
 
 		const stopChild = (status: "cancelled" | "timed_out") => {
 			requestedStatus ??= status;
@@ -107,9 +127,7 @@ export async function runSwarmSubagent(
 		};
 		const onAbort = () => stopChild("cancelled");
 		const timer = setTimeout(() => {
-			const next = appendOutput(stderr, "\n[sub-agent timed out]");
-			stderr = next.text;
-			stderrTruncated ||= next.truncated;
+			appendStderr("\n[sub-agent timed out]");
 			stopChild("timed_out");
 		}, SUBAGENT_TIMEOUT_MS);
 		const finish = (exitCode: number, status: SwarmProcessStatus) => {
@@ -128,25 +146,21 @@ export async function runSwarmSubagent(
 		};
 
 		child.stdout.on("data", (data: Buffer) => {
-			const next = appendOutput(stdout, data.toString());
-			stdout = next.text;
-			stdoutTruncated ||= next.truncated;
+			appendStdout(stdoutDecoder.write(data));
 			scheduleUpdate();
 		});
 		child.stderr.on("data", (data: Buffer) => {
-			const next = appendOutput(stderr, data.toString());
-			stderr = next.text;
-			stderrTruncated ||= next.truncated;
+			appendStderr(stderrDecoder.write(data));
 			scheduleUpdate();
 		});
 		child.on("close", (code) => {
+			flushDecoders();
 			const exitCode = code ?? 1;
 			finish(exitCode, requestedStatus ?? (exitCode === 0 ? "completed" : "failed"));
 		});
 		child.on("error", (error) => {
-			const next = appendOutput(stderr, `${stderr ? "\n" : ""}${error.message}`);
-			stderr = next.text;
-			stderrTruncated ||= next.truncated;
+			flushDecoders();
+			appendStderr(`${stderr ? "\n" : ""}${error.message}`);
 			finish(1, requestedStatus ?? "failed");
 		});
 
