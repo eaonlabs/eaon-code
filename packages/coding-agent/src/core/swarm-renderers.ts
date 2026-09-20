@@ -17,18 +17,34 @@ function taskPreview(task: string): string {
 	return truncateToWidth(normalized, 64, "...");
 }
 
+function stripTerminalStringControls(text: string): string {
+	let result = "";
+	let index = 0;
+	while (index < text.length) {
+		const c1Opener = /[\u0090\u0098\u009d\u009e\u009f]/.test(text[index] ?? "");
+		const escOpener = text[index] === "\x1b" && /[PX\]^_]/.test(text[index + 1] ?? "");
+		if (!c1Opener && !escOpener) {
+			result += text[index];
+			index++;
+			continue;
+		}
+		index += c1Opener ? 1 : 2;
+		while (
+			index < text.length &&
+			text[index] !== "\u0007" &&
+			text[index] !== "\u009c" &&
+			!(text[index] === "\x1b" && text[index + 1] === "\\")
+		) {
+			index++;
+		}
+		if (text[index] === "\x1b") index += 2;
+		else if (index < text.length) index++;
+	}
+	return result;
+}
+
 function safeTerminalText(text: string): string {
-	const withoutStringControls = text
-		.replaceAll(/[\u0090\u0098\u009d\u009e\u009f][\s\S]*?(?:\u0007|\u009c)/g, "")
-		.replaceAll(/\x1b(?:P|X|\^|_)[\s\S]*?(?:\u0007|\x1b\\)/g, "");
-	const normalizedC1 = withoutStringControls
-		.replaceAll("\u0090", "\x1bP")
-		.replaceAll("\u0098", "\x1bX")
-		.replaceAll("\u009b", "\x1b[")
-		.replaceAll("\u009d", "\x1b]")
-		.replaceAll("\u009e", "\x1b^")
-		.replaceAll("\u009f", "\x1b_")
-		.replaceAll("\u009c", "\x1b\\");
+	const normalizedC1 = stripTerminalStringControls(text).replaceAll("\u009b", "\x1b[");
 	return sanitizeBinaryOutput(stripTerminalSequences(normalizedC1))
 		.replaceAll(/[\u0080-\u009f]/g, "")
 		.replaceAll("\r", "");
