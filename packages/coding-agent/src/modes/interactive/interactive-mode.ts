@@ -106,7 +106,7 @@ import { withBuiltInRenderers } from "../../core/tools/renderers/index.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
 import { getUsageCostBreakdown } from "../../core/usage-totals.ts";
-import { createBetterWrightBrowserTools, createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
+import { createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
 import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
 import { copyToClipboard, readClipboardText } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
@@ -389,7 +389,6 @@ export interface InteractiveModeOptions {
 
 export class InteractiveMode {
 	private runtimeHost: AgentSessionRuntime;
-	private browserTools: ReturnType<typeof createBetterWrightBrowserTools> | undefined;
 	private renderer: TuiMainScreen | TuiAltScreen;
 	private ui: TUI;
 	private mainScreenRenderState: TuiMainScreenRenderState | undefined;
@@ -4037,7 +4036,6 @@ export class InteractiveMode {
 			// which the stdout/stderr error handler turns into emergencyTerminalExit;
 			// the render loop is already idle, so this cannot hot-spin (see #4144).
 			await this.runtimeHost.dispose();
-			await this.browserTools?.close();
 			await this.ui.terminal.drainInput(1000);
 			this.stop();
 			process.exit(0);
@@ -4052,7 +4050,6 @@ export class InteractiveMode {
 
 		this.stop();
 		await this.runtimeHost.dispose();
-		await this.browserTools?.close();
 
 		const resumeCommand = formatResumeCommand(this.sessionManager);
 		if (resumeCommand) {
@@ -6646,8 +6643,6 @@ export class InteractiveMode {
 	/** Built-in web access + long-context tools (no extra packages). */
 	private registerBuiltinEaonTools(): void {
 		const session = this.session;
-		const browserTools = this.browserTools ?? createBetterWrightBrowserTools(session.sessionId);
-		this.browserTools = browserTools;
 		const target = {
 			getMessages: () => session.messages as unknown as Array<{ role: string; content?: unknown }>,
 			setMessages: (messages: unknown[]) => {
@@ -6659,8 +6654,6 @@ export class InteractiveMode {
 		const tools = [
 			createWebSearchTool(),
 			createFetchContentTool(),
-			browserTools.browser,
-			browserTools.browserClose,
 			createCompressTool(() => target),
 			createContextStatusTool(() => target),
 		];

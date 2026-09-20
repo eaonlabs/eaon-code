@@ -4,7 +4,6 @@
 
 ### Added
 
-- Added an on-demand BetterWright browser tool with bounded results and explicit session cleanup.
 - Added `ctx.modelRegistry.stream()` and `streamSimple()` for extension model calls through configured providers with resolved authentication ([#8964](https://github.com/earendil-works/pi/issues/8964)).
 - Added per-model `reserveTokens` and `keepRecentTokens` settings through `compaction.modelOverrides`, with ordinary compaction settings as fallback ([#8133](https://github.com/earendil-works/pi-mono/issues/8133)).
 
@@ -14,6 +13,10 @@
 - Moved compaction, branch summarization, and retry spinners into the editor border alongside the working indicator. Custom editors use the same embedding opt-in for all status spinners.
 - Enabled strict-prefer JSON-schema sampling by default for built-in `read`, `bash`, `powershell`, `edit`, and `write` tools, without requiring `PI_EXPERIMENTAL`. Extensions can re-register tool definitions with `constrainedSampling: false`.
 - Use Eaon Code’s own package metadata for version checks and self-update targets; staged updates require an Eaon-configured service.
+
+### Removed
+
+- Removed the BetterWright browser integration and its browser tools.
 
 ### Fixed
 

@@ -22,7 +22,6 @@ const allowedExternalPackages = new Set([
 	"@eaonlabs/chord/delta",
 	"@eaonlabs/chord/node",
 	"@silvia-odwyer/photon-node",
-	"betterwright/sdk",
 	"jiti",
 	// Optional native accelerators. Their callers fall back to JavaScript when absent.
 	"bufferutil",
@@ -87,7 +86,7 @@ function commonBuildOptions() {
 		banner,
 		bundle: true,
 		define: { PI_BUNDLED_NODE: "true" },
-		external: ["@eaonlabs/chord", "@silvia-odwyer/photon-node", "betterwright/sdk"],
+		external: ["@eaonlabs/chord", "@silvia-odwyer/photon-node"],
 		format: "esm",
 		legalComments: "none",
 		logLevel: "warning",

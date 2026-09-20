@@ -6,8 +6,6 @@
 import type { AgentTool, AgentToolResult } from "@eaonlabs/eaon-agent-core";
 import { Type } from "typebox";
 
-export { createBetterWrightBrowserTools } from "./betterwright-browser.ts";
-
 const USER_AGENT = "EaonCode/0.85 (https://github.com/eaonlabs/eaon-code; coding agent web access)";
 const MAX_BODY = 80_000;
 
