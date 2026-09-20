@@ -338,7 +338,7 @@ export function getSelfUpdateUnavailableInstruction(
 	const method = detectInstallMethod();
 	const target = normalizeSelfUpdatePackageTarget(updatePackageTarget);
 	if (method === "bun-binary") {
-		return `Download from: https://github.com/earendil-works/pi/releases/latest`;
+		return `Download from: https://github.com/eaonlabs/eaon-code/releases/latest`;
 	}
 	const command = getSelfUpdateCommandForMethod(method, packageName, target, npmCommand);
 	if (command) {
@@ -346,6 +346,9 @@ export function getSelfUpdateUnavailableInstruction(
 			return `This installation is managed by a global ${method} install, but the install path is not writable. Update it yourself with: ${command.display}`;
 		}
 		return `This installation is not managed by a global ${method} install. Update it with the package manager, wrapper, or source checkout that provides it.`;
+	}
+	if (method === "unknown") {
+		return `This ${APP_NAME} installation is managed by its source checkout or wrapper. Update it through that installation method.`;
 	}
 	return `Update ${target.installSpec} using the package manager, wrapper, or source checkout that provides this installation.`;
 }
@@ -499,6 +502,7 @@ try {
 
 const eaonConfigName: string | undefined = pkg.eaonConfig?.name;
 export const PACKAGE_NAME: string = pkg.name || "@eaonlabs/eaon-code";
+export const EAON_CODE_PACKAGE_NAME = "@eaonlabs/eaon-code";
 export const APP_NAME: string = eaonConfigName || "eaon-code";
 export const APP_TITLE: string = eaonConfigName ? APP_NAME : "Eaon Code";
 export const CONFIG_DIR_NAME: string = pkg.eaonConfig?.configDir || ".pi";

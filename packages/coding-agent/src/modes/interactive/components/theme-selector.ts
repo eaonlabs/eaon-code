@@ -1,6 +1,7 @@
 import { Container, type SelectItem, SelectList, type SelectListLayoutOptions, Spacer, Text } from "@eaonlabs/eaon-tui";
-import { getAvailableThemes, getSelectListTheme, theme } from "../theme/theme.ts";
+import { getDarkThemeNames, getDefaultTheme, getLightThemeNames, getSelectListTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
+import { ThemePreviewComponent } from "./theme-preview.ts";
 
 const THEME_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 	minPrimaryColumnWidth: 12,
@@ -9,6 +10,7 @@ const THEME_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 
 export class ThemeSelectorComponent extends Container {
 	private selectList: SelectList;
+	private preview: ThemePreviewComponent;
 
 	constructor(
 		currentTheme: string,
@@ -21,7 +23,7 @@ export class ThemeSelectorComponent extends Container {
 	) {
 		super();
 
-		const themes = options?.themes ?? getAvailableThemes();
+		const themes = options?.themes ?? [...getDarkThemeNames(), ...getLightThemeNames()];
 		const themeItems: SelectItem[] = themes.map((name) => ({
 			value: name,
 			label: name,
@@ -39,7 +41,11 @@ export class ThemeSelectorComponent extends Container {
 		const currentIndex = themes.indexOf(currentTheme);
 		if (currentIndex !== -1) {
 			this.selectList.setSelectedIndex(currentIndex);
+		} else {
+			const defaultIndex = themes.indexOf(getDefaultTheme());
+			if (defaultIndex !== -1) this.selectList.setSelectedIndex(defaultIndex);
 		}
+		this.preview = new ThemePreviewComponent(this.selectList.getSelectedItem()?.value ?? getDefaultTheme());
 
 		this.selectList.onSelect = (item) => {
 			onSelect(item.value);
@@ -48,8 +54,12 @@ export class ThemeSelectorComponent extends Container {
 		this.selectList.onCancel = () => {
 			onCancel();
 		};
+		this.selectList.onSelectionChange = (item) => {
+			this.preview.setThemeName(item.value);
+		};
 
 		this.addChild(this.selectList);
+		this.addChild(this.preview);
 		this.addChild(new DynamicBorder());
 	}
 

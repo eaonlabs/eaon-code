@@ -8,6 +8,7 @@ import { Container, getKeybindings, Spacer, Text } from "@eaonlabs/eaon-tui";
 import { getDarkThemeNames, getDefaultTheme, getLightThemeNames, isLightTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyHint, rawKeyHint } from "./keybinding-hints.ts";
+import { ThemePreviewComponent } from "./theme-preview.ts";
 
 export interface SetupResult {
 	provider: string | "skip";
@@ -109,6 +110,7 @@ export class SetupWizardComponent extends Container {
 					this.themes.map((id) => ({ label: id, description: id === getDefaultTheme() ? "default" : "" })),
 					this.themePickIndex,
 				);
+				this.addChild(new ThemePreviewComponent(this.themes[this.themePickIndex] ?? getDefaultTheme()));
 			}
 		} else {
 			this.addChild(new Text(theme.fg("success", "Setup complete."), 1, 0));

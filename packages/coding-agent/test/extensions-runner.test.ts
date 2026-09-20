@@ -118,6 +118,54 @@ describe("ExtensionRunner", () => {
 		});
 	});
 
+	describe("user_bash", () => {
+		it("does not allow a failing handler to fall through to local shell execution", async () => {
+			const extensionPath = path.join(extensionsDir, "user-bash-error.ts");
+			fs.writeFileSync(
+				extensionPath,
+				`export default function(pi) {
+	pi.on("user_bash", () => {
+		throw new Error("shell delegation failed");
+	});
+}`,
+			);
+
+			const result = await loadExtensions([extensionPath], tempDir);
+			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
+
+			await expect(
+				runner.emitUserBash({
+					type: "user_bash",
+					command: "touch should-not-run",
+					excludeFromContext: false,
+					cwd: tempDir,
+				}),
+			).rejects.toThrow("shell delegation failed");
+		});
+
+		it("rejects invalid handler results rather than allowing local shell execution", async () => {
+			const extensionPath = path.join(extensionsDir, "user-bash-invalid.ts");
+			fs.writeFileSync(
+				extensionPath,
+				`export default function(pi) {
+	pi.on("user_bash", () => ({}));
+}`,
+			);
+
+			const result = await loadExtensions([extensionPath], tempDir);
+			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
+
+			await expect(
+				runner.emitUserBash({
+					type: "user_bash",
+					command: "touch should-not-run",
+					excludeFromContext: false,
+					cwd: tempDir,
+				}),
+			).rejects.toThrow("Invalid user_bash handler result");
+		});
+	});
+
 	describe("project_trust", () => {
 		it("continues past undecided handlers and returns the first yes/no decision", async () => {
 			const undecidedPath = path.join(extensionsDir, "undecided.ts");

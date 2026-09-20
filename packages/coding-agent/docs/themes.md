@@ -317,6 +317,6 @@ echo $COLORTERM  # Should output "truecolor" or "24bit"
 
 ## Examples
 
-See the built-in themes:
-- [dark.json](../src/modes/interactive/theme/dark.json)
-- [light.json](../src/modes/interactive/theme/light.json)
+See the built-in Amber palettes:
+- [Dark Amber (default)](../src/modes/interactive/theme/dark-amber.json)
+- [Light Amber](../src/modes/interactive/theme/light-amber.json)

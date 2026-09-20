@@ -20,10 +20,15 @@ describe("theme documents", () => {
 
 	it("partitions the available documents into explicit dark and light lists", () => {
 		expect(getDarkThemeNames()).toContain("dark-amber");
+		expect(getDarkThemeNames()).not.toContain("dark");
 		expect(getDarkThemeNames()).not.toContain("light-amber");
 		expect(getLightThemeNames()).toContain("light-amber");
+		expect(getLightThemeNames()).not.toContain("light");
 		expect(getLightThemeNames()).not.toContain("dark-amber");
-		expect(getAvailableThemes()).toContain("light");
+		expect(getAvailableThemes()).not.toContain("dark");
+		expect(getAvailableThemes()).not.toContain("light");
+		expect(getThemeByName("dark")?.name).toBe("dark");
+		expect(getThemeByName("light")?.name).toBe("light");
 	});
 
 	it("loads light user-message colors as a light palette", () => {

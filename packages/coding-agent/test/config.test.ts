@@ -177,7 +177,7 @@ describe("detectInstallMethod", () => {
 		expect(detectInstallMethod()).toBe("unknown");
 		expect(getSelfUpdateCommand("@eaonlabs/eaon-code")).toBeUndefined();
 		expect(getUpdateInstruction("@eaonlabs/eaon-code")).toBe(
-			"Update @eaonlabs/eaon-code using the package manager, wrapper, or source checkout that provides this installation.",
+			"This eaon-code installation is managed by its source checkout or wrapper. Update it through that installation method.",
 		);
 	});
 

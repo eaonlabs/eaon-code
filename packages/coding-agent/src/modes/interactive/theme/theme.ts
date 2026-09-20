@@ -468,6 +468,9 @@ export function getAvailableThemesWithPaths(): ThemeInfo[] {
 
 	// Built-in themes
 	for (const name of Object.keys(getBuiltinThemes())) {
+		if (name === "dark" || name === "light") {
+			continue;
+		}
 		addTheme({ name, path: path.join(themesDir, `${name}.json`) });
 	}
 

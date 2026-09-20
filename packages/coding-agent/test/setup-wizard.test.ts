@@ -38,6 +38,11 @@ describe("SetupWizardComponent", () => {
 		expect(output).toContain("Dark themes");
 		expect(output).toContain("amber");
 		expect(output).not.toContain("light-amber");
+		expect(output).toContain("Preview: dark-amber");
+
+		wizard.handleInput("\x1b[B");
+		output = stripAnsi(wizard.render(120).join("\n"));
+		expect(output).toContain("Preview: dark-copper");
 
 		wizard.handleInput("\x1b");
 		wizard.handleInput("\x1b[B");
@@ -47,7 +52,6 @@ describe("SetupWizardComponent", () => {
 		expect(output).toContain("light-amber");
 		expect(output).not.toContain("\namber");
 
-		wizard.handleInput("\x1b[B");
 		wizard.handleInput("\r");
 		expect(onSubmit).toHaveBeenCalledWith({ provider: "anthropic", themeName: "light-amber" });
 	});

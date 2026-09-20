@@ -52,7 +52,7 @@ describe("package commands", () => {
 		writeFileSync(join(managedRoot, "current-version"), `${VERSION}\n`);
 		writeFileSync(
 			join(managedRoot, "managed-install.json"),
-			`${JSON.stringify({ kind: "pi-managed-install", schemaVersion: 1, layout: "releases-v1" })}\n`,
+			`${JSON.stringify({ kind: "eaon-code-managed-install", schemaVersion: 1, layout: "releases-v1" })}\n`,
 		);
 
 		const binDir = join(tempDir, "managed-bin");
@@ -68,14 +68,14 @@ fs.writeFileSync(${JSON.stringify(npmRecordPath)}, JSON.stringify(args));
 if (${npmExitCode} !== 0) process.exit(${npmExitCode});
 const binDir = path.join(process.cwd(), "node_modules", ".bin");
 fs.mkdirSync(binDir, { recursive: true });
-const piPath = path.join(binDir, process.platform === "win32" ? "pi.cmd" : "pi");
+const eaonCodePath = path.join(binDir, process.platform === "win32" ? "eaon-code.cmd" : "eaon-code");
 fs.writeFileSync(
-	piPath,
+	eaonCodePath,
 	process.platform === "win32"
 		? "@echo off\\r\\necho ${targetVersion}\\r\\n"
 		: "#!/bin/sh\\nprintf '%s\\n' ${targetVersion}\\n",
 );
-if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
+if (process.platform !== "win32") fs.chmodSync(eaonCodePath, 0o755);
 `,
 		);
 		const npmPath = join(binDir, process.platform === "win32" ? "npm.cmd" : "npm");
@@ -87,8 +87,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		);
 		chmodSync(npmPath, 0o755);
 
-		vi.stubEnv("PI_INSTALLER_API_BASE", "https://example.test/api/installer/releases");
-		vi.stubEnv("PI_MANAGED_INSTALL_ROOT", managedRoot);
+		vi.stubEnv("EAON_CODE_INSTALLER_API_BASE", "https://example.test/api/installer/releases");
+		vi.stubEnv("EAON_CODE_MANAGED_INSTALL_ROOT", managedRoot);
 		process.env.PI_PACKAGE_DIR = selfPackageDir;
 		process.env.PATH = `${binDir}${delimiter}${originalPath ?? ""}`;
 		return { managedRoot, npmRecordPath };
@@ -99,8 +99,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			"fetch",
 			vi.fn(async (input: string | URL | Request) => {
 				const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-				if (url === "https://pi.dev/api/latest-version") {
-					return Response.json({ packageName: PACKAGE_NAME, version: targetVersion });
+				if (url === "https://registry.npmjs.org/%40eaonlabs%2Feaon-code/latest") {
+					return Response.json({ name: PACKAGE_NAME, version: targetVersion });
 				}
 				const releaseUrl = `https://example.test/api/installer/releases/${targetVersion}`;
 				if (url === `${releaseUrl}/package.json` || url === `${releaseUrl}/package-lock.json`) {
@@ -559,6 +559,10 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 	});
 
 	it("allows explicit self-update checks when automatic version checks are disabled", async () => {
+		Object.defineProperty(process, "execPath", {
+			value: join(tempDir, "node_modules", "eaon-code", "node"),
+			configurable: true,
+		});
 		const previousSkipVersionCheck = process.env.PI_SKIP_VERSION_CHECK;
 		process.env.PI_SKIP_VERSION_CHECK = "1";
 		const fetchMock = vi.fn(async () => Response.json({ version: VERSION }));
@@ -585,6 +589,10 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 	});
 
 	it("retries a transient self-update version check", async () => {
+		Object.defineProperty(process, "execPath", {
+			value: join(tempDir, "node_modules", "eaon-code", "node"),
+			configurable: true,
+		});
 		const previousSkipVersionCheck = process.env.PI_SKIP_VERSION_CHECK;
 		delete process.env.PI_SKIP_VERSION_CHECK;
 		const fetchMock = vi
@@ -608,7 +616,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		}
 	});
 
-	it("updates installer-managed Pi through a staged immutable release", async () => {
+	it("updates installer-managed Eaon Code through a staged immutable release", async () => {
 		const targetVersion = getNewerPatchVersion();
 		const { managedRoot, npmRecordPath } = prepareManagedInstall(targetVersion);
 		const abandonedStage = join(managedRoot, "staging", "update-abandoned");
@@ -702,9 +710,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		mkdirSync(join(inheritedManagedRoot, "releases"), { recursive: true });
 		writeFileSync(
 			join(inheritedManagedRoot, "managed-install.json"),
-			JSON.stringify({ kind: "pi-managed-install", schemaVersion: 1, layout: "releases-v1" }),
+			JSON.stringify({ kind: "eaon-code-managed-install", schemaVersion: 1, layout: "releases-v1" }),
 		);
-		vi.stubEnv("PI_MANAGED_INSTALL_ROOT", inheritedManagedRoot);
+		vi.stubEnv("EAON_CODE_MANAGED_INSTALL_ROOT", inheritedManagedRoot);
 		const fakeNpmPath = join(tempDir, "fake-npm.cjs");
 		const recordPath = join(tempDir, "self-update.json");
 		mkdirSync(selfPackageDir, { recursive: true });
@@ -800,7 +808,7 @@ else fs.writeFileSync(${JSON.stringify(recordPath)},JSON.stringify(args));
 		}
 	});
 
-	it("installs the active package name from the update check during self-update", async () => {
+	it("does not install a Pi package named by foreign update metadata", async () => {
 		const globalPrefix = join(tempDir, "global-prefix");
 		const selfPackageDir = join(globalPrefix, "lib", "node_modules", "@mariozechner", "eaon-code");
 		const fakeNpmPath = join(tempDir, "fake-npm.cjs");
@@ -826,10 +834,10 @@ else {
 			value: join(selfPackageDir, "dist", "cli.js"),
 			configurable: true,
 		});
-		const activePackageName = PACKAGE_NAME === "@new-scope/pi" ? "@newer-scope/pi" : "@new-scope/pi";
+		const targetVersion = getNewerPatchVersion();
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(async () => Response.json({ packageName: activePackageName, version: "0.73.0" })),
+			vi.fn(async () => Response.json({ packageName: "@earendil-works/pi-coding-agent", version: targetVersion })),
 		);
 
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -841,10 +849,10 @@ else {
 			expect(process.exitCode).toBeUndefined();
 			expect(errorSpy).not.toHaveBeenCalled();
 			const recordedCalls = JSON.parse(readFileSync(recordPath, "utf-8")) as string[][];
-			expect(recordedCalls).toEqual([
-				expect.arrayContaining(["uninstall", "-g", PACKAGE_NAME]),
-				expect.arrayContaining(["install", "-g", `${activePackageName}@0.73.0`]),
-			]);
+			expect(recordedCalls).toHaveLength(1);
+			expect(recordedCalls[0]).toEqual(
+				expect.arrayContaining(["install", "-g", `${PACKAGE_NAME}@${targetVersion}`]),
+			);
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();
@@ -923,10 +931,10 @@ if(args.includes("install")) process.exit(23);
 			value: join(selfPackageDir, "dist", "cli.js"),
 			configurable: true,
 		});
-		const activePackageName = PACKAGE_NAME === "@new-scope/pi" ? "@newer-scope/pi" : "@new-scope/pi";
+		const targetVersion = getNewerPatchVersion();
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(async () => Response.json({ packageName: activePackageName, version: "0.73.0" })),
+			vi.fn(async () => Response.json({ packageName: "@earendil-works/pi-coding-agent", version: targetVersion })),
 		);
 
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -938,13 +946,13 @@ if(args.includes("install")) process.exit(23);
 			expect(process.exitCode).toBe(1);
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).not.toContain(`Updated pi`);
+			expect(stdout).not.toContain(`Updated eaon-code`);
 			expect(stderr).toContain("exited with code 23");
 			const recordedCalls = JSON.parse(readFileSync(recordPath, "utf-8")) as string[][];
-			expect(recordedCalls).toEqual([
-				expect.arrayContaining(["uninstall", "-g", PACKAGE_NAME]),
-				expect.arrayContaining(["install", "-g", `${activePackageName}@0.73.0`]),
-			]);
+			expect(recordedCalls).toHaveLength(1);
+			expect(recordedCalls[0]).toEqual(
+				expect.arrayContaining(["install", "-g", `${PACKAGE_NAME}@${targetVersion}`]),
+			);
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();

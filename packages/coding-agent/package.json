@@ -55,6 +55,7 @@
 		"@eaonlabs/eaon-ai": "^0.85.1",
 		"@eaonlabs/eaon-tui": "^0.85.1",
 		"@silvia-odwyer/photon-node": "0.3.4",
+		"betterwright": "2.7.3",
 		"chalk": "6.0.0",
 		"cross-spawn": "7.0.6",
 		"diff": "8.0.4",

@@ -89,7 +89,7 @@ describe("SettingsSelectorComponent", () => {
 		expect(output).toContain("Light themes");
 		expect(output).toContain("light-amber");
 		list.handleInput("\r");
-		expect(onThemeChange).toHaveBeenCalledWith("light");
+		expect(onThemeChange).toHaveBeenCalledWith("light-amber");
 	});
 
 	it("keeps the configured per-model thinking level marked while browsing", async () => {

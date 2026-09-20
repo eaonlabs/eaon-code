@@ -106,7 +106,7 @@ import { withBuiltInRenderers } from "../../core/tools/renderers/index.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
 import { getUsageCostBreakdown } from "../../core/usage-totals.ts";
-import { createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
+import { createBetterWrightBrowserTools, createFetchContentTool, createWebSearchTool } from "../../core/web-access.ts";
 import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
 import { copyToClipboard, readClipboardText } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
@@ -116,7 +116,7 @@ import { getPiUserAgent } from "../../utils/pi-user-agent.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { loadAllHighlightLanguages } from "../../utils/syntax-highlight.ts";
 import { ensureTool, type ToolStatus } from "../../utils/tools-manager.ts";
-import { checkForNewPiVersion, type LatestPiRelease } from "../../utils/version-check.ts";
+import { checkForNewVersion, type LatestRelease } from "../../utils/version-check.ts";
 import { createChatViewport } from "./chat-viewport.ts";
 import { ArminComponent } from "./components/armin.ts";
 import { AssistantMessageComponent } from "./components/assistant-message.ts";
@@ -389,6 +389,7 @@ export interface InteractiveModeOptions {
 
 export class InteractiveMode {
 	private runtimeHost: AgentSessionRuntime;
+	private browserTools: ReturnType<typeof createBetterWrightBrowserTools> | undefined;
 	private renderer: TuiMainScreen | TuiAltScreen;
 	private ui: TUI;
 	private mainScreenRenderState: TuiMainScreenRenderState | undefined;
@@ -1079,7 +1080,7 @@ export class InteractiveMode {
 		}
 
 		// Start version check asynchronously
-		checkForNewPiVersion(this.version).then((newRelease) => {
+		checkForNewVersion(this.version).then((newRelease) => {
 			if (newRelease) {
 				this.showNewVersionNotification(newRelease);
 			}
@@ -4036,6 +4037,7 @@ export class InteractiveMode {
 			// which the stdout/stderr error handler turns into emergencyTerminalExit;
 			// the render loop is already idle, so this cannot hot-spin (see #4144).
 			await this.runtimeHost.dispose();
+			await this.browserTools?.close();
 			await this.ui.terminal.drainInput(1000);
 			this.stop();
 			process.exit(0);
@@ -4050,6 +4052,7 @@ export class InteractiveMode {
 
 		this.stop();
 		await this.runtimeHost.dispose();
+		await this.browserTools?.close();
 
 		const resumeCommand = formatResumeCommand(this.sessionManager);
 		if (resumeCommand) {
@@ -4350,10 +4353,10 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	showNewVersionNotification(release: LatestPiRelease): void {
+	showNewVersionNotification(release: LatestRelease): void {
 		const action = theme.fg("accent", `${APP_NAME} update`);
 		const updateInstruction = theme.fg("muted", `New version ${release.version} is available. Run `) + action;
-		const changelogUrl = "https://pi.dev/changelog";
+		const changelogUrl = "https://github.com/eaonlabs/eaon-code/blob/main/packages/coding-agent/CHANGELOG.md";
 		const changelogLink = getCapabilities().hyperlinks
 			? hyperlink(theme.fg("accent", changelogUrl), changelogUrl)
 			: theme.fg("accent", changelogUrl);
@@ -6643,6 +6646,8 @@ export class InteractiveMode {
 	/** Built-in web access + long-context tools (no extra packages). */
 	private registerBuiltinEaonTools(): void {
 		const session = this.session;
+		const browserTools = this.browserTools ?? createBetterWrightBrowserTools(session.sessionId);
+		this.browserTools = browserTools;
 		const target = {
 			getMessages: () => session.messages as unknown as Array<{ role: string; content?: unknown }>,
 			setMessages: (messages: unknown[]) => {
@@ -6654,6 +6659,8 @@ export class InteractiveMode {
 		const tools = [
 			createWebSearchTool(),
 			createFetchContentTool(),
+			browserTools.browser,
+			browserTools.browserClose,
 			createCompressTool(() => target),
 			createContextStatusTool(() => target),
 		];
@@ -6976,12 +6983,18 @@ export class InteractiveMode {
 		const extensionRunner = this.session.extensionRunner;
 
 		// Emit user_bash event to let extensions intercept
-		const eventResult = await extensionRunner.emitUserBash({
-			type: "user_bash",
-			command,
-			excludeFromContext,
-			cwd: this.sessionManager.getCwd(),
-		});
+		let eventResult: Awaited<ReturnType<typeof extensionRunner.emitUserBash>>;
+		try {
+			eventResult = await extensionRunner.emitUserBash({
+				type: "user_bash",
+				command,
+				excludeFromContext,
+				cwd: this.sessionManager.getCwd(),
+			});
+		} catch {
+			// The extension runner already reported the error. Do not fall back to local execution.
+			return;
+		}
 
 		// If extension returned a full result, use it directly
 		if (eventResult?.result) {
