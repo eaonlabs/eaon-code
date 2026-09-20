@@ -1,6 +1,8 @@
 import { Container, MouseRegion, Text, truncateToWidth } from "@eaonlabs/eaon-tui";
 import { keyText } from "../modes/interactive/components/keybinding-hints.ts";
 import type { Theme } from "../modes/interactive/theme/theme.ts";
+import { stripAnsi } from "../utils/ansi.ts";
+import { sanitizeBinaryOutput } from "../utils/shell.ts";
 import type { ToolDefinition, ToolRenderResultOptions } from "./extensions/types.ts";
 import type { SwarmInvocation, SwarmParamsSchema, SwarmTask, SwarmToolDetails } from "./swarm.ts";
 
@@ -12,8 +14,12 @@ export interface SwarmRendererState {
 }
 
 function taskPreview(task: string): string {
-	const normalized = task.replaceAll(/\s+/g, " ").trim();
+	const normalized = safeTerminalText(task).replaceAll(/\s+/g, " ").trim();
 	return truncateToWidth(normalized, 64, "...");
+}
+
+function safeTerminalText(text: string): string {
+	return sanitizeBinaryOutput(stripAnsi(text)).replaceAll("\r", "");
 }
 
 function listTasks(args: SwarmInvocation): readonly SwarmTask[] {
@@ -31,7 +37,7 @@ function formatCall(args: SwarmInvocation, theme: Theme, executionStarted: boole
 	const tasks = listTasks(args);
 	let text = theme.fg("toolTitle", theme.bold(`sub-agents · ${tasks.length} ${args.mode}`));
 	for (const task of tasks) {
-		text += `\n  ${theme.fg("accent", task.agent)}  ${theme.fg("muted", taskPreview(task.task))}`;
+		text += `\n  ${theme.fg("accent", safeTerminalText(task.agent))}  ${theme.fg("muted", taskPreview(task.task))}`;
 	}
 	if (executionStarted && isPartial) {
 		text += `\n  ${theme.fg("dim", `${keyText("app.interrupt")} to cancel all`)}`;
@@ -57,9 +63,9 @@ function statusLabel(status: SwarmToolDetails["agents"][number]["status"], theme
 }
 
 function formatAgent(agent: SwarmToolDetails["agents"][number], expanded: boolean, theme: Theme): string {
-	let text = `${statusLabel(agent.status, theme)}  ${theme.fg("toolTitle", theme.bold(agent.agent))}`;
+	let text = `${statusLabel(agent.status, theme)}  ${theme.fg("toolTitle", theme.bold(safeTerminalText(agent.agent)))}`;
 	if (expanded) text += `\n    ${theme.fg("muted", taskPreview(agent.task))}`;
-	const output = agent.output.trim();
+	const output = safeTerminalText(agent.output).trim();
 	if (!output) return text;
 	const lines = output.split("\n");
 	const visibleLines = expanded ? lines : lines.slice(-COLLAPSED_OUTPUT_LINES);

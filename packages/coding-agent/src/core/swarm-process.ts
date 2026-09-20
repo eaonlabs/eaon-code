@@ -6,8 +6,13 @@ import {
 	untrackDetachedChildPid,
 } from "../utils/shell.ts";
 import type { SwarmSubagentOptions } from "./swarm.ts";
+import { truncateTail } from "./tools/truncate.ts";
 
 const SUBAGENT_TIMEOUT_MS = 8 * 60 * 1000;
+const LIVE_UPDATE_INTERVAL_MS = 50;
+const MAX_SUBAGENT_OUTPUT_BYTES = 64 * 1024;
+const MAX_SUBAGENT_OUTPUT_LINES = 1000;
+const TRUNCATION_NOTICE = "[... earlier sub-agent output truncated ...]\n";
 
 export type SwarmProcessStatus = "completed" | "failed" | "cancelled" | "timed_out";
 
@@ -19,6 +24,19 @@ export interface SwarmProcessResult {
 }
 
 export type SwarmProcessUpdate = (output: string, stderr: string) => void;
+
+function appendOutput(current: string, chunk: string): { text: string; truncated: boolean } {
+	const combined = current + sanitizeBinaryOutput(chunk);
+	const truncated = truncateTail(combined, {
+		maxBytes: MAX_SUBAGENT_OUTPUT_BYTES,
+		maxLines: MAX_SUBAGENT_OUTPUT_LINES,
+	});
+	return { text: truncated.content, truncated: truncated.truncated };
+}
+
+function visibleOutput(output: string, truncated: boolean): string {
+	return truncated ? `${TRUNCATION_NOTICE}${output}` : output;
+}
 
 function resolveCliInvocation(opts: SwarmSubagentOptions): { command: string; argsPrefix: string[] } {
 	if (opts.cliEntry.endsWith(".ts") && opts.tsxBin) {
@@ -69,8 +87,19 @@ export async function runSwarmSubagent(
 		if (child.pid) trackDetachedChildPid(child.pid);
 		let stdout = "";
 		let stderr = "";
+		let stdoutTruncated = false;
+		let stderrTruncated = false;
 		let requestedStatus: "cancelled" | "timed_out" | undefined;
 		let settled = false;
+		let updateTimer: NodeJS.Timeout | undefined;
+
+		const emitUpdate = () => {
+			updateTimer = undefined;
+			onUpdate(visibleOutput(stdout, stdoutTruncated), visibleOutput(stderr, stderrTruncated));
+		};
+		const scheduleUpdate = () => {
+			updateTimer ??= setTimeout(emitUpdate, LIVE_UPDATE_INTERVAL_MS);
+		};
 
 		const stopChild = (status: "cancelled" | "timed_out") => {
 			requestedStatus ??= status;
@@ -78,32 +107,46 @@ export async function runSwarmSubagent(
 		};
 		const onAbort = () => stopChild("cancelled");
 		const timer = setTimeout(() => {
-			stderr += "\n[sub-agent timed out]";
+			const next = appendOutput(stderr, "\n[sub-agent timed out]");
+			stderr = next.text;
+			stderrTruncated ||= next.truncated;
 			stopChild("timed_out");
 		}, SUBAGENT_TIMEOUT_MS);
 		const finish = (exitCode: number, status: SwarmProcessStatus) => {
 			if (settled) return;
 			settled = true;
 			clearTimeout(timer);
+			if (updateTimer) clearTimeout(updateTimer);
 			signal?.removeEventListener("abort", onAbort);
 			if (child.pid) untrackDetachedChildPid(child.pid);
-			resolve({ output: stdout, stderr, exitCode, status });
+			resolve({
+				output: visibleOutput(stdout, stdoutTruncated),
+				stderr: visibleOutput(stderr, stderrTruncated),
+				exitCode,
+				status,
+			});
 		};
 
 		child.stdout.on("data", (data: Buffer) => {
-			stdout += sanitizeBinaryOutput(data.toString());
-			onUpdate(stdout, stderr);
+			const next = appendOutput(stdout, data.toString());
+			stdout = next.text;
+			stdoutTruncated ||= next.truncated;
+			scheduleUpdate();
 		});
 		child.stderr.on("data", (data: Buffer) => {
-			stderr += sanitizeBinaryOutput(data.toString());
-			onUpdate(stdout, stderr);
+			const next = appendOutput(stderr, data.toString());
+			stderr = next.text;
+			stderrTruncated ||= next.truncated;
+			scheduleUpdate();
 		});
 		child.on("close", (code) => {
 			const exitCode = code ?? 1;
 			finish(exitCode, requestedStatus ?? (exitCode === 0 ? "completed" : "failed"));
 		});
 		child.on("error", (error) => {
-			stderr += `${stderr ? "\n" : ""}${error.message}`;
+			const next = appendOutput(stderr, `${stderr ? "\n" : ""}${error.message}`);
+			stderr = next.text;
+			stderrTruncated ||= next.truncated;
 			finish(1, requestedStatus ?? "failed");
 		});
 

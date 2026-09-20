@@ -2,11 +2,14 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AgentToolResult } from "@eaonlabs/eaon-agent-core";
-import { setKeybindings, type TUI, type TuiMouseEvent } from "@eaonlabs/eaon-tui";
+import { setKeybindings, type TUI, TuiMainScreen, type TuiMouseEvent } from "@eaonlabs/eaon-tui";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { defaultEditorTheme } from "../../tui/test/test-themes.ts";
+import { VirtualTerminal } from "../../tui/test/virtual-terminal.ts";
 import { KeybindingsManager } from "../src/core/keybindings.ts";
 import { createSwarmSubagentTool, type SwarmToolDetails } from "../src/core/swarm.ts";
 import { wrapToolDefinition } from "../src/core/tools/tool-definition-wrapper.ts";
+import { CustomEditor } from "../src/modes/interactive/components/custom-editor.ts";
 import { ToolExecutionComponent } from "../src/modes/interactive/components/tool-execution.ts";
 import { initTheme, theme } from "../src/modes/interactive/theme/theme.ts";
 import { stripAnsi } from "../src/utils/ansi.ts";
@@ -89,6 +92,25 @@ process.stderr.write("warning: partial result\\n");
 		const output = result.details.agents[0]?.output ?? "";
 		expect(output).toContain("inspecting files");
 		expect(output).toContain("warning: partial result");
+	});
+
+	it("bounds noisy child output before publishing live updates", async () => {
+		// Given: a child that emits more output than the live activity limit.
+		const { directory, script } = await createChildScript(`process.stdout.write("x".repeat(96 * 1024));`);
+		const tool = wrapToolDefinition(createSwarmSubagentTool({ cwd: directory, cliEntry: script }));
+
+		// When: the child completes.
+		const result = await tool.execute(
+			"tool-bounded-output",
+			{ mode: "single", agent: "reviewer", task: "Produce a large report" },
+			undefined,
+			undefined,
+		);
+
+		// Then: the retained activity is bounded and clearly marked as truncated.
+		const output = result.details.agents[0]?.output ?? "";
+		expect(output).toContain("earlier sub-agent output truncated");
+		expect(Buffer.byteLength(output, "utf8")).toBeLessThan(66 * 1024);
 	});
 
 	it("terminates a running child when the parent turn is cancelled", async () => {
@@ -189,6 +211,43 @@ setTimeout(() => process.exit(0), 1000);
 		expect(rendered).not.toContain('"mode": "parallel"');
 	});
 
+	it("removes terminal control payloads from model-generated activity", () => {
+		// Given: model-generated agent and task text containing OSC and C1 control sequences.
+		const tool = createSwarmSubagentTool({ cwd: process.cwd(), cliEntry: "unused.mjs" });
+		const renderCall = tool.renderCall;
+		if (!renderCall) throw new Error("Expected swarm call renderer");
+		const args = {
+			mode: "single" as const,
+			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007scout",
+			task: "\u009b31mInspect files\u009b0m",
+		};
+
+		// When: the TUI renders the activity.
+		const rendered = renderCall(args, theme, {
+			args,
+			toolCallId: "tool-safe-terminal",
+			invalidate: () => {},
+			lastComponent: undefined,
+			state: {},
+			cwd: process.cwd(),
+			executionStarted: true,
+			argsComplete: true,
+			isPartial: true,
+			expanded: false,
+			showImages: true,
+			isError: false,
+		})
+			.render(100)
+			.join("\n");
+
+		// Then: terminal instructions and their payloads never reach the rendered bytes.
+		expect(rendered).not.toContain("c2VjcmV0LWNsaXBib2FyZA==");
+		expect(rendered).not.toContain("52;c;");
+		expect(rendered).not.toContain("\u009b31m");
+		expect(stripAnsi(rendered)).toContain("scout");
+		expect(stripAnsi(rendered)).toContain("Inspect files");
+	});
+
 	it("expands one clicked sub-agent or all sub-agents with Ctrl+O", () => {
 		// Given: two completed sub-agents with multi-line output in a collapsed tool row.
 		const tool = createSwarmSubagentTool({ cwd: process.cwd(), cliEntry: "unused.mjs" });
@@ -208,6 +267,13 @@ setTimeout(() => process.exit(0), 1000);
 			createFakeTui(),
 			process.cwd(),
 		);
+		const keybindings = new KeybindingsManager();
+		const editor = new CustomEditor(new TuiMainScreen(new VirtualTerminal()), defaultEditorTheme, keybindings);
+		let toolsExpanded = false;
+		editor.onAction("app.tools.expand", () => {
+			toolsExpanded = !toolsExpanded;
+			component.setExpanded(toolsExpanded);
+		});
 		component.updateResult(
 			{
 				content: [{ type: "text", text: "done" }],
@@ -262,7 +328,7 @@ setTimeout(() => process.exit(0), 1000);
 		expect(clicked).not.toContain("review first detail");
 
 		// When: Ctrl+O expands the whole tool row.
-		component.setExpanded(true);
+		editor.handleInput("\x0f");
 
 		// Then: every sub-agent's activity is visible.
 		const expanded = stripAnsi(component.render(width).join("\n"));
@@ -270,7 +336,7 @@ setTimeout(() => process.exit(0), 1000);
 		expect(expanded).toContain("review first detail");
 
 		// When: Ctrl+O collapses the whole tool row again.
-		component.setExpanded(false);
+		editor.handleInput("\x0f");
 
 		// Then: global collapse clears the earlier row-level expansion too.
 		const recollapsed = stripAnsi(component.render(width).join("\n"));

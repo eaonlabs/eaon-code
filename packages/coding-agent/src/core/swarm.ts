@@ -16,6 +16,8 @@ export { SWARM_MODE_PROMPT } from "./swarm-prompt.ts";
 const MAX_AGENTS = 6;
 const MIN_AGENTS = 2;
 const MAX_CONCURRENCY = 4;
+const MAX_AGENT_NAME_LENGTH = 80;
+const MAX_TASK_LENGTH = 32_000;
 
 export interface SwarmTask {
 	readonly agent: string;
@@ -60,14 +62,22 @@ export interface SwarmToolDetails {
 const SwarmParams = Type.Union([
 	Type.Object({
 		mode: Type.Literal("single"),
-		agent: Type.String({ description: "Role name: scout | implementer | tester | reviewer | custom" }),
-		task: Type.String({ description: "Self-contained task brief" }),
+		agent: Type.String({
+			description: "Role name: scout | implementer | tester | reviewer | custom",
+			minLength: 1,
+			maxLength: MAX_AGENT_NAME_LENGTH,
+		}),
+		task: Type.String({ description: "Self-contained task brief", minLength: 1, maxLength: MAX_TASK_LENGTH }),
 		model: Type.Optional(Type.String()),
 	}),
 	Type.Object({
 		mode: Type.Literal("parallel"),
 		tasks: Type.Array(
-			Type.Object({ agent: Type.String(), task: Type.String(), model: Type.Optional(Type.String()) }),
+			Type.Object({
+				agent: Type.String({ minLength: 1, maxLength: MAX_AGENT_NAME_LENGTH }),
+				task: Type.String({ minLength: 1, maxLength: MAX_TASK_LENGTH }),
+				model: Type.Optional(Type.String()),
+			}),
 			{ minItems: 1, maxItems: MAX_AGENTS },
 		),
 	}),
@@ -75,8 +85,12 @@ const SwarmParams = Type.Union([
 		mode: Type.Literal("chain"),
 		chain: Type.Array(
 			Type.Object({
-				agent: Type.String(),
-				task: Type.String({ description: "May reference {previous} for the prior step output" }),
+				agent: Type.String({ minLength: 1, maxLength: MAX_AGENT_NAME_LENGTH }),
+				task: Type.String({
+					description: "May reference {previous} for the prior step output",
+					minLength: 1,
+					maxLength: MAX_TASK_LENGTH,
+				}),
 				model: Type.Optional(Type.String()),
 			}),
 			{ minItems: 1, maxItems: MAX_AGENTS },
