@@ -26,7 +26,9 @@ function safeTerminalText(text: string): string {
 		.replaceAll("\u009e", "\x1b^")
 		.replaceAll("\u009f", "\x1b_")
 		.replaceAll("\u009c", "\x1b\\");
-	return sanitizeBinaryOutput(stripTerminalSequences(normalizedC1)).replaceAll("\r", "");
+	return sanitizeBinaryOutput(stripTerminalSequences(normalizedC1))
+		.replaceAll(/[\u0080-\u009f]/g, "")
+		.replaceAll("\r", "");
 }
 
 function listTasks(args: SwarmInvocation): readonly SwarmTask[] {

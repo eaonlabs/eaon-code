@@ -5689,6 +5689,7 @@ export class InteractiveMode {
 					done();
 					this.ui.requestRender();
 				},
+				{ onToggleToolsExpanded: () => this.toggleToolOutputExpansion() },
 			);
 			return { component: selector, focus: selector };
 		});
@@ -5995,6 +5996,7 @@ export class InteractiveMode {
 					restoreDialog();
 					reject(new Error("Login cancelled"));
 				},
+				{ onToggleToolsExpanded: () => this.toggleToolOutputExpansion() },
 			);
 			this.editorContainer.clear();
 			this.editorContainer.addChild(selector);

@@ -239,7 +239,7 @@ setTimeout(() => process.exit(0), 1000);
 		const args = {
 			mode: "single" as const,
 			agent: "\x1b]52;c;c2VjcmV0LWNsaXBib2FyZA==\u0007\u009d52;c;YzEtc2VjcmV0\u009cscout",
-			task: "\u009b31mInspect files\u009b0m",
+			task: "\u0085\u009b31mInspect files\u009b0m",
 		};
 
 		// When: the TUI renders the activity.
@@ -266,6 +266,7 @@ setTimeout(() => process.exit(0), 1000);
 		expect(rendered).not.toContain("52;c;");
 		expect(rendered).not.toContain("\u009b31m");
 		expect(rendered).not.toContain("\u009d");
+		expect(rendered).not.toContain("\u0085");
 		expect(stripAnsi(rendered)).toContain("scout");
 		expect(stripAnsi(rendered)).toContain("Inspect files");
 	});
