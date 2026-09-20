@@ -155,7 +155,7 @@ export interface Settings {
 	fullscreenScrollbar?: ScrollViewScrollbar; // default: "auto"; no effect in regular TUI mode
 	fullscreenCopyOnSelect?: boolean; // default: true; no effect in regular TUI mode
 	planMode?: boolean; // default: false — read-only plan mode
-	swarmMode?: boolean; // default: false — sub-agent swarm
+	swarmMode?: boolean;
 	mcpServers?: import("./mcp.ts").McpServersConfig; // default: {} (none)
 }
 

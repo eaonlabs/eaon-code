@@ -22,6 +22,10 @@ export default mergeConfig(
 		resolve: {
 			alias: [
 				{ find: /^@eaonlabs\/eaon-ai$/, replacement: workspaceSourcePaths.aiIndex },
+				{
+					find: /^@eaonlabs\/eaon-ai\/utils\/(.+)$/,
+					replacement: `${workspaceSourcePaths.aiUtils}/$1.ts`,
+				},
 				{ find: /^@eaonlabs\/eaon-agent-core$/, replacement: workspaceSourcePaths.agentIndex },
 				{ find: /^@mariozechner\/pi-ai$/, replacement: workspaceSourcePaths.aiIndex },
 				{ find: /^@mariozechner\/pi-ai\/oauth$/, replacement: workspaceSourcePaths.aiOAuth },

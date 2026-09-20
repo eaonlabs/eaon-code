@@ -100,7 +100,7 @@ import { type SessionEntry, SessionManager, sessionEntryToContextMessages } from
 import type { FullscreenExitOutput, TuiMode } from "../../core/settings-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
-import { createSwarmSubagentTool, defaultSwarmCliOptions, SWARM_MODE_PROMPT } from "../../core/swarm.ts";
+import { SWARM_MODE_PROMPT } from "../../core/swarm-prompt.ts";
 import { withBuiltInRenderers } from "../../core/tools/renderers/index.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
@@ -516,11 +516,9 @@ export class InteractiveMode {
 	private autoTrustOnReloadCwd: string | undefined;
 	private themeController: InteractiveThemeController;
 
-	// Modes: plan / swarm / optional MCP
 	private planModeEnabled = false;
 	private swarmModeEnabled = false;
 	private toolsBeforePlanMode: string[] | undefined;
-	private toolsBeforeSwarm: string[] | undefined;
 	private mcpClients = new Map<string, McpClient>();
 
 	// Convenience accessors
@@ -927,7 +925,6 @@ export class InteractiveMode {
 
 		await this.themeController.applyFromSettings();
 
-		// Restore optional modes (default: both off)
 		if (this.settingsManager.getPlanMode()) this.enablePlanMode();
 		if (this.settingsManager.getSwarmMode()) this.enableSwarmMode();
 		this.refreshModeStatus();
@@ -6582,8 +6579,9 @@ export class InteractiveMode {
 			new Text(theme.fg("muted", "  /plan   —  read-only exploration, then a numbered plan"), 1, 1),
 		);
 		this.chatContainer.addChild(
-			new Text(theme.fg("muted", "  /swarm  —  delegate work to 2–6 sub-agents (scout/implement/test)"), 1, 1),
+			new Text(theme.fg("muted", "  /swarm — require sub-agent delegation for every task"), 1, 1),
 		);
+		this.chatContainer.addChild(new Text(theme.fg("muted", "  /agents — inspect, steer, or stop sub-agents"), 1, 1));
 		this.chatContainer.addChild(new Text(theme.fg("muted", "  /setup  —  provider + theme wizard"), 1, 1));
 		this.chatContainer.addChild(
 			new Text(theme.fg("muted", "  /mcp    —  optional MCP servers (none by default; not required)"), 1, 1),
@@ -6712,32 +6710,12 @@ export class InteractiveMode {
 	private enableSwarmMode(): void {
 		this.swarmModeEnabled = true;
 		this.settingsManager.setSwarmMode(true);
-		if (!this.toolsBeforeSwarm) {
-			this.toolsBeforeSwarm = this.session.getActiveToolNames();
-		}
-		const tool = createSwarmSubagentTool({
-			...defaultSwarmCliOptions(),
-			resolveModelSelection: () => ({
-				provider: this.session.model?.provider,
-				model: this.session.model?.id,
-				thinking: this.session.thinkingLevel,
-			}),
-		});
-		this.session.registerRuntimeTool(tool as never);
-		const active = new Set(this.session.getActiveToolNames());
-		active.add("subagent");
-		this.session.setActiveToolsByName([...active]);
 		this.rebuildModeSystemPrompt();
 	}
 
 	private disableSwarmMode(): void {
 		this.swarmModeEnabled = false;
 		this.settingsManager.setSwarmMode(false);
-		this.session.unregisterRuntimeTool("subagent");
-		if (this.toolsBeforeSwarm?.length) {
-			this.session.setActiveToolsByName(this.toolsBeforeSwarm.filter((n) => n !== "subagent"));
-		}
-		this.toolsBeforeSwarm = undefined;
 		this.rebuildModeSystemPrompt();
 	}
 
@@ -6760,7 +6738,7 @@ export class InteractiveMode {
 			this.showStatus("Swarm OFF");
 		} else {
 			this.enableSwarmMode();
-			this.showStatus("Swarm ON  ·  will use 2–6 sub-agents  ·  /swarm to turn off");
+			this.showStatus("Swarm ON · sub-agent delegation required · /agents to inspect");
 		}
 		this.refreshModeStatus();
 		this.footer.invalidate();

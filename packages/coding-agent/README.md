@@ -20,7 +20,8 @@ Eaon Code is Eaon's full-screen terminal coding agent. It combines a focused set
 ## What Eaon Code adds
 
 - **Plan mode** (`/plan`) switches to read-only exploration and shows a small `plan` indicator while active.
-- **Swarm mode** (`/swarm`) enables delegated work across 2–6 sub-agents and shows a `swarm` indicator while active.
+- **Swarm mode** (`/swarm`) makes the parent orchestrate 2–6 named specialist sub-agents in parallel, then reconcile and verify their work.
+- **Observable sub-agents** run in isolated sessions with a persistent live activity view. Open `/agents` to inspect conversations, steer work, or press `x` twice to stop a run; completed results expand with Ctrl+O.
 - **Eaon Plan** is a regular provider alongside the others; it is not forced as the default or recommended provider.
 - **Full-screen TUI by default**, with Amber as the default theme and separate dark and light theme lists in `/themes` and setup.
 - **Eaon-branded configuration paths** use `~/.eaon/agent/` globally and `.eaon/` in projects. Existing `.pi` directories and package manifests remain readable as compatibility formats; data is not moved or deleted.

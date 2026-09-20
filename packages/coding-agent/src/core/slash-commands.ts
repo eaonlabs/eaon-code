@@ -21,7 +21,7 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 	{ name: "model", description: "Select model (opens selector UI)", argumentHint: "<provider/model>" },
 	{ name: "theme", description: "Change TUI colors (messages, text, input box)", argumentHint: "[name]" },
 	{ name: "plan", description: "Toggle plan mode (read-only explore → numbered plan)" },
-	{ name: "swarm", description: "Toggle swarm mode (delegate work to 2–6 sub-agents)" },
+	{ name: "swarm", description: "Toggle orchestration across 2–6 sub-agents" },
 	{ name: "setup", description: "Run setup wizard (provider, theme, privacy)" },
 	{
 		name: "mcp",

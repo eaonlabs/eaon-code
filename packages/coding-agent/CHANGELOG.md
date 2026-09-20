@@ -9,6 +9,7 @@
 
 ### Changed
 
+- Replaced the custom swarm process runner with the pinned `@tintinweb/pi-subagents` lifecycle engine. `/swarm` remains a prompt-only orchestration mode that directs the parent to coordinate 2–6 named specialist agents, while `/agents` provides the persistent live widget, fleet inspector, conversation viewer, steering, explicit `x` cancellation, completion notifications, and Ctrl+O result expansion.
 - Default the interactive TUI to fullscreen when no mode has been saved; an explicit regular-mode preference remains unchanged.
 - Moved compaction, branch summarization, and retry spinners into the editor border alongside the working indicator. Custom editors use the same embedding opt-in for all status spinners.
 - Enabled strict-prefer JSON-schema sampling by default for built-in `read`, `bash`, `powershell`, `edit`, and `write` tools, without requiring `PI_EXPERIMENTAL`. Extensions can re-register tool definitions with `constrainedSampling: false`.
@@ -20,7 +21,6 @@
 
 ### Fixed
 
-- Made swarm sub-agents visible while they run, including named task status, bounded and sanitized live output, per-agent click expansion, Ctrl+O expansion, and interrupt-driven child-process cancellation.
 - Prevent failed shell-extension handlers from falling through to local command execution.
 - Capped agent-level retry backoff at `retry.maxAgentDelayMs` (60s by default) so long retry runs stay responsive during prolonged transient outages ([#8826](https://github.com/earendil-works/pi/issues/8826)).
 - Fixed direct RPC `steer` and `follow_up` commands bypassing extension `input` handlers ([#8718](https://github.com/earendil-works/pi/issues/8718)).

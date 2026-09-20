@@ -102,6 +102,28 @@ describe("ExtensionRunner", () => {
 		getScopedModels: () => [],
 	};
 
+	it("loads extensions that import the current upstream Pi package scope", async () => {
+		const extensionPath = path.join(extensionsDir, "earendil-scope.ts");
+		fs.writeFileSync(
+			extensionPath,
+			`import { Type } from "@earendil-works/pi-ai";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+
+export default function(pi) {
+	pi.registerCommand("scope-check", {
+		description: [typeof Type.Object, typeof getAgentDir, typeof Text].join(":"),
+		handler: async () => {},
+	});
+}`,
+		);
+
+		const result = await loadExtensions([extensionPath], tempDir);
+
+		expect(result.errors).toEqual([]);
+		expect(result.extensions[0]?.commands.get("scope-check")?.description).toBe("function:function:function");
+	});
+
 	describe("scopedModels", () => {
 		it("reflects the getScopedModels context action on ctx.scopedModels", async () => {
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);

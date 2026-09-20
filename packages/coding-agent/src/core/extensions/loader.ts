@@ -14,7 +14,10 @@ import * as _bundledPiAiOauth from "@eaonlabs/eaon-ai/oauth";
 import * as _bundledPiAiProviders from "@eaonlabs/eaon-ai/providers/all";
 import type { KeyId } from "@eaonlabs/eaon-tui";
 import * as _bundledPiTui from "@eaonlabs/eaon-tui";
+import * as _bundledSinclairTypebox from "@sinclair/typebox";
+import * as _bundledCroner from "croner";
 import { createJiti } from "jiti/static";
+import * as _bundledNanoid from "nanoid";
 // Static imports of packages that extensions may use.
 // These MUST be static so Bun bundles them into the compiled binary.
 // The virtualModules option then makes them available to extensions.
@@ -51,9 +54,11 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	typebox: _bundledTypebox,
 	"typebox/compile": _bundledTypeboxCompile,
 	"typebox/value": _bundledTypeboxValue,
-	"@sinclair/typebox": _bundledTypebox,
+	"@sinclair/typebox": _bundledSinclairTypebox,
 	"@sinclair/typebox/compile": _bundledTypeboxCompile,
 	"@sinclair/typebox/value": _bundledTypeboxValue,
+	croner: _bundledCroner,
+	nanoid: _bundledNanoid,
 	"@eaonlabs/eaon-agent-core": _bundledPiAgentCore,
 	"@eaonlabs/eaon-tui": _bundledPiTui,
 	// Extensions resolve the legacy Pi AI package root to the compat entrypoint (a strict
@@ -64,6 +69,13 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@eaonlabs/eaon-ai/oauth": _bundledPiAiOauth,
 	"@eaonlabs/eaon-ai/providers/all": _bundledPiAiProviders,
 	"@eaonlabs/eaon-code": _bundledEaonCode,
+	"@earendil-works/pi-agent-core": _bundledPiAgentCore,
+	"@earendil-works/pi-tui": _bundledPiTui,
+	"@earendil-works/pi-ai": _bundledPiAiCompat,
+	"@earendil-works/pi-ai/compat": _bundledPiAiCompat,
+	"@earendil-works/pi-ai/oauth": _bundledPiAiOauth,
+	"@earendil-works/pi-ai/providers/all": _bundledPiAiProviders,
+	"@earendil-works/pi-coding-agent": _bundledEaonCode,
 	"@mariozechner/pi-agent-core": _bundledPiAgentCore,
 	"@mariozechner/pi-tui": _bundledPiTui,
 	"@mariozechner/pi-ai": _bundledPiAiCompat,
@@ -123,6 +135,13 @@ function getAliases(): Record<string, string> {
 		"@eaonlabs/eaon-ai/compat": piAiCompatEntry,
 		"@eaonlabs/eaon-ai/oauth": piAiOauthEntry,
 		"@eaonlabs/eaon-ai": piAiCompatEntry,
+		"@earendil-works/pi-coding-agent": eaonCodeEntry,
+		"@earendil-works/pi-agent-core": piAgentCoreEntry,
+		"@earendil-works/pi-tui": piTuiEntry,
+		"@earendil-works/pi-ai/providers/all": piAiProvidersEntry,
+		"@earendil-works/pi-ai/compat": piAiCompatEntry,
+		"@earendil-works/pi-ai/oauth": piAiOauthEntry,
+		"@earendil-works/pi-ai": piAiCompatEntry,
 		"@mariozechner/pi-coding-agent": eaonCodeEntry,
 		"@mariozechner/pi-agent-core": piAgentCoreEntry,
 		"@mariozechner/pi-tui": piTuiEntry,
