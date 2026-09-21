@@ -64,13 +64,13 @@ describe("analytics settings", () => {
 		expect(manager.getTrackingId()).toBeUndefined();
 	});
 
-	it("generates a tracking identifier on opt-in", () => {
+	it("keeps analytics disabled when opt-in is requested", () => {
 		const manager = SettingsManager.inMemory();
 
 		manager.setEnableAnalytics(true);
 
-		expect(manager.getEnableAnalytics()).toBe(true);
-		expect(manager.getTrackingId()).toMatch(/^[0-9a-f-]{36}$/);
+		expect(manager.getEnableAnalytics()).toBe(false);
+		expect(manager.getTrackingId()).toBeUndefined();
 	});
 
 	it("does not generate a tracking identifier on opt-out", () => {
@@ -82,14 +82,14 @@ describe("analytics settings", () => {
 		expect(manager.getTrackingId()).toBeUndefined();
 	});
 
-	it("keeps the tracking identifier when toggling analytics", () => {
+	it("does not create analytics identifiers when toggling the preference", () => {
 		const manager = SettingsManager.inMemory();
 
 		manager.setEnableAnalytics(true);
-		const trackingId = manager.getTrackingId();
 		manager.setEnableAnalytics(false);
 		manager.setEnableAnalytics(true);
 
-		expect(manager.getTrackingId()).toBe(trackingId);
+		expect(manager.getEnableAnalytics()).toBe(false);
+		expect(manager.getTrackingId()).toBeUndefined();
 	});
 });
