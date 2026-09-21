@@ -7,27 +7,10 @@ import * as fs from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import * as _bundledPiAgentCore from "@eaonlabs/eaon-agent-core";
 import type { Provider } from "@eaonlabs/eaon-ai";
-import * as _bundledPiAiCompat from "@eaonlabs/eaon-ai/compat";
-import * as _bundledPiAiOauth from "@eaonlabs/eaon-ai/oauth";
-import * as _bundledPiAiProviders from "@eaonlabs/eaon-ai/providers/all";
 import type { KeyId } from "@eaonlabs/eaon-tui";
-import * as _bundledPiTui from "@eaonlabs/eaon-tui";
-import * as _bundledSinclairTypebox from "@sinclair/typebox";
-import * as _bundledCroner from "croner";
-import { createJiti } from "jiti/static";
-import * as _bundledNanoid from "nanoid";
-// Static imports of packages that extensions may use.
-// These MUST be static so Bun bundles them into the compiled binary.
-// The virtualModules option then makes them available to extensions.
-import * as _bundledTypebox from "typebox";
-import * as _bundledTypeboxCompile from "typebox/compile";
-import * as _bundledTypeboxValue from "typebox/value";
+import type { createJiti } from "jiti";
 import { getAgentDir, getProjectConfigDir, isBunBinary, isBundledNode } from "../../config.ts";
-// NOTE: This import works because loader.ts exports are NOT re-exported from index.ts,
-// avoiding a circular dependency. Extensions can import from @eaonlabs/eaon-code.
-import * as _bundledEaonCode from "../../index.ts";
 import { resolvePath } from "../../utils/paths.ts";
 import { readEaonManifest } from "../eaon-manifest.ts";
 import { createEventBus, type EventBus } from "../event-bus.ts";
@@ -49,48 +32,29 @@ import type {
 	ToolDefinition,
 } from "./types.ts";
 
-/** Modules available to extensions via virtualModules (for compiled binaries) */
-const VIRTUAL_MODULES: Record<string, unknown> = {
-	typebox: _bundledTypebox,
-	"typebox/compile": _bundledTypeboxCompile,
-	"typebox/value": _bundledTypeboxValue,
-	"@sinclair/typebox": _bundledSinclairTypebox,
-	"@sinclair/typebox/compile": _bundledTypeboxCompile,
-	"@sinclair/typebox/value": _bundledTypeboxValue,
-	croner: _bundledCroner,
-	nanoid: _bundledNanoid,
-	"@eaonlabs/eaon-agent-core": _bundledPiAgentCore,
-	"@eaonlabs/eaon-tui": _bundledPiTui,
-	// Extensions resolve the legacy Pi AI package root to the compat entrypoint (a strict
-	// superset of the core entrypoint): existing extensions using the old
-	// global API keep working at runtime until compat is removed.
-	"@eaonlabs/eaon-ai": _bundledPiAiCompat,
-	"@eaonlabs/eaon-ai/compat": _bundledPiAiCompat,
-	"@eaonlabs/eaon-ai/oauth": _bundledPiAiOauth,
-	"@eaonlabs/eaon-ai/providers/all": _bundledPiAiProviders,
-	"@eaonlabs/eaon-code": _bundledEaonCode,
-	"@earendil-works/pi-agent-core": _bundledPiAgentCore,
-	"@earendil-works/pi-tui": _bundledPiTui,
-	"@earendil-works/pi-ai": _bundledPiAiCompat,
-	"@earendil-works/pi-ai/compat": _bundledPiAiCompat,
-	"@earendil-works/pi-ai/oauth": _bundledPiAiOauth,
-	"@earendil-works/pi-ai/providers/all": _bundledPiAiProviders,
-	"@earendil-works/pi-coding-agent": _bundledEaonCode,
-	"@mariozechner/pi-agent-core": _bundledPiAgentCore,
-	"@mariozechner/pi-tui": _bundledPiTui,
-	"@mariozechner/pi-ai": _bundledPiAiCompat,
-	"@mariozechner/pi-ai/compat": _bundledPiAiCompat,
-	"@mariozechner/pi-ai/oauth": _bundledPiAiOauth,
-	"@mariozechner/pi-ai/providers/all": _bundledPiAiProviders,
-	"@mariozechner/pi-coding-agent": _bundledEaonCode,
-};
-
 const require = createRequire(import.meta.url);
 
 const isNodeSeaBinary =
 	("sea" in process.features && process.features.sea === true) ||
 	process.getBuiltinModule("node:sea")?.isSea() === true;
 const isTypeScriptSourceRuntime = !isBunBinary && path.extname(fileURLToPath(import.meta.url)) === ".ts";
+const usesEmbeddedModules = isBunBinary || isNodeSeaBinary || isBundledNode;
+
+let createJitiPromise: Promise<typeof createJiti> | undefined;
+
+function getCreateJiti(): Promise<typeof createJiti> {
+	createJitiPromise ??= (usesEmbeddedModules ? import("./jiti-static-loader.ts") : import("./jiti-loader.ts")).then(
+		(module) => module.createJiti,
+	);
+	return createJitiPromise;
+}
+
+let virtualModulesPromise: Promise<Record<string, unknown>> | undefined;
+
+function getVirtualModules(): Promise<Record<string, unknown>> {
+	virtualModulesPromise ??= import("./virtual-modules.ts").then((module) => module.VIRTUAL_MODULES);
+	return virtualModulesPromise;
+}
 
 /**
  * Get aliases for jiti (used in built Node.js mode).
@@ -293,11 +257,21 @@ function createExtensionAPI(
 
 	const api = {
 		// Registration methods - write to extension
-		on(event: string, handler: HandlerFn): void {
+		on(event: string, handler: HandlerFn): () => void {
 			assertActive();
+			const registeredHandler: HandlerFn = (...args) => handler(...args);
 			const list = extension.handlers.get(event) ?? [];
-			list.push(handler);
+			list.push(registeredHandler);
 			extension.handlers.set(event, list);
+
+			return () => {
+				const handlers = extension.handlers.get(event);
+				if (!handlers) return;
+				const handlerIndex = handlers.indexOf(registeredHandler);
+				if (handlerIndex === -1) return;
+				handlers.splice(handlerIndex, 1);
+				if (handlers.length === 0) extension.handlers.delete(event);
+			};
 		},
 
 		registerTool(tool: ToolDefinition): void {
@@ -514,16 +488,18 @@ async function loadExtensionModule(extensionPath: string, cacheToken?: Extension
 		}
 	}
 
-	const jiti = createJiti(import.meta.url, {
+	const createJitiImpl = await getCreateJiti();
+	// Compiled binaries and the bundled Node distribution use embedded modules.
+	// Source TypeScript reuses host modules and root tsconfig paths. Unbundled
+	// Node builds use dist aliases and do not need the bundled virtual modules.
+	const resolutionOptions = usesEmbeddedModules
+		? { virtualModules: await getVirtualModules(), tryNative: false }
+		: isTypeScriptSourceRuntime
+			? { virtualModules: await getVirtualModules(), tsconfigPaths: true }
+			: { alias: getAliases() };
+	const jiti = createJitiImpl(import.meta.url, {
 		moduleCache: false,
-		// Compiled binaries and the bundled Node distribution use embedded modules.
-		// Source TypeScript reuses host modules and root tsconfig paths. Unbundled
-		// Node builds use dist aliases.
-		...(isBunBinary || isNodeSeaBinary || isBundledNode
-			? { virtualModules: VIRTUAL_MODULES, tryNative: false }
-			: isTypeScriptSourceRuntime
-				? { virtualModules: VIRTUAL_MODULES, tsconfigPaths: true }
-				: { alias: getAliases() }),
+		...resolutionOptions,
 	});
 
 	const module = await jiti.import(extensionPath, { default: true });

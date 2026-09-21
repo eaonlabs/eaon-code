@@ -4,6 +4,7 @@ import { convertMessages } from "../src/api/openai-completions.ts";
 import { getModel, streamSimple } from "../src/compat.ts";
 import type { Api, AssistantMessage, Context, Model, Tool, ToolResultMessage, UserMessage } from "../src/types.ts";
 import { estimateContextTokens } from "../src/utils/estimate.ts";
+import { normalizeContext } from "../src/utils/transcript.ts";
 
 interface AnthropicToolPayload {
 	name: string;
@@ -361,7 +362,7 @@ describe("deferred tools", () => {
 			toolCallId: "call_2",
 		});
 
-		const messages = convertMessages(makeKimiModel("kimi"), context, {
+		const messages = convertMessages(makeKimiModel("kimi"), normalizeContext(context), {
 			supportsStore: false,
 			supportsDeveloperRole: false,
 			supportsReasoningEffort: false,
@@ -537,12 +538,14 @@ describe("deferred tools", () => {
 			},
 			stopReason: "stop",
 		};
-		const plain = estimateContextTokens({ messages: [assistant, makeUserMessage(4)], tools: [] });
+		const plain = estimateContextTokens(normalizeContext({ messages: [assistant, makeUserMessage(4)], tools: [] }));
 		const lateTool = { ...makeTool("late_tool"), description: "x".repeat(4000) };
-		const marked = estimateContextTokens({
-			messages: [assistant, makeToolResult(["late_tool"])],
-			tools: [lateTool],
-		});
+		const marked = estimateContextTokens(
+			normalizeContext({
+				messages: [assistant, makeToolResult(["late_tool"])],
+				tools: [lateTool],
+			}),
+		);
 
 		expect(marked.tokens).toBeGreaterThan(plain.tokens + 500);
 		expect(marked.trailingTokens).toBeGreaterThan(plain.trailingTokens + 500);

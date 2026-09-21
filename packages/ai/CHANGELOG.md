@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-20
+
 ### Added
 
+- Added the Meta provider with Muse subscription OAuth and the Muse model catalog.
 - Enabled native deferred tool loading for Fireworks Messages models. Use `ToolSearch` or `tool_search` as the loader name for prompt-prefix deferral ([#9323](https://github.com/earendil-works/pi/issues/9323)).
 
 ### Fixed

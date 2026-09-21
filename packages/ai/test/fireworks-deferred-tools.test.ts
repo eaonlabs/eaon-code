@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { stream as streamAnthropic } from "../src/api/anthropic-messages.ts";
 import { getModel } from "../src/compat.ts";
 import type { AssistantMessage, Context, Model, Tool, ToolResultMessage } from "../src/types.ts";
+import { normalizeContext } from "../src/utils/transcript.ts";
 
 const lookup: Tool = {
 	name: "lookup",
@@ -52,7 +53,7 @@ function discoveryContext(model: Model<"anthropic-messages">, name = "tool_searc
 
 async function capture(model: Model<"anthropic-messages">, context: Context): Promise<MessageCreateParamsStreaming> {
 	let payload: MessageCreateParamsStreaming | undefined;
-	await streamAnthropic({ ...model, baseUrl: "http://127.0.0.1:9" }, context, {
+	await streamAnthropic({ ...model, baseUrl: "http://127.0.0.1:9" }, normalizeContext(context), {
 		apiKey: "test-key",
 		cacheRetention: "none",
 		onPayload(value) {
@@ -123,14 +124,18 @@ describe("Fireworks deferred tools", () => {
 				{ type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 10 } },
 				{ type: "message_stop" },
 			];
-			const response = await streamAnthropic({ ...model, baseUrl: "http://127.0.0.1:9" }, context, {
-				apiKey: "test-key",
-				fetch: async () =>
-					new Response(
-						events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(""),
-						{ headers: { "content-type": "text/event-stream" } },
-					),
-			}).result();
+			const response = await streamAnthropic(
+				{ ...model, baseUrl: "http://127.0.0.1:9" },
+				normalizeContext(context),
+				{
+					apiKey: "test-key",
+					fetch: async () =>
+						new Response(
+							events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(""),
+							{ headers: { "content-type": "text/event-stream" } },
+						),
+				},
+			).result();
 			expect(response.stopReason).toBe("toolUse");
 			expect(response.content).toEqual([
 				{ type: "toolCall", id: "tool_use_tool_1", name: "lookup", arguments: { key: "alpha" } },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getModel, streamSimple } from "../src/compat.ts";
+import { getModel, getModels, streamSimple } from "../src/compat.ts";
 import type { AssistantMessage, Context, Model } from "../src/types.ts";
 
 interface AnthropicPayload {
@@ -97,6 +97,11 @@ describe("Anthropic empty thinking signature compat", () => {
 		expect(assistant?.content).toEqual([{ type: "thinking", thinking: "internal reasoning", signature: "" }]);
 	});
 
+	it("allows empty thinking signatures for every Vercel AI Gateway model", () => {
+		const models = getModels("vercel-ai-gateway");
+		expect(models.length).toBeGreaterThan(0);
+		expect(models.every((model) => model.compat?.allowEmptySignature === true)).toBe(true);
+	});
 	// Regression for #9323: Fireworks emits unsigned thinking that must survive replay.
 	it.each([
 		"accounts/fireworks/models/deepseek-v4-flash-0731",

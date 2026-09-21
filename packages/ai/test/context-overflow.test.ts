@@ -571,6 +571,15 @@ describe("Context overflow error handling", () => {
 			expect(result.errorMessage).toMatch(/maximum context length is \d+ tokens/i);
 			expect(isContextOverflow(result.response, model.contextWindow)).toBe(true);
 		}, 120000);
+		it("mistralai/mistral-large via OpenRouter - should detect overflow via isContextOverflow", async () => {
+			const model = getModel("openrouter", "mistralai/mistral-large");
+			const result = await testContextOverflow(model, process.env.OPENROUTER_API_KEY!);
+			logResult(result);
+
+			expect(result.stopReason).toBe("error");
+			expect(result.errorMessage).toMatch(/maximum context length is \d+ tokens/i);
+			expect(isContextOverflow(result.response, model.contextWindow)).toBe(true);
+		}, 120000);
 
 		// Google backend
 		it("google/gemini-2.5-flash via OpenRouter - should detect overflow via isContextOverflow", async () => {

@@ -9,6 +9,7 @@
  *   # Then /login gitlab-duo, or set GITLAB_TOKEN=glpat-...
  */
 
+import { normalizeContext } from "@eaonlabs/eaon-ai";
 import {
 	type Api,
 	type AssistantMessageEventStream,
@@ -334,12 +335,12 @@ export function streamGitLabDuo(
 									forceAdaptiveThinking: true,
 								},
 							},
-							context,
+							normalizeContext(context),
 							streamOptions,
 						)
 					: openAIResponsesApi().streamSimple(
 							modelWithBaseUrl as Model<"openai-responses">,
-							context,
+							normalizeContext(context),
 							streamOptions,
 						);
 

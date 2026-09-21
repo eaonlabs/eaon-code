@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-20
+
 ### Added
 
+- Added Meta Muse subscription authentication with `/login meta`, `META_API_KEY`, and Muse model selection.
 - Added `ctx.modelRegistry.stream()` and `streamSimple()` for extension model calls through configured providers with resolved authentication ([#8964](https://github.com/earendil-works/pi/issues/8964)).
 - Added per-model `reserveTokens` and `keepRecentTokens` settings through `compaction.modelOverrides`, with ordinary compaction settings as fallback ([#8133](https://github.com/earendil-works/pi-mono/issues/8133)).
 
