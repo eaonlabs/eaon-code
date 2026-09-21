@@ -19,6 +19,7 @@ Use `/login` in interactive mode, then select a provider:
 - ChatGPT Plus/Pro (Codex)
 - Claude Pro/Max
 - GitHub Copilot
+- Meta (Muse subscription)
 - xAI (Grok/X subscription)
 - OpenRouter (OAuth-minted API key billed from OpenRouter credits)
 - Radius
@@ -38,6 +39,11 @@ Anthropic subscription auth is active for Claude Pro/Max accounts. Third-party h
 
 - Press Enter for github.com, or enter your GitHub Enterprise Server domain
 - If you get "model not supported", enable it in VS Code: Copilot Chat → model selector → select model → "Enable"
+
+### Meta (Muse subscription)
+
+- Run `/login meta` and follow the device authorization prompt
+- Or choose **Use an API key** and set `META_API_KEY`
 
 ### xAI (Grok/X subscription)
 
@@ -77,6 +83,7 @@ eaon-code
 | Google Gemini | `GEMINI_API_KEY` | `google` |
 | Amazon Bedrock | `AWS_BEARER_TOKEN_BEDROCK` | `amazon-bedrock` |
 | Mistral | `MISTRAL_API_KEY` | `mistral` |
+| Meta | `META_API_KEY` | `meta` |
 | Groq | `GROQ_API_KEY` | `groq` |
 | Cerebras | `CEREBRAS_API_KEY` | `cerebras` |
 | Cloudflare AI Gateway | `CLOUDFLARE_API_KEY` (+ `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_GATEWAY_ID`) | `cloudflare-ai-gateway` |
