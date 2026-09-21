@@ -27,7 +27,7 @@ vi.mock("../../../src/core/extensions/virtual-modules.ts", () => {
 	return {
 		VIRTUAL_MODULES: {
 			typebox: {},
-			"@earendil-works/pi-coding-agent": {},
+			"@eaonlabs/eaon-code": {},
 		},
 	};
 });

@@ -5,8 +5,9 @@
 
 import type { AgentTool, AgentToolResult } from "@eaonlabs/eaon-agent-core";
 import { Type } from "typebox";
+import { VERSION } from "../config.ts";
 
-const USER_AGENT = "EaonCode/0.85 (https://github.com/eaonlabs/eaon-code; coding agent web access)";
+const USER_AGENT = `EaonCode/${VERSION} (https://github.com/eaonlabs/eaon-code; coding agent web access)`;
 const MAX_BODY = 80_000;
 
 function stripTags(html: string): string {

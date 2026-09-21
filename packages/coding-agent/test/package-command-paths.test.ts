@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import lockfile from "proper-lockfile";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ENV_AGENT_DIR, PACKAGE_NAME, VERSION } from "../src/config.ts";
+import { CONFIG_DIR_NAME, ENV_AGENT_DIR, PACKAGE_NAME, VERSION } from "../src/config.ts";
 import { ModelRuntime } from "../src/core/model-runtime.ts";
 import type { ResolvedPaths } from "../src/core/package-manager.ts";
 import { InMemorySettingsStorage, SettingsManager } from "../src/core/settings-manager.ts";
@@ -431,11 +431,12 @@ if (process.platform !== "win32") fs.chmodSync(eaonCodePath, 0o755);
 	it("allows local package install to initialize fresh project settings", async () => {
 		await main(["install", "-l", packageDir]);
 
-		const settingsPath = join(projectDir, ".pi", "settings.json");
+		const projectConfigDir = join(projectDir, CONFIG_DIR_NAME);
+		const settingsPath = join(projectConfigDir, "settings.json");
 		const settings = JSON.parse(readFileSync(settingsPath, "utf-8")) as { packages?: string[] };
 		expect(settings.packages?.length).toBe(1);
 		const stored = settings.packages?.[0] ?? "";
-		expect(realpathSync(join(projectDir, ".pi", stored))).toBe(realpathSync(packageDir));
+		expect(realpathSync(join(projectConfigDir, stored))).toBe(realpathSync(packageDir));
 		expect(process.exitCode).toBeUndefined();
 	});
 

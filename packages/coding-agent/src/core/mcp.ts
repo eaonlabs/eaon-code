@@ -13,6 +13,7 @@
  */
 
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import { VERSION } from "../config.ts";
 
 export interface McpServerConfig {
 	command: string;
@@ -86,7 +87,7 @@ export class McpClient {
 		await this.#request("initialize", {
 			protocolVersion: "2024-11-05",
 			capabilities: {},
-			clientInfo: { name: "eaon-code", version: "0.85.1" },
+			clientInfo: { name: "eaon-code", version: VERSION },
 		});
 		// notification
 		this.#notify("notifications/initialized", {});
