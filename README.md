@@ -27,7 +27,7 @@
 
 Eaon Code is a full-screen coding agent for the terminal, with multi-provider model access, durable sessions, and an extension system for adapting it to a project or team.
 
-## What Eaon Code adds
+## What Eaon Code includes
 
 - **Plan mode** (`/plan`) restricts the agent to read-only exploration and shows a small mode indicator.
 - **Swarm mode** (`/swarm`) makes the parent orchestrate 2–6 named specialist sub-agents in parallel, then reconcile and verify their work.
