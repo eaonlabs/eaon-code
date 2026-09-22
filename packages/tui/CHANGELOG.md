@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Centered the fullscreen jump-to-end label within the visible transcript area when the scrollbar reserves the right edge.
+
 ## [1.0.0] - 2026-09-20
 
 ## [0.85.1] - 2026-09-05

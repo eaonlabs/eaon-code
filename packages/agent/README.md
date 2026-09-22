@@ -127,7 +127,7 @@ The `beforeToolCall` hook runs after `tool_execution_start` and validated argume
 
 Tools, blocked `beforeToolCall` results, and `afterToolCall` overrides can return `terminate: true` to hint that the automatic follow-up LLM call should be skipped. The loop only stops early when every finalized tool result in that batch sets `terminate: true`. Mixed batches continue normally.
 
-The `Agent` class accepts `shouldStopAfterTurn` in `AgentOptions`. Low-level loop callers can set the same hook in `AgentLoopConfig`:
+The `Agent` class accepts `finishTurn` in `AgentOptions`. Low-level loop callers can set the same hook in `AgentLoopConfig` to end a completed run before another request:
 
 ```typescript
 const stream = agentLoop(
@@ -136,8 +136,8 @@ const stream = agentLoop(
   {
     model,
     convertToLlm,
-    shouldStopAfterTurn: async ({ message, toolResults, context, newMessages }) => {
-      return shouldCompactBeforeNextTurn(context.messages);
+    finishTurn: async ({ context }) => {
+      if (await shouldCompactBeforeNextTurn(context.messages)) return { action: "end" };
     },
   },
   undefined,
@@ -145,7 +145,7 @@ const stream = agentLoop(
 );
 ```
 
-`shouldStopAfterTurn` runs after `turn_end` is emitted and after the assistant response and any tool executions have completed normally. If it returns `true`, the loop emits `agent_end` and exits before polling steering or follow-up queues, and before starting another LLM call. It does not abort the provider stream, does not cancel running tools, and does not alter the assistant message stop reason. The `AgentOptions` callback also receives the active run's `AbortSignal` as its second argument.
+`finishTurn` runs after assistant/tool-result finalization and before `turn_end`, including for error and aborted responses. Its decision affects only normal responses; errors and aborts remain hard exits. Return `{ action: "end" }` to end the run after `turn_end` without polling steering or follow-up queues; return `undefined` to continue normal scheduling. `{ action: "continue" }` ensures one more provider request, using already queued work if available. The callback also receives the active run's `AbortSignal` as its second argument.
 
 When you use the `Agent` class, assistant `message_end` processing is treated as a barrier before tool preflight begins. That means `beforeToolCall` sees agent state that already includes the assistant message that requested the tool call.
 
@@ -231,9 +231,9 @@ const agent = new Agent({
     }
   },
 
-  // Stop gracefully after a completed turn, before queued messages are polled.
-  shouldStopAfterTurn: async ({ context }, signal) => {
-    return shouldCompactBeforeNextTurn(context.messages, signal);
+  // End after a completed turn when compaction should happen before another request.
+  finishTurn: async ({ context }, signal) => {
+    if (await shouldCompactBeforeNextTurn(context.messages, signal)) return { action: "end" };
   },
 
   // Custom thinking budgets for token-based providers
@@ -300,7 +300,8 @@ agent.state.tools = [myTool];
 agent.toolExecution = "sequential";
 agent.beforeToolCall = async ({ toolCall }) => undefined;
 agent.afterToolCall = async ({ toolCall, result }) => undefined;
-agent.shouldStopAfterTurn = async ({ context }) => shouldCompactBeforeNextTurn(context.messages);
+agent.finishTurn = async ({ context }) =>
+	(await shouldCompactBeforeNextTurn(context.messages)) ? { action: "end" } : undefined;
 agent.state.messages = newMessages; // top-level array is copied
 agent.state.messages.push(message);
 agent.reset();

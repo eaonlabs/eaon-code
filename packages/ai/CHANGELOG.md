@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added recent frontier models to supported provider catalogs and model-specific image input limits/resizing metadata.
+
+### Fixed
+
+- Defaulted unverified OpenAI-compatible endpoints to omitting strict tool-schema fields, while preserving explicit support for capable built-in models.
+- Fixed image-only user inputs for OpenAI-compatible providers and refreshed Anthropic OAuth client-version reporting.
+
 ## [1.0.0] - 2026-09-20
 
 ### Added

@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added append-only context edits, actionable `turn_end` and `agent_before_settle` extension boundaries, and `context_with_system` handlers.
+- Added model-specific image resizing across attachments, file reads, and tool results.
+
+### Fixed
+
+- Fixed context projection and compaction around edits, split turns, and extension-filtered context; preserved prompts and tool declarations when context handlers filter messages.
+- Validated interactive `--mode` values and fixed image-only OpenAI-compatible requests and text files beginning with `GIF` being treated as images.
+
 ### Fixed
 
 - Fixed first-launch setup showing the theme selector twice.

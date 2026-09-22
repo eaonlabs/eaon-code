@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- Replaced `shouldStopAfterTurn` with `finishTurn`, which runs after assistant/tool-result finalization and before `turn_end`; return `{ action: "end" }` to finish without polling queued messages.
+
+### Added
+
+- Added `prepareRequest` for per-request context preparation and `Agent.peekQueuedMessages()` for inspecting the next queued batch without consuming it.
+
 ## [1.0.0] - 2026-09-20
 
 ## [0.85.1] - 2026-09-05

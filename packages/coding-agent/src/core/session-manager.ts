@@ -1,11 +1,14 @@
 import type { AgentMessage } from "@eaonlabs/eaon-agent-core";
 import {
+	type AssistantMessage,
 	getCurrentSystemMessage,
 	type ImageContent,
 	type Message,
 	type SystemMessage,
 	type TextContent,
+	type ToolResultMessage,
 	type Usage,
+	type UserMessage,
 	uuidv7,
 } from "@eaonlabs/eaon-ai";
 import { randomUUID } from "crypto";
@@ -161,6 +164,21 @@ export interface CustomMessageEntry<T = unknown> extends SessionEntryBase {
 	display: boolean;
 }
 
+/** Content that an append-only context edit may replace without changing message metadata. */
+export type ContextEditableContent =
+	| UserMessage["content"]
+	| AssistantMessage["content"]
+	| ToolResultMessage["content"]
+	| CustomMessage["content"];
+
+/** Append-only change to one earlier entry's contribution to model context. */
+export interface ContextEditEntry extends SessionEntryBase {
+	type: "context_edit";
+	targetId: string;
+	/** Null omits the target from model context. A value replaces only its content. */
+	replacement: { content: ContextEditableContent } | null;
+}
+
 /** Session entry - has id/parentId for tree structure (returned by "read" methods in SessionManager) */
 export type SessionEntry =
 	| SessionMessageEntry
@@ -171,6 +189,7 @@ export type SessionEntry =
 	| BranchSummaryEntry
 	| CustomEntry
 	| CustomMessageEntry
+	| ContextEditEntry
 	| LabelEntry
 	| SessionInfoEntry;
 
@@ -185,6 +204,20 @@ export interface SessionTreeNode {
 	label?: string;
 	/** Timestamp of the latest label change for this entry, if any */
 	labelTimestamp?: string;
+}
+
+export interface ProjectedSessionEntry {
+	/** Raw append-only entry that owns this projected contribution. */
+	sourceEntry: SessionEntry;
+	/** Model-visible messages after context edits. Empty for state-only entries and omissions. */
+	messages: AgentMessage[];
+}
+
+export interface SessionProjection {
+	entries: ProjectedSessionEntry[];
+	messages: AgentMessage[];
+	thinkingLevel: string;
+	model: { provider: string; modelId: string } | null;
 }
 
 export interface SessionContext {
@@ -221,6 +254,7 @@ export type ReadonlySessionManager = Pick<
 	| "getLabel"
 	| "getBranch"
 	| "buildContextEntries"
+	| "buildSessionProjection"
 	| "getHeader"
 	| "getEntries"
 	| "getTree"
@@ -482,14 +516,69 @@ export function buildContextEntries(
  * If leafId is provided, walks from that entry to root.
  * Handles compaction and branch summaries along the path.
  */
+function projectContextEntry(entry: SessionEntry, edit: ContextEditEntry | undefined): AgentMessage[] {
+	const messages = sessionEntryToContextMessages(entry);
+	if (!edit) return messages;
+	const replacement = edit.replacement;
+	if (replacement === null) return [];
+
+	return messages.map((message) => {
+		if (
+			message.role !== "user" &&
+			message.role !== "assistant" &&
+			message.role !== "toolResult" &&
+			message.role !== "custom"
+		) {
+			return message;
+		}
+		const content =
+			(message.role === "assistant" || message.role === "toolResult") && typeof replacement.content === "string"
+				? [{ type: "text" as const, text: replacement.content }]
+				: replacement.content;
+		return { ...message, content } as AgentMessage;
+	});
+}
+
+/** Build provenance-preserving, compaction-aware model context. */
+export function buildSessionProjection(
+	entries: SessionEntry[],
+	leafId?: string | null,
+	byId?: Map<string, SessionEntry>,
+): SessionProjection {
+	const path = buildSessionPath(entries, leafId, byId);
+	const { thinkingLevel, model } = getSessionContextSettings(path);
+	const contextEntries = buildContextEntries(entries, leafId, byId);
+	const edits = new Map<string, ContextEditEntry>();
+	for (const entry of contextEntries) {
+		if (entry.type === "context_edit") edits.set(entry.targetId, entry);
+	}
+	const projectedEntries = contextEntries.map(
+		(sourceEntry, index): ProjectedSessionEntry => ({
+			sourceEntry,
+			// buildContextEntries() may retain an older compaction entry because its
+			// raw ID lies inside the newest retained range. Only the newest compaction
+			// at index zero contributes a checkpoint and summary.
+			messages:
+				sourceEntry.type === "compaction" && index > 0
+					? []
+					: projectContextEntry(sourceEntry, edits.get(sourceEntry.id)),
+		}),
+	);
+	return {
+		entries: projectedEntries,
+		messages: projectedEntries.flatMap((entry) => entry.messages),
+		thinkingLevel,
+		model,
+	};
+}
+
+/** Build the finalized model context from the canonical session projection. */
 export function buildSessionContext(
 	entries: SessionEntry[],
 	leafId?: string | null,
 	byId?: Map<string, SessionEntry>,
 ): SessionContext {
-	const path = buildSessionPath(entries, leafId, byId);
-	const { thinkingLevel, model } = getSessionContextSettings(path);
-	const messages = buildContextEntries(entries, leafId, byId).flatMap(sessionEntryToContextMessages);
+	const { messages, thinkingLevel, model } = buildSessionProjection(entries, leafId, byId);
 	return { messages, thinkingLevel, model };
 }
 
@@ -1169,21 +1258,22 @@ export class SessionManager {
 	/** Append a compaction summary as child of current leaf, then advance leaf. Returns entry id. */
 	appendCompaction<T = unknown>(
 		summary: string,
-		firstKeptEntryId: string,
+		firstKeptEntryId: string | null,
 		tokensBefore: number,
 		details?: T,
 		fromHook?: boolean,
 		usage?: Usage,
 	): string {
 		const timestamp = new Date().toISOString();
-		const systemMessage = getCurrentSystemMessage(this.buildSessionContext().messages);
+		const systemMessage = getCurrentSystemMessage(this.buildSessionProjection().messages);
+		const id = generateId(this.byId);
 		const entry: CompactionEntry<T> = {
 			type: "compaction",
-			id: generateId(this.byId),
+			id,
 			parentId: this.leafId,
 			timestamp,
 			summary,
-			firstKeptEntryId,
+			firstKeptEntryId: firstKeptEntryId ?? id,
 			tokensBefore,
 			details,
 			usage,
@@ -1259,6 +1349,47 @@ export class SessionManager {
 			id: generateId(this.byId),
 			parentId: this.leafId,
 			timestamp: new Date().toISOString(),
+		};
+		this._appendEntry(entry);
+		return entry.id;
+	}
+
+	/** Append a branch-local edit to an earlier model-visible entry. */
+	appendContextEdit(targetId: string, replacement: ContextEditEntry["replacement"]): string {
+		if (
+			replacement !== null &&
+			(typeof replacement !== "object" ||
+				!("content" in replacement) ||
+				(typeof replacement.content !== "string" && !Array.isArray(replacement.content)))
+		) {
+			throw new Error("Context edit replacement must be null or contain string/array content");
+		}
+		const target = this.byId.get(targetId);
+		if (!target) throw new Error(`Entry ${targetId} not found`);
+		if (!this.getBranch().some((entry) => entry.id === targetId)) {
+			throw new Error(`Entry ${targetId} is not on the active branch`);
+		}
+		const editable =
+			target.type === "custom_message" ||
+			(target.type === "message" &&
+				(target.message.role === "user" ||
+					target.message.role === "assistant" ||
+					target.message.role === "toolResult"));
+		if (!editable) throw new Error(`Entry ${targetId} does not contribute editable model content`);
+		const targetRole = target.type === "message" ? target.message.role : "custom";
+		const normalizedReplacement =
+			replacement !== null &&
+			(targetRole === "assistant" || targetRole === "toolResult") &&
+			typeof replacement.content === "string"
+				? { content: [{ type: "text" as const, text: replacement.content }] }
+				: replacement;
+		const entry: ContextEditEntry = {
+			type: "context_edit",
+			id: generateId(this.byId),
+			parentId: this.leafId,
+			timestamp: new Date().toISOString(),
+			targetId,
+			replacement: normalizedReplacement,
 		};
 		this._appendEntry(entry);
 		return entry.id;
@@ -1357,8 +1488,13 @@ export class SessionManager {
 	 * Build the session context (what gets sent to the LLM).
 	 * Uses tree traversal from current leaf.
 	 */
+	buildSessionProjection(): SessionProjection {
+		return buildSessionProjection(this.getEntries(), this.leafId, this.byId);
+	}
+
 	buildSessionContext(): SessionContext {
-		return buildSessionContext(this.getEntries(), this.leafId, this.byId);
+		const { messages, thinkingLevel, model } = this.buildSessionProjection();
+		return { messages, thinkingLevel, model };
 	}
 
 	/**
@@ -1514,7 +1650,10 @@ export class SessionManager {
 					? {
 							...entry,
 							parentId: pathParentId,
-							firstKeptEntryId: replacementByLabelId.get(entry.firstKeptEntryId) ?? entry.firstKeptEntryId,
+							firstKeptEntryId:
+								entry.firstKeptEntryId === entry.id
+									? entry.id
+									: (replacementByLabelId.get(entry.firstKeptEntryId) ?? entry.firstKeptEntryId),
 						}
 					: { ...entry, parentId: pathParentId },
 			);
