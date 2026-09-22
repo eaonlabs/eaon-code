@@ -9,7 +9,7 @@ import type { AutocompleteProviderFactory } from "../src/core/extensions/types.t
 import type { SourceInfo } from "../src/core/source-info.ts";
 import type { AuthSelectorProvider } from "../src/modes/interactive/components/oauth-selector.ts";
 import { InteractiveMode } from "../src/modes/interactive/interactive-mode.ts";
-import { initTheme } from "../src/modes/interactive/theme/theme.ts";
+import { initTheme, theme } from "../src/modes/interactive/theme/theme.ts";
 
 function renderLastLine(container: Container, width = 120): string {
 	const last = container.children[container.children.length - 1];
@@ -115,6 +115,39 @@ describe("InteractiveMode.showStatus", () => {
 		// adds spacer + text
 		expect(fakeThis.chatContainer.children).toHaveLength(5);
 		expect(renderLastLine(fakeThis.chatContainer)).toContain("STATUS_TWO");
+	});
+});
+
+describe("InteractiveMode.updateEditorBorderColor", () => {
+	test("uses the active theme accent for the normal input border", () => {
+		type EditorBorderContext = {
+			isBashMode: boolean;
+			session: { thinkingLevel?: string };
+			editor: { borderColor: (text: string) => string };
+			activeStatusIndicator?: { invalidate: () => void };
+			ui: { requestRender: () => void };
+		};
+
+		const updateEditorBorderColor = (
+			InteractiveMode as unknown as {
+				prototype: { updateEditorBorderColor(this: EditorBorderContext): void };
+			}
+		).prototype.updateEditorBorderColor;
+		initTheme("dark-amber");
+		const editor = { borderColor: (_text: string) => "stale" };
+		const fakeThis: EditorBorderContext = {
+			isBashMode: false,
+			session: { thinkingLevel: "off" },
+			editor,
+			activeStatusIndicator: { invalidate: vi.fn() },
+			ui: { requestRender: vi.fn() },
+		};
+
+		updateEditorBorderColor.call(fakeThis);
+
+		expect(editor.borderColor("─")).toBe(theme.fg("accent", "─"));
+		expect(fakeThis.activeStatusIndicator?.invalidate).toHaveBeenCalledTimes(1);
+		expect(fakeThis.ui.requestRender).toHaveBeenCalledTimes(1);
 	});
 });
 

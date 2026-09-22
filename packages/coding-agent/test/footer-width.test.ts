@@ -263,4 +263,21 @@ describe("FooterComponent width handling", () => {
 		expect(stats).toContain("plan");
 		expect(stats).toContain("swarm");
 	});
+
+	it("does not show the internal experimental marker", () => {
+		const previousExperimentalFlag = process.env.EAON_CODE_EXPERIMENTAL;
+		process.env.EAON_CODE_EXPERIMENTAL = "1";
+		try {
+			const session = createSession({ sessionName: "" });
+			const stats = stripAnsi(new FooterComponent(session, createFooterData(1)).render(120)[1]);
+
+			expect(stats).not.toContain("xp");
+		} finally {
+			if (previousExperimentalFlag === undefined) {
+				delete process.env.EAON_CODE_EXPERIMENTAL;
+			} else {
+				process.env.EAON_CODE_EXPERIMENTAL = previousExperimentalFlag;
+			}
+		}
+	});
 });

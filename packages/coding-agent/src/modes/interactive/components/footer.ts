@@ -1,7 +1,6 @@
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { type Component, truncateToWidth, visibleWidth } from "@eaonlabs/eaon-tui";
 import type { AgentSession } from "../../../core/agent-session.ts";
-import { areExperimentalFeaturesEnabled } from "../../../core/experimental.ts";
 import type { ReadonlyFooterDataProvider } from "../../../core/footer-data-provider.ts";
 import { addUsageToTotals, createUsageTotals } from "../../../core/usage-totals.ts";
 import { theme } from "../theme/theme.ts";
@@ -163,10 +162,6 @@ export class FooterComponent implements Component {
 		if (this.session.settingsManager.getPlanMode()) modeParts.push(theme.fg("warning", "plan"));
 		if (this.session.settingsManager.getSwarmMode()) modeParts.push(theme.fg("accent", "swarm"));
 		if (modeParts.length > 0) statsParts.push(modeParts.join(" "));
-		if (areExperimentalFeaturesEnabled()) {
-			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
-		}
-
 		let statsLeft = statsParts.join(" ");
 
 		// Add model name on the right side, plus thinking level if model supports it
