@@ -1450,6 +1450,9 @@ export class InteractiveMode {
 				const lastSegment = segments[segments.length - 1];
 				if (segments.length > 1 && (lastSegment === "index.ts" || lastSegment === "index.js")) {
 					segments.pop();
+					if (segments.length > 1 && segments[segments.length - 1] === "src") {
+						segments.pop();
+					}
 				}
 				return {
 					path: extension.path,

@@ -16,6 +16,7 @@
 
 - Fixed first-launch setup showing the theme selector twice.
 - Fixed the themed editor border and removed the internal experimental XP footer marker.
+- Fixed the startup extension list showing the bundled subagents source folder as `src`.
 
 ## [1.0.0] - 2026-09-20
 

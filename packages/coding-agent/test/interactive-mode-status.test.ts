@@ -889,6 +889,33 @@ describe("InteractiveMode.showLoadedResources", () => {
   plan-mode"`);
 	});
 
+	test("labels nested src/index.ts with the extension directory, not src", () => {
+		const extensionPath = "/tmp/extensions/pi-subagents/src/index.ts";
+		const fakeThis = createShowLoadedResourcesThis({
+			quietStartup: false,
+			extensions: [
+				{
+					path: extensionPath,
+					sourceInfo: createSourceInfo(extensionPath, {
+						source: "cli",
+						scope: "temporary",
+						origin: "top-level",
+						baseDir: "/tmp/extensions/pi-subagents/src",
+					}),
+				},
+			],
+			useRealScopeGroups: true,
+		});
+
+		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
+			force: false,
+		});
+
+		const output = normalizeRenderedOutput(fakeThis.loadedResourcesContainer);
+		expect(output).toContain("pi-subagents");
+		expect(output).not.toContain("src");
+	});
+
 	test("strips index.js from local extension label, showing parent dir", () => {
 		const extensions: ExtensionFixture[] = [
 			{
