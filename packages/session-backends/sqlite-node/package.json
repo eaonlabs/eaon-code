@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/eaon-session-backend-sqlite-node",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Node sqlite session backend for @eaonlabs/eaon-agent-core sessions",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -35,8 +35,8 @@
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@eaonlabs/eaon-ai": "^1.0.0",
-		"@eaonlabs/eaon-agent-core": "^1.0.0"
+		"@eaonlabs/eaon-ai": "^1.0.1",
+		"@eaonlabs/eaon-agent-core": "^1.0.1"
 	},
 	"devDependencies": {
 		"@vitest/coverage-v8": "4.1.9",
