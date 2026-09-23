@@ -89,7 +89,7 @@ import { stream as streamGoogleGenerativeAi } from "../src/api/google-generative
 import { stream as streamGoogleVertex } from "../src/api/google-vertex.ts";
 import { getModel, normalizeContext } from "../src/compat.ts";
 
-const PI_USER_AGENT = `pi (${platform()} ${release()}; ${arch()})`;
+const EAON_USER_AGENT = `eaon-code (${platform()} ${release()}; ${arch()})`;
 
 const context = normalizeContext({
 	messages: [{ role: "user", content: "hello", timestamp: Date.now() }],
@@ -183,8 +183,8 @@ describe("Google raw stop reasons", () => {
 });
 
 describe("Google Generative AI user agent", () => {
-	it("uses pi's User-Agent by default", async () => {
-		expect((await captureGoogleHeaders())["User-Agent"]).toBe(PI_USER_AGENT);
+	it("uses Eaon Code's User-Agent by default", async () => {
+		expect((await captureGoogleHeaders())["User-Agent"]).toBe(EAON_USER_AGENT);
 	});
 
 	it("lets explicit headers override the default User-Agent", async () => {

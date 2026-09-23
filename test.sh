@@ -42,6 +42,7 @@ test_env=(
 	"PWD=$PWD"
 	"HOME=$test_root/home"
 	"USERPROFILE=$test_root/home"
+	"PI_CODING_AGENT_DIR=$test_root/home/.pi/agent"
 	"TMPDIR=$test_root/tmp"
 	"TMP=$test_root/tmp"
 	"TEMP=$test_root/tmp"

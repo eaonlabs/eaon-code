@@ -27,7 +27,7 @@ function createFixture(t, { importServer = false, declareServer = false } = {}) 
 				"./experimental/plugin": { source: "./src/experimental/plugin.ts" },
 			} : "./dist/index.js",
 			...(isAgent ? {
-				bin: { pi: "dist/bundle/cli.js" },
+				bin: { "eaon-code": "dist/bundle/cli.js" },
 				dependencies: {
 					"@eaonlabs/chord": "1.0.0",
 					...(declareServer ? { "@eaonlabs/eaon-server": "1.0.0" } : {}),

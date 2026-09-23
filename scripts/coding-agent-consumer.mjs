@@ -92,9 +92,9 @@ export function smokeTestCodingAgentConsumer(directory, runtime = process.execPa
 		LOCALAPPDATA: home,
 		XDG_CONFIG_HOME: home,
 		XDG_CACHE_HOME: home,
-		PI_CODING_AGENT_DIR: join(home, ".pi", "agent"),
-		PI_OFFLINE: "1",
-		PI_TELEMETRY: "0",
+		EAON_CODE_CODING_AGENT_DIR: join(home, ".eaon", "agent"),
+		EAON_CODE_OFFLINE: "1",
+		EAON_CODE_TELEMETRY: "0",
 	};
 	for (const name of ["SystemRoot", "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT"]) {
 		if (process.env[name]) env[name] = process.env[name];
@@ -113,7 +113,7 @@ for (const subpath of ["/client", "/experimental/plugin"]) {
 }
 `);
 		run(runtime, [entry], { cwd: directory, env, timeout: 30_000 });
-		for (const cli of new Set([manifest.bin.pi, "dist/cli.js"])) {
+		for (const cli of new Set([manifest.bin["eaon-code"], "dist/cli.js"])) {
 			const output = run(runtime, [join(packageDir, cli), "--version"], { cwd: directory, env, timeout: 30_000 });
 			if (output.trim() !== manifest.version) throw new Error(`Unexpected version from ${cli}: ${output}`);
 		}

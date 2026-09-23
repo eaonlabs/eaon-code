@@ -5,13 +5,18 @@
  * OAuth tokens are automatically refreshed if expired and saved back to auth.json.
  */
 
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { homedir } from "os";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { dirname, join } from "path";
 import type { OAuthCredentials } from "../src/auth/types.ts";
 import { builtinProviders } from "../src/providers/all.ts";
 
-const AUTH_PATH = join(homedir(), ".pi", "agent", "auth.json");
+const DEFAULT_AGENT_DIR = mkdtempSync(join(tmpdir(), "eaon-ai-test-agent-"));
+process.once("exit", () => rmSync(DEFAULT_AGENT_DIR, { recursive: true, force: true }));
+
+function getAuthPath(): string {
+	return join(process.env.PI_CODING_AGENT_DIR ?? DEFAULT_AGENT_DIR, "auth.json");
+}
 
 type ApiKeyCredential = {
 	type: "api_key";
@@ -27,11 +32,12 @@ type AuthCredential = ApiKeyCredential | OAuthCredentialEntry;
 type AuthStorage = Record<string, AuthCredential>;
 
 function loadAuthStorage(): AuthStorage {
-	if (!existsSync(AUTH_PATH)) {
+	const authPath = getAuthPath();
+	if (!existsSync(authPath)) {
 		return {};
 	}
 	try {
-		const content = readFileSync(AUTH_PATH, "utf-8");
+		const content = readFileSync(authPath, "utf-8");
 		return JSON.parse(content);
 	} catch {
 		return {};
@@ -39,12 +45,13 @@ function loadAuthStorage(): AuthStorage {
 }
 
 function saveAuthStorage(storage: AuthStorage): void {
-	const configDir = dirname(AUTH_PATH);
+	const authPath = getAuthPath();
+	const configDir = dirname(authPath);
 	if (!existsSync(configDir)) {
 		mkdirSync(configDir, { recursive: true, mode: 0o700 });
 	}
-	writeFileSync(AUTH_PATH, JSON.stringify(storage, null, 2), "utf-8");
-	chmodSync(AUTH_PATH, 0o600);
+	writeFileSync(authPath, JSON.stringify(storage, null, 2), "utf-8");
+	chmodSync(authPath, 0o600);
 }
 
 /**
