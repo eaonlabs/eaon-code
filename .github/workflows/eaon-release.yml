@@ -79,8 +79,10 @@ jobs:
           npm install --global npm@11.16.0 --ignore-scripts
           npm --version
 
-      - name: Publish npm packages with provenance
+      - name: Publish npm packages via trusted publishing
         run: node scripts/publish.mjs
+        env:
+          NPM_CONFIG_PROVENANCE: "false"
 
   publish-github-release:
     runs-on: ubuntu-latest
