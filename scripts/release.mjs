@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Release script for pi-mono
+ * Release script for Eaon Code
  *
  * Usage:
  *   node scripts/release.mjs <major|minor|patch>
@@ -16,7 +16,7 @@
  * 7. Commit and tag the release
  * 8. Add new [Unreleased] section to changelogs
  * 9. Commit next-cycle changelog updates
- * 10. Push main and the tag to trigger CI publication and verified pi.dev announcement
+ * 10. Push main and an Eaon release tag to trigger npm publication and a GitHub Release
  */
 
 import { execSync, spawnSync } from "node:child_process";
@@ -26,6 +26,7 @@ import { findPackageDirectories } from "./package-workspaces.mjs";
 import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 const RELEASE_TARGET = process.argv[2];
+const RELEASE_TAG_PREFIX = "eaon-v";
 const BUMP_TYPES = new Set(["major", "minor", "patch"]);
 const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 
@@ -259,10 +260,11 @@ run("npm run check:package-install");
 console.log();
 
 // 7. Commit and tag
+const releaseTag = `${RELEASE_TAG_PREFIX}${version}`;
 console.log("Committing and tagging...");
 stageChangedFiles();
-run(`git commit -m "Release v${version}"`);
-run(`git tag v${version}`);
+run(`git commit -m "Release Eaon Code v${version}"`);
+run(`git tag ${releaseTag}`);
 console.log();
 
 // 8. Add new [Unreleased] sections
@@ -279,7 +281,7 @@ console.log();
 // 10. Push
 console.log("Pushing to remote...");
 run("git push origin main");
-run(`git push origin v${version}`);
+run(`git push origin ${releaseTag}`);
 console.log();
 
-console.log(`=== Prepared release v${version}; CI publication and pi.dev announcement start after the tag push ===`);
+console.log(`=== Prepared Eaon Code v${version}; npm publication and the GitHub Release start after ${releaseTag} is pushed ===`);

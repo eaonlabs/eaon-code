@@ -1,0 +1,112 @@
+name: Release Eaon Code
+
+on:
+  push:
+    tags:
+      - 'eaon-v*'
+
+permissions: {}
+
+concurrency:
+  group: eaon-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev fd-find ripgrep
+          sudo ln -s "$(which fdfind)" /usr/local/bin/fd
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify release tag matches package versions
+        run: |
+          node --input-type=module <<'NODE'
+          import { getPublicWorkspacePackages } from './scripts/release-packages.mjs';
+
+          const packages = getPublicWorkspacePackages();
+          const versions = new Set(packages.map((pkg) => pkg.version));
+          if (versions.size !== 1) {
+            throw new Error(`Public packages are not lockstep versioned: ${[...versions].join(', ')}`);
+          }
+
+          const version = [...versions][0];
+          const expectedTag = `eaon-v${version}`;
+          if (process.env.RELEASE_TAG !== expectedTag) {
+            throw new Error(`Tag ${process.env.RELEASE_TAG} does not match package version ${version}; expected ${expectedTag}`);
+          }
+
+          console.log(`Releasing ${packages.length} public packages as ${expectedTag}`);
+          NODE
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Check repository
+        run: npm run check
+
+      - name: Run release script tests
+        run: npm run test:scripts
+
+      - name: Smoke-test packed npm consumer
+        run: npm run check:package-install
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install --global npm@11.16.0 --ignore-scripts
+          npm --version
+
+      - name: Publish npm packages with provenance
+        run: node scripts/publish.mjs
+
+  publish-github-release:
+    runs-on: ubuntu-latest
+    needs: publish-npm
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Create GitHub Release
+        run: |
+          set -euo pipefail
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            is_draft="$(gh release view "${RELEASE_TAG}" --json isDraft --jq .isDraft)"
+            if [[ "${is_draft}" == "true" ]]; then
+              echo "::error::GitHub Release ${RELEASE_TAG} already exists as a draft."
+              exit 1
+            fi
+            echo "GitHub Release ${RELEASE_TAG} already exists; leaving it unchanged."
+            exit 0
+          fi
+
+          version="${RELEASE_TAG#eaon-v}"
+          gh release create "${RELEASE_TAG}" \
+            --verify-tag \
+            --title "Eaon Code v${version}" \
+            --generate-notes
