@@ -4,6 +4,7 @@
 
 ### Added
 
+- Added AICheap provider setup instructions and dynamic model discovery.
 - Added append-only context edits, actionable `turn_end` and `agent_before_settle` extension boundaries, and `context_with_system` handlers.
 - Added model-specific image resizing across attachments, file reads, and tool results.
 

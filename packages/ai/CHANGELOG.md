@@ -4,6 +4,7 @@
 
 ### Added
 
+- Added the AICheap OpenAI-compatible provider with API-key auth and plan-scoped model discovery.
 - Added recent frontier models to supported provider catalogs and model-specific image input limits/resizing metadata.
 
 ### Fixed

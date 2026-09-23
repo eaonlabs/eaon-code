@@ -74,6 +74,7 @@ eaon-code
 
 | Provider | Environment Variable | `auth.json` key |
 |----------|----------------------|------------------|
+| AICheap | `AICHEAP_API_KEY` | `aicheap` |
 | Anthropic | `ANTHROPIC_API_KEY` | `anthropic` |
 | Ant Ling | `ANT_LING_API_KEY` | `ant-ling` |
 | Azure OpenAI Responses | `AZURE_OPENAI_API_KEY` | `azure-openai-responses` |
@@ -111,6 +112,10 @@ eaon-code
 | Xiaomi MiMo Token Plan (Amsterdam) | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` | `xiaomi-token-plan-ams` |
 | Xiaomi MiMo Token Plan (Singapore) | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` | `xiaomi-token-plan-sgp` |
 
+### AICheap
+
+Run `/login aicheap` and enter an API key from [AICheap](https://aicheap.io/docs), or set `AICHEAP_API_KEY`. Eaon Code discovers the models available to your account from `https://api.aicheap.io/v1/models` after login and caches the catalog for offline use.
+
 Reference for environment variables and `auth.json` keys: [`const envMap`](https://github.com/eaonlabs/eaon-code/blob/main/packages/ai/src/env-api-keys.ts) in [`packages/ai/src/env-api-keys.ts`](https://github.com/eaonlabs/eaon-code/blob/main/packages/ai/src/env-api-keys.ts).
 
 #### Auth File
@@ -119,6 +124,7 @@ Store credentials in `~/.eaon/agent/auth.json`:
 
 ```json
 {
+  "aicheap": { "type": "api_key", "key": "sk-..." },
   "anthropic": { "type": "api_key", "key": "sk-ant-..." },
   "ant-ling": { "type": "api_key", "key": "..." },
   "openai": { "type": "api_key", "key": "sk-..." },

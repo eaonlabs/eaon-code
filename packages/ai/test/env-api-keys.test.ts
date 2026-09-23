@@ -54,6 +54,11 @@ afterEach(() => {
 });
 
 describe("environment API keys", () => {
+	it("resolves AICheap credentials from AICHEAP_API_KEY", () => {
+		expect(findEnvKeys("aicheap", { AICHEAP_API_KEY: "aicheap-token" })).toEqual(["AICHEAP_API_KEY"]);
+		expect(getEnvApiKey("aicheap", { AICHEAP_API_KEY: "aicheap-token" })).toBe("aicheap-token");
+	});
+
 	it("does not treat generic GitHub tokens as GitHub Copilot credentials", () => {
 		delete process.env.COPILOT_GITHUB_TOKEN;
 		process.env.GH_TOKEN = "gh-token";

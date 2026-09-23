@@ -52,6 +52,7 @@ describe("builtin providers", () => {
 		const providers = models.getProviders();
 		expect(providers.length).toBe(builtinProviders().length);
 		expect(providers.map((p) => p.id)).toContain("anthropic");
+		expect(providers.map((p) => p.id)).toContain("aicheap");
 
 		const anthropic = models.getModel("anthropic", "claude-haiku-4-5");
 		expect(anthropic?.api).toBe("anthropic-messages");
@@ -61,7 +62,7 @@ describe("builtin providers", () => {
 
 		for (const provider of providers) {
 			const list = models.getModels(provider.id);
-			expect(list.length).toBeGreaterThan(0);
+			if (!provider.refreshModels || list.length > 0) expect(list.length).toBeGreaterThan(0);
 			expect(list.every((m) => m.provider === provider.id)).toBe(true);
 		}
 		expect(getBuiltinModel("radius", "balanced")).toMatchObject({
