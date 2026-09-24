@@ -17,7 +17,7 @@
   ·
   <a href="mailto:sanscreates@eaon.dev">sanscreates@eaon.dev</a>
    ·
-  <a href="mailto:mincoffical@eaon.dev">sanscreates@eaon.dev</a>
+  <a href="mailto:mincoffical@eaon.dev">mincoffical@eaon.dev</a>
 </p>
 
 <p align="center">
