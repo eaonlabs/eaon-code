@@ -87,6 +87,16 @@ if ! "$BIN_DIR/eaon-code" --help >/dev/null 2>&1; then
   die "installed, but the CLI did not run"
 fi
 
+node - "$PREFIX" "$REPO" "$REF" "$BIN_DIR" <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+const [prefix, repo, ref, binDir] = process.argv.slice(2);
+fs.writeFileSync(
+  path.join(prefix, ".git", "eaon-code-install.json"),
+  `${JSON.stringify({ kind: "eaon-code-source-install", schemaVersion: 1, repo, ref, binDir })}\n`,
+);
+NODE
+
 echo "Eaon Code installed."
 echo "  source:  $PREFIX"
 echo "  command: $BIN_DIR/eaon-code"

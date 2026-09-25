@@ -8,6 +8,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
+import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { Markdown, type MarkdownTheme } from "@eaonlabs/eaon-tui";
 import chalk from "chalk";
@@ -50,7 +51,66 @@ type UpdateTarget = { type: "all" } | { type: "self" } | { type: "extensions"; s
 const INSTALLER_API_BASE_ENV = "EAON_CODE_INSTALLER_API_BASE";
 const MANAGED_INSTALL_MARKER = "managed-install.json";
 const MANAGED_INSTALL_MARKER_KIND = "eaon-code-managed-install";
+const SOURCE_INSTALL_MARKER = ".git/eaon-code-install.json";
+const SOURCE_INSTALL_MARKER_KIND = "eaon-code-source-install";
 const MANAGED_RELEASE_VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+interface SourceInstallConfig {
+	root: string;
+	repo: string;
+	ref: string;
+	binDir: string;
+}
+
+function getSourceInstallConfig(): SourceInstallConfig | undefined {
+	const packageDir = canonicalizePath(getPackageDir());
+	const root = resolve(packageDir, "../..");
+	if (canonicalizePath(join(root, "packages/coding-agent")) !== packageDir || !existsSync(join(root, "install.sh"))) {
+		return undefined;
+	}
+
+	try {
+		const marker = JSON.parse(readFileSync(join(root, SOURCE_INSTALL_MARKER), "utf8")) as {
+			kind?: unknown;
+			schemaVersion?: unknown;
+			repo?: unknown;
+			ref?: unknown;
+			binDir?: unknown;
+		};
+		if (
+			marker.kind === SOURCE_INSTALL_MARKER_KIND &&
+			marker.schemaVersion === 1 &&
+			typeof marker.repo === "string" &&
+			/^[\w.-]+\/[\w.-]+$/.test(marker.repo) &&
+			typeof marker.ref === "string" &&
+			marker.ref.length > 0 &&
+			typeof marker.binDir === "string" &&
+			marker.binDir.length > 0
+		) {
+			return { root, repo: marker.repo, ref: marker.ref, binDir: marker.binDir };
+		}
+	} catch {
+		// Older default-prefix installations predate the source-install marker.
+	}
+
+	const home = process.env.HOME?.trim() || homedir();
+	const defaultRoot = resolve(home, ".local/share/eaon-code");
+	if (canonicalizePath(root) !== canonicalizePath(defaultRoot) || !existsSync(join(root, ".git"))) {
+		return undefined;
+	}
+	const origin = spawnProcessSync("git", ["-C", root, "remote", "get-url", "origin"], {
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "ignore"],
+	});
+	const branch = spawnProcessSync("git", ["-C", root, "branch", "--show-current"], {
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "ignore"],
+	});
+	const isUpstreamOrigin =
+		origin.status === 0 && /github\.com[:/]eaonlabs\/eaon-code(?:\.git)?\s*$/.test(origin.stdout);
+	if (!isUpstreamOrigin || branch.status !== 0 || branch.stdout.trim() !== "main") return undefined;
+	return { root, repo: "eaonlabs/eaon-code", ref: "main", binDir: join(home, ".local/bin") };
+}
 
 function getActiveManagedInstallRoot(): string | undefined {
 	const configuredRoot = process.env.EAON_CODE_MANAGED_INSTALL_ROOT?.trim();
@@ -693,6 +753,24 @@ async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 	return { packageName, installSpec, version: latestRelease.version, shouldRun: false };
 }
 
+async function runSourceInstallUpdate(config: SourceInstallConfig): Promise<void> {
+	console.log(chalk.dim(`Updating ${APP_NAME} from its installer-managed checkout...`));
+	const child = spawnProcess("bash", [join(config.root, "install.sh")], {
+		stdio: "inherit",
+		env: {
+			...process.env,
+			EAON_CODE_PREFIX: config.root,
+			EAON_CODE_REPO: config.repo,
+			EAON_CODE_REF: config.ref,
+			EAON_CODE_BIN_DIR: config.binDir,
+		},
+	});
+	const code = await waitForChildProcess(child);
+	if (code !== 0) {
+		throw new Error(`Installer exited with code ${code ?? "unknown"}`);
+	}
+}
+
 async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
 	console.log(chalk.dim(`Updating ${APP_NAME} with ${command.display}...`));
 	for (const step of command.steps ?? [command]) {
@@ -1033,6 +1111,27 @@ export async function handlePackageCommand(
 							),
 						);
 						process.exitCode = 1;
+						return true;
+					}
+					const sourceInstall = managedInstallRoot ? undefined : getSourceInstallConfig();
+					if (sourceInstall) {
+						if (options.force) {
+							console.error(
+								chalk.red(
+									`Installer-managed ${APP_NAME} checkouts do not support --force; local changes are never overwritten.`,
+								),
+							);
+							process.exitCode = 1;
+							return true;
+						}
+						try {
+							await runSourceInstallUpdate(sourceInstall);
+							console.log(chalk.green(`Updated ${APP_NAME} installer-managed checkout`));
+						} catch (error: unknown) {
+							const message = error instanceof Error ? error.message : "Unknown installer error";
+							console.error(chalk.red(`Error: ${message}`));
+							process.exitCode = 1;
+						}
 						return true;
 					}
 					if (!managedInstallRoot && detectInstallMethod() === "unknown") {
