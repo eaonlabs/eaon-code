@@ -7,9 +7,6 @@ export function setupCli(): void {
 	process.env.PI_CODING_AGENT = "true";
 	process.env.AI_AGENT = "eaon-code";
 	if (process.env.EAON_CODE_OFFLINE !== undefined) process.env.PI_OFFLINE = process.env.EAON_CODE_OFFLINE;
-	if (process.env.EAON_CODE_SKIP_VERSION_CHECK !== undefined) {
-		process.env.PI_SKIP_VERSION_CHECK = process.env.EAON_CODE_SKIP_VERSION_CHECK;
-	}
 	if (process.env.EAON_CODE_TELEMETRY !== undefined) process.env.PI_TELEMETRY = process.env.EAON_CODE_TELEMETRY;
 	process.emitWarning = (() => {}) as typeof process.emitWarning;
 

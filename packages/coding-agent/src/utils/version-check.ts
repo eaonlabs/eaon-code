@@ -88,17 +88,3 @@ export async function getLatestVersion(
 ): Promise<string | undefined> {
 	return (await getLatestRelease(currentVersion, options))?.version;
 }
-
-export async function checkForNewVersion(currentVersion: string): Promise<LatestRelease | undefined> {
-	if (process.env.EAON_CODE_SKIP_VERSION_CHECK || process.env.PI_SKIP_VERSION_CHECK) return undefined;
-
-	try {
-		const latestRelease = await getLatestRelease(currentVersion);
-		if (latestRelease && isNewerPackageVersion(latestRelease.version, currentVersion)) {
-			return latestRelease;
-		}
-		return undefined;
-	} catch {
-		return undefined;
-	}
-}

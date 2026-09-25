@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Installer-created source checkouts check for upstream updates at startup and rerun the installer quietly only when the configured ref advances.
+
+### Removed
+
+- Removed the background package-registry version check and update-available notification.
+- Removed experimental release-managed self-update installations.
+
+### Fixed
+
+- Updated a skipped OpenRouter context-overflow test to use a model in the current catalog.
+
 ## [1.0.1] - 2026-09-23
 
 ### Added

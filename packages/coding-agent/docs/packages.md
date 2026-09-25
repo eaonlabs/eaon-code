@@ -38,7 +38,7 @@ eaon-code update npm:@foo/bar      # update one package
 eaon-code update --extension npm:@foo/bar
 ```
 
-These commands manage Eaon Code packages. `eaon-code update` also updates the CLI: installer-created source checkouts rerun their installer and refuse to overwrite local changes, while experimental release-managed installations stage and verify the exact checked version before activation. Managed installations do not support `--force`; rerun the installer to repair one. To uninstall Eaon Code itself, see [Quickstart](quickstart.md#uninstall).
+These commands manage Eaon Code packages. Installer-created source checkouts check for upstream changes at startup and quietly rerun the installer when an update is available. The terminal only shows `Checking for updates...`; installer build output stays hidden. The check is skipped in offline mode and does not overwrite a checkout with local changes. `eaon-code update --self` remains available for a manual update. To uninstall Eaon Code itself, see [Quickstart](quickstart.md#uninstall).
 
 By default, `install` and `remove` write to user settings (`~/.eaon/agent/settings.json`). Use `-l` to write to project settings (`.eaon/settings.json`) instead. Project settings can be shared with your team, and Eaon Code installs any missing packages automatically on startup after the project is trusted.
 

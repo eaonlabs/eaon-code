@@ -35,7 +35,7 @@ if [ -d "$PREFIX/.git" ]; then
     die "$PREFIX contains local changes. Move them or choose another EAON_CODE_PREFIX before updating."
   fi
   git -C "$PREFIX" fetch --depth 1 origin "$REF" -q
-  git -C "$PREFIX" reset --hard "origin/$REF" -q
+  git -C "$PREFIX" reset --hard FETCH_HEAD -q
 else
   if [ -e "$PREFIX" ]; then
     die "$PREFIX exists and is not an Eaon Code Git checkout. Move it or choose another EAON_CODE_PREFIX."
@@ -49,6 +49,9 @@ cd "$PREFIX"
 cleanup_build_generated_model_sources() {
   local exit_status=$?
   trap - EXIT
+  if [ -n "${WRAPPER_TMP:-}" ]; then
+    rm -f "$WRAPPER_TMP"
+  fi
   if ! git -C "$PREFIX" restore -- packages/ai/src/models.generated.ts 'packages/ai/src/providers/*.models.ts'; then
     echo "eaon-code: could not restore generated model source files" >&2
     exit 1
@@ -77,23 +80,27 @@ CLI="$AGENT_DIR/dist/bundle/cli.js"
 [ -f "$CLI" ] || die "build finished but $CLI is missing"
 
 mkdir -p "$BIN_DIR"
-cat >"$BIN_DIR/eaon-code" <<EOF
+WRAPPER_TMP="$(mktemp "$BIN_DIR/.eaon-code.XXXXXX")"
+cat >"$WRAPPER_TMP" <<EOF
 #!/bin/sh
-exec node "$CLI" "\$@"
+exec node "$PREFIX/scripts/startup-update.mjs" "$PREFIX" "$CLI" "\$@"
 EOF
-chmod +x "$BIN_DIR/eaon-code"
+chmod +x "$WRAPPER_TMP"
+mv -f "$WRAPPER_TMP" "$BIN_DIR/eaon-code"
+WRAPPER_TMP=
 
 if ! "$BIN_DIR/eaon-code" --help >/dev/null 2>&1; then
   die "installed, but the CLI did not run"
 fi
 
-node - "$PREFIX" "$REPO" "$REF" "$BIN_DIR" <<'NODE'
+INSTALLED_COMMIT="$(git -C "$PREFIX" rev-parse HEAD)"
+node - "$PREFIX" "$REPO" "$REF" "$BIN_DIR" "$INSTALLED_COMMIT" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
-const [prefix, repo, ref, binDir] = process.argv.slice(2);
+const [prefix, repo, ref, binDir, installedCommit] = process.argv.slice(2);
 fs.writeFileSync(
   path.join(prefix, ".git", "eaon-code-install.json"),
-  `${JSON.stringify({ kind: "eaon-code-source-install", schemaVersion: 1, repo, ref, binDir })}\n`,
+  `${JSON.stringify({ kind: "eaon-code-source-install", schemaVersion: 1, repo, ref, binDir, installedCommit })}\n`,
 );
 NODE
 

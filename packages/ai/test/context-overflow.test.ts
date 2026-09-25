@@ -562,8 +562,8 @@ describe("Context overflow error handling", () => {
 		}, 120000);
 
 		// Mistral backend
-		it("mistralai/devstral-2512 via OpenRouter - should detect overflow via isContextOverflow", async () => {
-			const model = getModel("openrouter", "mistralai/devstral-2512");
+		it("mistralai/mistral-medium-3-5 via OpenRouter - should detect overflow via isContextOverflow", async () => {
+			const model = getModel("openrouter", "mistralai/mistral-medium-3-5");
 			const result = await testContextOverflow(model, process.env.OPENROUTER_API_KEY!);
 			logResult(result);
 

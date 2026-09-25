@@ -38,7 +38,6 @@ Custom tools created with `createBashTool()` or `createPowerShellTool()` expose 
 | `EAON_CODE_CODING_AGENT_SESSION_DIR` | Override session storage; `--session-dir` takes precedence. Legacy alias: `PI_CODING_AGENT_SESSION_DIR` |
 | `EAON_CODE_PACKAGE_DIR` | Override the package directory for Nix/Guix or other managed installs; legacy alias: `PI_PACKAGE_DIR` |
 | `EAON_CODE_OFFLINE` | Disable startup network operations; legacy alias: `PI_OFFLINE` |
-| `EAON_CODE_SKIP_VERSION_CHECK` | Disable the npm-registry update check; legacy alias: `PI_SKIP_VERSION_CHECK` |
 | `EAON_CODE_TELEMETRY` | Enable or disable optional provider-attribution headers; legacy alias: `PI_TELEMETRY` |
 | `EAON_CODE_SHARE_VIEWER_URL` | Optional `/share` viewer base URL; legacy alias: `PI_SHARE_VIEWER_URL` |
 | `EAON_CODE_SERVER_DIR`, `EAON_CODE_SERVER_ID` | Configure the source-only [experimental remote harness](development.md#experimental-remote-harness); legacy aliases: `PI_SERVER_DIR`, `PI_SERVER_ID` |

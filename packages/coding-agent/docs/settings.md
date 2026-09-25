@@ -81,7 +81,7 @@ For VS Code, include `--wait` so Eaon Code resumes after the editor exits:
 
 ### Telemetry and update checks
 
-The optional version check reads release metadata for `@eaonlabs/eaon-code` from the npm registry. Set `EAON_CODE_SKIP_VERSION_CHECK=1` to disable it. Eaon Code does not send install or update pings. Provider-attribution headers are off by default; `enableInstallTelemetry` controls them.
+Installer-created source checkouts check their configured Git ref at startup and quietly rerun the installer when it has advanced. The check is skipped by `--offline` or `EAON_CODE_OFFLINE=1`. Other installation methods are not updated automatically. Eaon Code does not send install or update pings. Provider-attribution headers are off by default; `enableInstallTelemetry` controls them.
 
 Use `--offline` or `EAON_CODE_OFFLINE=1` to disable startup network checks, including version and package update checks.
 
