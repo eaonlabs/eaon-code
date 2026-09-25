@@ -11,7 +11,7 @@
   <a href="https://www.npmjs.com/package/@eaonlabs/eaon-code"><img alt="npm" src="https://img.shields.io/npm/v/@eaonlabs/eaon-code?style=flat-square" /></a>
 </p>
 
-> New issues and PRs from new contributors are auto-closed by default. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
+> New issues from new contributors are auto-closed by default. Pull requests are open to everyone. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ---
 

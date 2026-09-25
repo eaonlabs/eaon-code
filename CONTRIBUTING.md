@@ -20,18 +20,18 @@ If you use an agent, run it from the repo root directory so it picks up `AGENTS.
 
 ## Contribution Gate
 
-All issues and PRs from new contributors are auto-closed by default.
+All issues from new contributors are auto-closed by default. Pull requests may be opened by anyone.
 
 Issues submitted Friday through Sunday are not guaranteed to be reviewed.  If something is urgent, email sanscreates@eaon.dev.
 
 Maintainers review auto-closed issues daily and reopen worthwhile ones. Issues that do not meet the quality bar below will not be reopened or receive a reply.
 
-Approval happens through maintainer replies on issues:
+Maintainer approval is only used for the issue gate:
 
 - `lgtmi`: your future issues will not be auto-closed
-- `lgtm`: your future issues and PRs will not be auto-closed
+- `lgtm`: your future issues will not be auto-closed; PR approval is no longer required
 
-The command must be at the start of the reply (optionally after one or more `@username` mentions) or at the end. `lgtmi` does not grant rights to submit PRs. Only `lgtm` grants rights to submit PRs.
+The command must be at the start of the reply (optionally after one or more `@username` mentions) or at the end.
 
 ## Quality Bar For Issues
 
@@ -55,7 +55,7 @@ If you send a large volume of issues through automation, your GitHub account wil
 
 ## Before Submitting a PR
 
-Do not open a PR unless you have already been approved by a maintainer using `lgtm` in the command position described above.
+Anyone may open a PR. PRs must still meet the quality bar above.
 
 Before submitting a PR:
 
@@ -92,7 +92,7 @@ Email [sanscreates@eaon.dev](mailto:sanscreates@eaon.dev).
 
 ## FAQ
 
-### Why are new issues and PRs auto-closed?
+### Why are new issues auto-closed?
 
 Eaon Code receives more issues than the maintainers can responsibly review in real time. Many reports do not meet the quality bar in this guide or do not follow CONTRIBUTING.md. Some are slung at the repository mindlessly via an agent instead of being reviewed and shaped by the person submitting them. Auto-closing creates a buffer so maintainers can review the tracker on their own schedule and reopen the issues that meet the quality bar.
 
