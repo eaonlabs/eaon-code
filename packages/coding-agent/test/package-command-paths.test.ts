@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import {
 	chmodSync,
 	existsSync,
@@ -114,6 +115,70 @@ if (process.platform !== "win32") fs.chmodSync(eaonCodePath, 0o755);
 	async function runPackageCommandDirectly(args: string[]): Promise<void> {
 		expect(await handlePackageCommand(args)).toBe(true);
 	}
+
+	it("updates existing default-prefix source checkouts without installer metadata", async () => {
+		const checkoutRoot = join(tempDir, ".local", "share", "eaon-code");
+		const checkoutPackageDir = join(checkoutRoot, "packages", "coding-agent");
+		const installerRecord = join(tempDir, "installer-env.json");
+		mkdirSync(checkoutRoot, { recursive: true });
+		execFileSync("git", ["init", "--initial-branch=main", checkoutRoot], { stdio: "ignore" });
+		execFileSync("git", ["-C", checkoutRoot, "remote", "add", "origin", "https://github.com/eaonlabs/eaon-code.git"]);
+		mkdirSync(checkoutPackageDir, { recursive: true });
+		writeFileSync(
+			join(checkoutRoot, "install.sh"),
+			`node -e 'require("node:fs").writeFileSync(${JSON.stringify(installerRecord)}, JSON.stringify({ prefix: process.env.EAON_CODE_PREFIX, repo: process.env.EAON_CODE_REPO, ref: process.env.EAON_CODE_REF, binDir: process.env.EAON_CODE_BIN_DIR }))'\n`,
+		);
+		vi.stubEnv("HOME", tempDir);
+		vi.stubEnv("PI_PACKAGE_DIR", checkoutPackageDir);
+
+		await runPackageCommandDirectly(["update", "--self"]);
+
+		expect(JSON.parse(readFileSync(installerRecord, "utf8"))).toEqual({
+			prefix: checkoutRoot,
+			repo: "eaonlabs/eaon-code",
+			ref: "main",
+			binDir: join(tempDir, ".local", "bin"),
+		});
+	});
+
+	it("updates installer-managed source checkouts through install.sh", async () => {
+		const checkoutRoot = join(tempDir, "installer-checkout");
+		const checkoutPackageDir = join(checkoutRoot, "packages", "coding-agent");
+		const installerRecord = join(tempDir, "installer-env.json");
+		mkdirSync(join(checkoutRoot, ".git"), { recursive: true });
+		mkdirSync(checkoutPackageDir, { recursive: true });
+		writeFileSync(
+			join(checkoutRoot, "install.sh"),
+			`node -e 'require("node:fs").writeFileSync(${JSON.stringify(installerRecord)}, JSON.stringify({ prefix: process.env.EAON_CODE_PREFIX, repo: process.env.EAON_CODE_REPO, ref: process.env.EAON_CODE_REF, binDir: process.env.EAON_CODE_BIN_DIR }))'\n`,
+		);
+		writeFileSync(
+			join(checkoutRoot, ".git", "eaon-code-install.json"),
+			JSON.stringify({
+				kind: "eaon-code-source-install",
+				schemaVersion: 1,
+				repo: "eaonlabs/eaon-code",
+				ref: "main",
+				binDir: join(tempDir, "bin"),
+			}),
+		);
+		vi.stubEnv("PI_PACKAGE_DIR", checkoutPackageDir);
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		await runPackageCommandDirectly(["update", "--self"]);
+
+		expect(JSON.parse(readFileSync(installerRecord, "utf8"))).toEqual({
+			prefix: checkoutRoot,
+			repo: "eaonlabs/eaon-code",
+			ref: "main",
+			binDir: join(tempDir, "bin"),
+		});
+		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
+			"Updated eaon-code installer-managed checkout",
+		);
+		expect(errorSpy).not.toHaveBeenCalled();
+		expect(process.exitCode).toBeUndefined();
+	});
 
 	function extensionPaths(
 		packageRoot: string,
