@@ -46,6 +46,17 @@ fi
 
 cd "$PREFIX"
 
+cleanup_build_generated_model_sources() {
+  local exit_status=$?
+  trap - EXIT
+  if ! git -C "$PREFIX" restore -- packages/ai/src/models.generated.ts 'packages/ai/src/providers/*.models.ts'; then
+    echo "eaon-code: could not restore generated model source files" >&2
+    exit 1
+  fi
+  exit "$exit_status"
+}
+trap cleanup_build_generated_model_sources EXIT
+
 # Lifecycle scripts are intentionally skipped — see README supply-chain notes.
 npm install --ignore-scripts
 

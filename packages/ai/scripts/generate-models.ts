@@ -1358,8 +1358,11 @@ async function fetchRadiusModels(): Promise<Model<"pi-messages">[]> {
 		console.log(`Fetched ${models.length} models from Radius`);
 		return models;
 	} catch (error) {
-		console.error("Failed to fetch Radius models:", error);
-		if (generatorOptions.strict) throw error;
+		if (generatorOptions.strict && !(error instanceof TypeError && error.message === "fetch failed")) {
+			throw error;
+		}
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(`Failed to fetch optional Radius models; continuing without them: ${errorMessage}`);
 		return [];
 	}
 }
@@ -3290,7 +3293,7 @@ async function generateModels() {
 	applyAnthropicAllowedFallbackModelMetadata(allModels.filter(isAnthropicFallbackMetadataModel));
 
 	// Group by provider and deduplicate by model ID
-	const providers: Record<string, Record<string, Model<any>>> = {};
+	const providers: Record<string, Record<string, Model<any>>> = { radius: {} };
 	for (const model of allModels) {
 		if (!providers[model.provider]) {
 			providers[model.provider] = {};

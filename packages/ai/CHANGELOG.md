@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Skipped Radius transport failures during strict generation with a typed empty catalog, while keeping invalid responses fatal.
+
 ## [1.0.1] - 2026-09-23
 
 ### Added
