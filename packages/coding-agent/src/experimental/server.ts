@@ -52,7 +52,7 @@ import { SessionPluginSelectionConflictError, SessionWorkerManager } from "./ses
 export const ENV_SERVER_DIR = "EAON_CODE_SERVER_DIR";
 export const ENV_SERVER_ID = "EAON_CODE_SERVER_ID";
 const LEGACY_ENV_SERVER_DIR = "PI_SERVER_DIR";
-const LEGACY_ENV_SERVER_ID = "PI_SERVER_ID";
+export const LEGACY_ENV_SERVER_ID = "PI_SERVER_ID";
 
 export function resolveServerDirectory(directory?: string): string {
 	if (directory !== undefined) return resolvePath(directory);

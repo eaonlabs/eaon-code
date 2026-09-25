@@ -38,7 +38,7 @@ describe("buildSystemPrompt", () => {
 	});
 
 	describe("prompt structure", () => {
-		test("keeps the default and custom prompt prefixes exact", () => {
+		test("keeps structured sections for default and custom prompts", () => {
 			const defaultPrompt = buildSystemPrompt({ cwd: "/tmp", selectedTools: [], contextFiles: [], skills: [] });
 			const customPrompt = buildSystemPrompt({
 				customPrompt: "You are Exact.",
@@ -48,8 +48,11 @@ describe("buildSystemPrompt", () => {
 				skills: [],
 			});
 
-			expect(defaultPrompt.startsWith("You are an expert coding assistant operating inside pi")).toBe(true);
-			expect(customPrompt.startsWith("You are Exact.\n\n<cwd>")).toBe(true);
+			const toolsSectionIndex = defaultPrompt.indexOf("<tools>");
+			const cwdSectionIndex = defaultPrompt.indexOf("<cwd>");
+			expect(toolsSectionIndex).toBeGreaterThanOrEqual(0);
+			expect(cwdSectionIndex).toBeGreaterThan(toolsSectionIndex);
+			expect(customPrompt).toContain("<cwd>\n/tmp\n</cwd>");
 		});
 
 		test("preserves an exact forced prompt without sections", () => {

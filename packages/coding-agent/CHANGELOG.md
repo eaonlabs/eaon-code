@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- Honor the legacy `PI_SERVER_ID` when a client automatically starts a server.
 - Updated a skipped OpenRouter context-overflow test to use a model in the current catalog.
 
 ## [1.0.1] - 2026-09-23
