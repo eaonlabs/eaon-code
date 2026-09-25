@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/eaon-code",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Eaon Code — full-screen terminal coding agent with multi-provider support and extensibility",
 	"type": "module",
 	"eaonConfig": {
@@ -49,10 +49,10 @@
 		"prepublishOnly": "npm run clean && npm run build && npm run shrinkwrap"
 	},
 	"dependencies": {
-		"@eaonlabs/chord": "^1.0.1",
-		"@eaonlabs/eaon-agent-core": "^1.0.1",
-		"@eaonlabs/eaon-ai": "^1.0.1",
-		"@eaonlabs/eaon-tui": "^1.0.1",
+		"@eaonlabs/chord": "^1.0.2",
+		"@eaonlabs/eaon-agent-core": "^1.0.2",
+		"@eaonlabs/eaon-ai": "^1.0.2",
+		"@eaonlabs/eaon-tui": "^1.0.2",
 		"@silvia-odwyer/photon-node": "0.3.4",
 		"@sinclair/typebox": "0.34.52",
 		"@tintinweb/pi-subagents": "0.19.0",
@@ -77,9 +77,9 @@
 		"protobufjs": "7.6.6"
 	},
 	"devDependencies": {
-		"@eaonlabs/eaon-client": "^1.0.1",
-		"@eaonlabs/eaon-protocol": "^1.0.1",
-		"@eaonlabs/eaon-server": "^1.0.1",
+		"@eaonlabs/eaon-client": "^1.0.2",
+		"@eaonlabs/eaon-protocol": "^1.0.2",
+		"@eaonlabs/eaon-server": "^1.0.2",
 		"@types/cross-spawn": "6.0.6",
 		"@types/hosted-git-info": "3.0.5",
 		"@types/node": "22.19.19",

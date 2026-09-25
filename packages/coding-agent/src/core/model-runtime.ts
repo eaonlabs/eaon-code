@@ -686,7 +686,7 @@ export class ModelRuntime implements Models {
 		return this.enqueueCredentialOperation(providerId, signal, async () => {
 			const credential = await this.models.login(providerId, type, { ...interaction, signal });
 			await this.synchronizeCredentialState(providerId, "login", credential, signal);
-			// Dynamic catalogs (e.g. Eaon Plan GET /v1/models) need the new key and
+			// Dynamic catalogs (e.g. a gateway GET /v1/models) need the new key and
 			// a network refresh — offline sync alone leaves only baseline models.
 			if (this.modelNetworkEnabled && !signal.aborted) {
 				await this.models.refresh({
