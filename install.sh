@@ -54,7 +54,35 @@ echo "Building Eaon Code…"
 npm --prefix packages/chord run build
 npm --prefix packages/tui run build
 npm --prefix packages/telemetry run build
-npm --prefix packages/ai run build:offline 2>/dev/null || npm --prefix packages/ai run build
+
+# Fresh source clones omit packages/ai/src/providers/data/. Seed that ignored
+# generated data from the matching published package so an offline build does
+# not need to contact every provider catalog. Validate the snapshot against the
+# checked-out source; fall back to live generation only if it is unavailable or
+# no longer matches this checkout.
+AI_VERSION="$(node -p 'JSON.parse(require("node:fs").readFileSync("packages/ai/package.json", "utf8")).version')"
+AI_SNAPSHOT_DIR="$(mktemp -d)"
+trap 'rm -rf "$AI_SNAPSHOT_DIR"' EXIT
+AI_TARBALL=""
+if AI_TARBALL="$(npm pack "@eaonlabs/eaon-ai@$AI_VERSION" --silent --pack-destination "$AI_SNAPSHOT_DIR")"; then
+  if tar -xzf "$AI_SNAPSHOT_DIR/$AI_TARBALL" -C "$AI_SNAPSHOT_DIR" package/dist/providers/data; then
+    rm -rf packages/ai/src/providers/data
+    mkdir -p packages/ai/src/providers/data
+    cp -R "$AI_SNAPSHOT_DIR/package/dist/providers/data/." packages/ai/src/providers/data/
+    if ! npm --prefix packages/ai run check:model-data; then
+      echo "Published model data for @eaonlabs/eaon-ai@$AI_VERSION is stale; generating fresh catalogs from providers." >&2
+      npm --prefix packages/ai run build
+    else
+      npm --prefix packages/ai run build:offline
+    fi
+  else
+    echo "Could not extract published model data for @eaonlabs/eaon-ai@$AI_VERSION; generating fresh catalogs from providers." >&2
+    npm --prefix packages/ai run build
+  fi
+else
+  echo "Could not download published model data for @eaonlabs/eaon-ai@$AI_VERSION; generating fresh catalogs from providers." >&2
+  npm --prefix packages/ai run build
+fi
 npm --prefix packages/agent run build
 npm --prefix packages/session-backends/sqlite-node run build
 npm --prefix packages/protocol run build
