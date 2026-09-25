@@ -22,7 +22,6 @@ Eaon Code is Eaon's full-screen terminal coding agent. It combines a focused set
 - **Plan mode** (`/plan`) switches to read-only exploration and shows a small `plan` indicator while active.
 - **Swarm mode** (`/swarm`) makes the parent orchestrate 2–6 named specialist sub-agents in parallel, then reconcile and verify their work.
 - **Observable sub-agents** run in isolated sessions with a persistent live activity view. Open `/agents` to inspect conversations, steer work, or press `x` twice to stop a run; completed results expand with Ctrl+O.
-- **Eaon Plan** is a regular provider alongside the others; it is not forced as the default or recommended provider.
 - **Full-screen TUI by default**, with Amber as the default theme and separate dark and light theme lists in `/themes` and setup.
 - **Eaon-branded configuration paths** use `~/.eaon/agent/` globally and `.eaon/` in projects. Existing `.pi` directories and package manifests remain readable as compatibility formats; data is not moved or deleted.
 
@@ -133,9 +132,8 @@ Eaon Code includes tool-capable model catalogs for its built-in providers. Confi
 - Xiaomi MiMo Token Plan (China)
 - Xiaomi MiMo Token Plan (Amsterdam)
 - Xiaomi MiMo Token Plan (Singapore)
-- Eaon Plan
 
-Eaon Plan is an optional provider; configure it with `EAON_API_KEY` or `/login eaon`. Eaon Code also supports the llama.cpp router server. Configure it with `/login llama.cpp`, manage downloads and loaded models with `/llama`, then select a loaded model with `/model`. See [docs/llama-cpp.md](docs/llama-cpp.md) for setup and usage.
+Eaon Code also supports the llama.cpp router server. Configure it with `/login llama.cpp`, manage downloads and loaded models with `/llama`, then select a loaded model with `/model`. See [docs/llama-cpp.md](docs/llama-cpp.md) for setup and usage.
 
 See [docs/providers.md](docs/providers.md) for other provider setup instructions.
 

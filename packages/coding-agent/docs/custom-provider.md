@@ -12,6 +12,7 @@ Extensions can register custom model providers via `eaon.registerProvider()`. Th
 See these complete provider examples:
 
 - [`examples/extensions/custom-provider-anthropic/`](../examples/extensions/custom-provider-anthropic/)
+- [`examples/extensions/custom-provider-openai-compatible/`](../examples/extensions/custom-provider-openai-compatible/)
 - [`examples/extensions/custom-provider-gitlab-duo/`](../examples/extensions/custom-provider-gitlab-duo/)
 
 ## Table of Contents
