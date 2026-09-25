@@ -34,10 +34,23 @@ Eaon Code is a full-screen coding agent for the terminal, with multi-provider mo
 - **Plan mode** (`/plan`) restricts the agent to read-only exploration and shows a small mode indicator.
 - **Swarm mode** (`/swarm`) makes the parent orchestrate 2–6 named specialist sub-agents in parallel, then reconcile and verify their work.
 - **Observable sub-agents** run in isolated sessions with a persistent live activity view. Open `/agents` to inspect conversations, steer work, or press `x` twice to stop a run; completed results expand with Ctrl+O.
+- **Built-in browser control** is powered by BetterWright. Eaon can browse and interact with live pages in a persistent, policy-guarded browser without a separate extension install.
 - **Full-screen TUI by default**, with Amber as the default theme and separate dark- and light-theme lists in the theme picker and setup.
 - **Eaon configuration paths** use `~/.eaon/agent` and project `.eaon/` directories. Existing `.pi` configuration directories remain usable as a compatibility path; Eaon Code does not move or delete them.
 
 The core agent also includes file and shell tools, streaming responses, session branching and compaction, provider login and API-key auth, skills, prompts, extensions, themes, package management, and print/JSON/RPC/SDK interfaces.
+
+## Browser control
+
+Eaon Code includes BetterWright's official Pi browser integration as a built-in feature. The browser tools are ready in the agent without installing BetterWright as a separate extension. BetterWright keeps a browser session across calls and applies its network and browser policies while Eaon navigates and interacts with pages.
+
+On first use, install BetterChromium once with Bun 1.4 or newer:
+
+```bash
+bunx betterwright setup
+```
+
+See the [BetterWright setup guide](https://betterwright.com/docs/setup) and [package page](https://pi.dev/packages/betterwright?name=browser) for the integration details.
 
 ## Install
 

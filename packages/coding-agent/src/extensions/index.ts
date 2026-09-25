@@ -1,8 +1,12 @@
+import betterwrightExtension from "betterwright/pi-extension";
 import type { InlineExtension, LoadExtensionsResult } from "../core/extensions/types.ts";
 import llamaExtension from "./llama/index.ts";
 import { getBundledSubagentsExtensionPath } from "./subagents.ts";
 
-export const builtInExtensions: InlineExtension[] = [{ name: "llama.cpp", factory: llamaExtension, hidden: true }];
+export const builtInExtensions: InlineExtension[] = [
+	{ name: "llama.cpp", factory: llamaExtension, hidden: true },
+	{ name: "BetterWright", factory: betterwrightExtension, hidden: true },
+];
 
 export const builtInExtensionPaths = [getBundledSubagentsExtensionPath()] as const;
 
