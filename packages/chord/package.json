@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/chord",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Application composition runtime for services, replicated state, RPC, and plugins",
 	"type": "module",
 	"main": "./dist/index.js",
