@@ -1,10 +1,10 @@
 {
 	"name": "@eaonlabs/eaon-code-install",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"private": true,
 	"description": "Lockfile root used by the Eaon Code installer and updater.",
 	"dependencies": {
-		"@eaonlabs/eaon-code": "1.0.2"
+		"@eaonlabs/eaon-code": "1.0.3"
 	},
 	"overrides": {
 		"protobufjs": "7.6.6"

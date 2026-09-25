@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/eaon-client",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Transport-neutral client for remote pi sessions over framed CBOR bytes",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -47,8 +47,8 @@
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@eaonlabs/chord": "^1.0.2",
-		"@eaonlabs/eaon-protocol": "^1.0.2"
+		"@eaonlabs/chord": "^1.0.3",
+		"@eaonlabs/eaon-protocol": "^1.0.3"
 	},
 	"devDependencies": {
 		"shx": "0.4.0",

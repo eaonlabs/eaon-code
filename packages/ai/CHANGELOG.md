@@ -1,9 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.3] - 2026-09-25
 
 ### Fixed
 
+- Corrected GitHub Copilot Claude Opus 5.5 thinking levels to exclude unsupported Off and Minimal modes.
 - Skipped Radius transport failures during strict generation with a typed empty catalog, while keeping invalid responses fatal.
 
 ## [1.0.1] - 2026-09-23
