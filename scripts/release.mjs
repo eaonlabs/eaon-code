@@ -192,6 +192,20 @@ function updateChangelogsForRelease(version) {
 	}
 }
 
+function updateReleaseSiteVersion(version) {
+	const sitePath = "site/index.html";
+	const content = readFileSync(sitePath, "utf-8");
+	const matches = [...content.matchAll(/eaon-code v\d+\.\d+\.\d+/g)];
+	if (matches.length !== 1) {
+		throw new Error(`Expected one Eaon Code version in ${sitePath}, found ${matches.length}.`);
+	}
+
+	const currentVersion = matches[0][0];
+	const updated = content.replace(currentVersion, `eaon-code v${version}`);
+	if (updated !== content) writeFileSync(sitePath, updated);
+	console.log(`  Updated ${sitePath} to v${version}`);
+}
+
 function addUnreleasedSection() {
 	const changelogs = getChangelogs();
 	const unreleasedSection = "## [Unreleased]\n\n";
@@ -232,6 +246,7 @@ console.log(`  New version: ${version}\n`);
 // 4. Update changelogs
 console.log("Updating CHANGELOG.md files...");
 updateChangelogsForRelease(version);
+updateReleaseSiteVersion(version);
 console.log();
 
 // 5. Regenerate release artifacts
