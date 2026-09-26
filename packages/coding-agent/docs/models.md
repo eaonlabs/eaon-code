@@ -136,13 +136,14 @@ Set `api` at provider level (default for all models) or model level (override pe
 | `baseUrl` | API endpoint URL |
 | `api` | API type (see above) |
 | `apiKey` | Optional API key config (see value resolution below). Omit it when auth is provided by `/login`/`auth.json` or CLI `--api-key`. |
+| `noAuth` | Set `true` for endpoints that require no credentials. Models are available without `/login`, and no bearer token is sent. |
 | `oauth` | Dynamic OAuth provider type. Currently supports `"radius"`; requires the gateway `baseUrl`. |
 | `headers` | Custom headers (see value resolution below) |
 | `authHeader` | Set `true` to add `Authorization: Bearer <apiKey>` automatically |
 | `models` | Array of model configurations |
 | `modelOverrides` | Per-model overrides for built-in or extension-registered models on this provider |
 
-For providers with `models`, non-built-in provider configs need `baseUrl` and an `api` value at either provider or model level. `apiKey` is not required to load the file: models become available when auth is configured through `/login`/`auth.json`, CLI `--api-key`, or provider `apiKey`. If no auth is configured, the models load but stay unavailable in `/model` and `--list-models`.
+For providers with `models`, non-built-in provider configs need `baseUrl` and an `api` value at either provider or model level. `apiKey` is not required to load the file: models become available when auth is configured through `/login`/`auth.json`, CLI `--api-key`, or provider `apiKey`. If the endpoint requires no credentials, set `noAuth: true` to make its models available without login. Otherwise, models without configured auth stay unavailable in `/model` and `--list-models`.
 
 ### Value Resolution
 

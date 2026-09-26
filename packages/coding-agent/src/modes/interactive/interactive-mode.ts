@@ -5621,7 +5621,7 @@ export class InteractiveMode {
 					status,
 				});
 			}
-			if ((!authType || authType === "api_key") && provider.auth.apiKey) {
+			if ((!authType || authType === "api_key") && provider.auth.apiKey && authStatus.source !== "no_auth") {
 				options.push({
 					id: provider.id,
 					name: provider.name,
@@ -5767,6 +5767,13 @@ export class InteractiveMode {
 			const name = (await dialog.showPrompt("Provider name:", "My inference server")).trim();
 			const providerId = (await dialog.showPrompt("Provider ID:", "my-inference-server")).trim();
 			const baseUrl = (await dialog.showPrompt("OpenAI-compatible base URL:", "http://localhost:1234/v1")).trim();
+			const authChoice = (await dialog.showPrompt("Does this endpoint require an API key? (yes/no)", "yes"))
+				.trim()
+				.toLowerCase();
+			if (authChoice !== "yes" && authChoice !== "no") {
+				throw new Error('Enter "yes" or "no" for API key authentication');
+			}
+			const requiresApiKey = authChoice === "yes";
 			if (!name || !providerId || !baseUrl) {
 				throw new Error("Provider name, ID, and URL are required");
 			}
@@ -5840,17 +5847,26 @@ export class InteractiveMode {
 			if (originalConfig !== undefined && (await fs.promises.readFile(configPath, "utf8")) !== originalConfig) {
 				throw new Error("models.json changed during setup; retry to avoid overwriting those changes");
 			}
+			const providerConfig = { ...existingConfig };
+			if (!requiresApiKey) delete providerConfig.apiKey;
 			config.providers[providerId] = {
-				...existingConfig,
+				...providerConfig,
 				name,
 				baseUrl,
 				api: "openai-completions",
+				noAuth: !requiresApiKey,
+				authHeader: requiresApiKey ? existingConfig?.authHeader : false,
 				models: modelIds.map((id) => ({ id })),
 			};
 			await fs.promises.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
 			await this.session.modelRuntime.refresh({ providers: [providerId], allowNetwork: false });
 			restoreEditor();
-			await this.showApiKeyLoginDialog(providerId, name);
+			if (requiresApiKey) {
+				await this.showApiKeyLoginDialog(providerId, name);
+			} else {
+				this.showStatus(`Added ${name}; its models are available without API-key login.`);
+				this.ui.requestRender();
+			}
 		} catch (error) {
 			restoreEditor();
 			this.showError(`Could not add custom endpoint: ${error instanceof Error ? error.message : String(error)}`);
