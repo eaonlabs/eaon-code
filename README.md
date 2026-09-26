@@ -75,7 +75,7 @@ eaon-code
 git clone https://github.com/eaonlabs/eaon-code.git
 cd eaon-code
 npm install --ignore-scripts
-npm run build
+npm run try:local -- --help  # Build the checkout and run its CLI without installing it
 ```
 
 ## Packages
@@ -106,6 +106,7 @@ If you need stronger boundaries, containerize or sandbox it. See [packages/codin
 ```bash
 npm install --ignore-scripts  # Install all dependencies without running lifecycle scripts
 npm run build                 # Refresh model data, then build all packages
+npm run try:local -- --help   # Build and run this checkout without installing it
 npm run build:offline         # Rebuild using existing model data without network access
 npm run check                 # Lint, format, and type check
 ./test.sh                     # Run tests (skips LLM-dependent tests without API keys)

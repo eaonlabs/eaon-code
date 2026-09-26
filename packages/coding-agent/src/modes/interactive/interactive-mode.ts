@@ -66,6 +66,7 @@ import {
 	detectCacheMiss,
 } from "../../core/cache-stats.ts";
 import { formatCacheWarmingStatus, formatCacheWarmingUsage } from "../../core/cache-warmer.ts";
+import { fetchOpenAICompatibleModelIds } from "../../core/custom-openai-models.ts";
 import { DEFAULT_THINKING_LEVEL, THINKING_LEVEL_OPTIONS } from "../../core/defaults.ts";
 import type {
 	AutocompleteProviderFactory,
@@ -5766,9 +5767,8 @@ export class InteractiveMode {
 			const name = (await dialog.showPrompt("Provider name:", "My inference server")).trim();
 			const providerId = (await dialog.showPrompt("Provider ID:", "my-inference-server")).trim();
 			const baseUrl = (await dialog.showPrompt("OpenAI-compatible base URL:", "http://localhost:1234/v1")).trim();
-			const modelId = (await dialog.showPrompt("Model ID:", "model-name")).trim();
-			if (!name || !providerId || !baseUrl || !modelId) {
-				throw new Error("Provider name, ID, URL, and model ID are required");
+			if (!name || !providerId || !baseUrl) {
+				throw new Error("Provider name, ID, and URL are required");
 			}
 			if (!/^[a-z0-9][a-z0-9._-]*$/.test(providerId)) {
 				throw new Error(
@@ -5779,6 +5779,20 @@ export class InteractiveMode {
 			if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
 				throw new Error("Endpoint URL must use http or https");
 			}
+			let modelIds: string[] = [];
+			try {
+				modelIds = await fetchOpenAICompatibleModelIds(baseUrl);
+			} catch {
+				// Protected endpoints may reject unauthenticated catalog requests; allow manual model IDs below.
+			}
+			if (modelIds.length === 0) {
+				modelIds = (await dialog.showPrompt("Model IDs (comma-separated):", "model-name"))
+					.split(",")
+					.map((modelId) => modelId.trim())
+					.filter(Boolean);
+				modelIds = [...new Set(modelIds)];
+			}
+			if (modelIds.length === 0) throw new Error("At least one model ID is required");
 			const configPath = path.join(getAgentDir(), "models.json");
 			await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
 			let config: { providers?: Record<string, unknown> } = { providers: {} };
@@ -5804,7 +5818,7 @@ export class InteractiveMode {
 				name,
 				baseUrl,
 				api: "openai-completions",
-				models: [{ id: modelId }],
+				models: modelIds.map((id) => ({ id })),
 			};
 			await fs.promises.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
 			await this.session.modelRuntime.refresh({ providers: [providerId], allowNetwork: false });
