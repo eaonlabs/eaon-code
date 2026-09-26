@@ -116,6 +116,7 @@ import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelo
 import { copyToClipboard, readClipboardText } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
 import { parseGitUrl } from "../../utils/git.ts";
+import { stripJsonComments } from "../../utils/json.ts";
 import { getCwdRelativePath } from "../../utils/paths.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { loadAllHighlightLanguages } from "../../utils/syntax-highlight.ts";
@@ -5748,8 +5749,82 @@ export class InteractiveMode {
 		});
 	}
 
+	private async addCustomOpenAIProvider(): Promise<void> {
+		const dialog = new LoginDialogComponent(this.ui, "custom endpoint", () => {}, "OpenAI-compatible endpoint");
+		const restoreEditor = () => {
+			this.editorContainer.clear();
+			this.editorContainer.addChild(this.editor);
+			this.ui.setFocus(this.editor);
+			this.ui.requestRender();
+		};
+		this.editorContainer.clear();
+		this.editorContainer.addChild(dialog);
+		this.ui.setFocus(dialog);
+		this.ui.requestRender();
+
+		try {
+			const name = (await dialog.showPrompt("Provider name:", "My inference server")).trim();
+			const providerId = (await dialog.showPrompt("Provider ID:", "my-inference-server")).trim();
+			const baseUrl = (await dialog.showPrompt("OpenAI-compatible base URL:", "http://localhost:1234/v1")).trim();
+			const modelId = (await dialog.showPrompt("Model ID:", "model-name")).trim();
+			if (!name || !providerId || !baseUrl || !modelId) {
+				throw new Error("Provider name, ID, URL, and model ID are required");
+			}
+			if (!/^[a-z0-9][a-z0-9._-]*$/.test(providerId)) {
+				throw new Error(
+					"Provider ID must start with a lowercase letter or number and contain only lowercase letters, numbers, '.', '_' or '-'",
+				);
+			}
+			const parsedUrl = new URL(baseUrl);
+			if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+				throw new Error("Endpoint URL must use http or https");
+			}
+			const configPath = path.join(getAgentDir(), "models.json");
+			await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+			let config: { providers?: Record<string, unknown> } = { providers: {} };
+			let originalConfig: string | undefined;
+			try {
+				originalConfig = await fs.promises.readFile(configPath, "utf8");
+				config = JSON.parse(stripJsonComments(originalConfig)) as typeof config;
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			}
+			if (
+				config.providers !== undefined &&
+				(typeof config.providers !== "object" || config.providers === null || Array.isArray(config.providers))
+			) {
+				throw new Error("models.json providers must be an object");
+			}
+			config.providers ??= {};
+			if (config.providers[providerId]) throw new Error(`Provider "${providerId}" already exists in models.json`);
+			if (originalConfig !== undefined && (await fs.promises.readFile(configPath, "utf8")) !== originalConfig) {
+				throw new Error("models.json changed during setup; retry to avoid overwriting those changes");
+			}
+			config.providers[providerId] = {
+				name,
+				baseUrl,
+				api: "openai-completions",
+				models: [{ id: modelId }],
+			};
+			await fs.promises.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+			await this.session.modelRuntime.refresh({ providers: [providerId], allowNetwork: false });
+			restoreEditor();
+			await this.showApiKeyLoginDialog(providerId, name);
+		} catch (error) {
+			restoreEditor();
+			this.showError(`Could not add custom endpoint: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
+
 	private showLoginProviderSelector(authType?: AuthSelectorProvider["authType"], initialSearchInput?: string): void {
 		const providerOptions = this.getLoginProviderOptions(authType);
+		if (!authType || authType === "api_key") {
+			providerOptions.push({
+				id: "__add_custom_openai_provider__",
+				name: "Add OpenAI-compatible endpoint",
+				authType: "api_key",
+			});
+		}
 		if (providerOptions.length === 0) {
 			const message =
 				authType === "oauth"
@@ -5767,6 +5842,10 @@ export class InteractiveMode {
 				providerOptions,
 				async (providerId, selectedAuthType) => {
 					done();
+					if (providerId === "__add_custom_openai_provider__") {
+						await this.addCustomOpenAIProvider();
+						return;
+					}
 
 					const providerOption = providerOptions.find(
 						(provider) => provider.id === providerId && provider.authType === selectedAuthType,
