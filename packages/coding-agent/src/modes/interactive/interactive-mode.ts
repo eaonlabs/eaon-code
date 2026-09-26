@@ -5779,20 +5779,6 @@ export class InteractiveMode {
 			if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
 				throw new Error("Endpoint URL must use http or https");
 			}
-			let modelIds: string[] = [];
-			try {
-				modelIds = await fetchOpenAICompatibleModelIds(baseUrl);
-			} catch {
-				// Protected endpoints may reject unauthenticated catalog requests; allow manual model IDs below.
-			}
-			if (modelIds.length === 0) {
-				modelIds = (await dialog.showPrompt("Model IDs (comma-separated):", "model-name"))
-					.split(",")
-					.map((modelId) => modelId.trim())
-					.filter(Boolean);
-				modelIds = [...new Set(modelIds)];
-			}
-			if (modelIds.length === 0) throw new Error("At least one model ID is required");
 			const configPath = path.join(getAgentDir(), "models.json");
 			await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
 			let config: { providers?: Record<string, unknown> } = { providers: {} };
@@ -5810,11 +5796,52 @@ export class InteractiveMode {
 				throw new Error("models.json providers must be an object");
 			}
 			config.providers ??= {};
-			if (config.providers[providerId]) throw new Error(`Provider "${providerId}" already exists in models.json`);
+			const existingProvider = config.providers[providerId];
+			let existingConfig: Record<string, unknown> | undefined;
+			const existingModelIds: string[] = [];
+			if (existingProvider !== undefined) {
+				if (typeof existingProvider !== "object" || existingProvider === null || Array.isArray(existingProvider)) {
+					throw new Error(`Provider "${providerId}" has an invalid models.json entry`);
+				}
+				existingConfig = existingProvider as Record<string, unknown>;
+				const existingBaseUrl = existingConfig.baseUrl;
+				if (
+					typeof existingBaseUrl !== "string" ||
+					existingConfig.api !== "openai-completions" ||
+					new URL(existingBaseUrl).href.replace(/\/+$/, "") !== parsedUrl.href.replace(/\/+$/, "")
+				) {
+					throw new Error(
+						`Provider "${providerId}" already exists with a different endpoint or API. Use its existing endpoint or choose another ID.`,
+					);
+				}
+				if (Array.isArray(existingConfig.models)) {
+					for (const model of existingConfig.models) {
+						if (typeof model === "object" && model !== null && "id" in model && typeof model.id === "string") {
+							existingModelIds.push(model.id);
+						}
+					}
+				}
+			}
+			let modelIds: string[] = [];
+			try {
+				modelIds = await fetchOpenAICompatibleModelIds(baseUrl);
+			} catch {
+				// Protected endpoints may reject unauthenticated catalog requests; allow manual model IDs below.
+			}
+			modelIds = [...new Set([...existingModelIds, ...modelIds])];
+			if (modelIds.length === 0) {
+				modelIds = (await dialog.showPrompt("Model IDs (comma-separated):", "model-name"))
+					.split(",")
+					.map((modelId) => modelId.trim())
+					.filter(Boolean);
+				modelIds = [...new Set(modelIds)];
+			}
+			if (modelIds.length === 0) throw new Error("At least one model ID is required");
 			if (originalConfig !== undefined && (await fs.promises.readFile(configPath, "utf8")) !== originalConfig) {
 				throw new Error("models.json changed during setup; retry to avoid overwriting those changes");
 			}
 			config.providers[providerId] = {
+				...existingConfig,
 				name,
 				baseUrl,
 				api: "openai-completions",
