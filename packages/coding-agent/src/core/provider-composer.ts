@@ -347,7 +347,7 @@ function composeApiKeyAuth(
 		return {
 			name: "No API key required",
 			check: async () => ({ type: "api_key", source: "No API key required" }),
-			resolve: async () => ({ auth: {}, source: "No API key required" }),
+			resolve: async () => ({ auth: { headers: { Authorization: null } }, source: "No API key required" }),
 		};
 	}
 	const inherited = base?.auth.apiKey;

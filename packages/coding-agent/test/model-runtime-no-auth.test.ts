@@ -40,7 +40,10 @@ describe("keyless custom providers", () => {
 
 		expect(runtime.getAvailableSnapshot().map((model) => model.id)).toContain("model-without-auth");
 		expect(runtime.getProviderAuthStatus("local")).toMatchObject({ configured: true, source: "no_auth" });
-		expect(await runtime.getAuth("local")).toMatchObject({ auth: {}, source: "No API key required" });
+		expect(await runtime.getAuth("local")).toMatchObject({
+			auth: { headers: { Authorization: null } },
+			source: "No API key required",
+		});
 		expect(runtime.getProvider("local")?.auth.apiKey?.login).toBeUndefined();
 	});
 });
