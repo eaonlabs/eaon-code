@@ -78,7 +78,7 @@ export interface ProviderConfigInput {
 
 export type AuthStatus = {
 	configured: boolean;
-	source?: "stored" | "runtime" | "environment" | "fallback" | "models_json_key" | "models_json_command";
+	source?: "stored" | "runtime" | "environment" | "fallback" | "models_json_key" | "models_json_command" | "no_auth";
 	label?: string;
 };
 
@@ -343,6 +343,13 @@ function composeApiKeyAuth(
 	config: ModelsJsonProvider | undefined,
 	extension: ProviderConfigInput | undefined,
 ): ApiKeyAuth | undefined {
+	if (config?.noAuth) {
+		return {
+			name: "No API key required",
+			check: async () => ({ type: "api_key", source: "No API key required" }),
+			resolve: async () => ({ auth: { headers: { Authorization: null } }, source: "No API key required" }),
+		};
+	}
 	const inherited = base?.auth.apiKey;
 	const rawKey = configuredApiKey(config, extension);
 	const oauth = extension?.oauth ?? base?.auth.oauth;
@@ -590,7 +597,7 @@ export function resolveCompatibilityRequestConfig(
 	);
 	return {
 		headers: model.headers || configured ? { ...model.headers, ...configured } : undefined,
-		authHeader: extension?.authHeader ?? config?.authHeader ?? false,
+		authHeader: config?.noAuth ? false : (extension?.authHeader ?? config?.authHeader ?? false),
 	};
 }
 
@@ -598,6 +605,7 @@ export function configuredRequestAuthStatus(
 	config: ModelsJsonProvider | undefined,
 	extension: ProviderConfigInput | undefined,
 ): AuthStatus | undefined {
+	if (config?.noAuth) return { configured: true, source: "no_auth", label: "No API key required" };
 	const value = configuredApiKey(config, extension);
 	if (value === undefined) return undefined;
 	if (isCommandConfigValue(value)) return { configured: true, source: "models_json_command" };

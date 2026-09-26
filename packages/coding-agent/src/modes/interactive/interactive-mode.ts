@@ -66,6 +66,7 @@ import {
 	detectCacheMiss,
 } from "../../core/cache-stats.ts";
 import { formatCacheWarmingStatus, formatCacheWarmingUsage } from "../../core/cache-warmer.ts";
+import { fetchOpenAICompatibleModelIds } from "../../core/custom-openai-models.ts";
 import { DEFAULT_THINKING_LEVEL, THINKING_LEVEL_OPTIONS } from "../../core/defaults.ts";
 import type {
 	AutocompleteProviderFactory,
@@ -116,6 +117,7 @@ import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelo
 import { copyToClipboard, readClipboardText } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
 import { parseGitUrl } from "../../utils/git.ts";
+import { stripJsonComments } from "../../utils/json.ts";
 import { getCwdRelativePath } from "../../utils/paths.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { loadAllHighlightLanguages } from "../../utils/syntax-highlight.ts";
@@ -5619,7 +5621,7 @@ export class InteractiveMode {
 					status,
 				});
 			}
-			if ((!authType || authType === "api_key") && provider.auth.apiKey) {
+			if ((!authType || authType === "api_key") && provider.auth.apiKey && authStatus.source !== "no_auth") {
 				options.push({
 					id: provider.id,
 					name: provider.name,
@@ -5748,8 +5750,138 @@ export class InteractiveMode {
 		});
 	}
 
+	private async addCustomOpenAIProvider(): Promise<void> {
+		const dialog = new LoginDialogComponent(this.ui, "custom endpoint", () => {}, "OpenAI-compatible endpoint");
+		const restoreEditor = () => {
+			this.editorContainer.clear();
+			this.editorContainer.addChild(this.editor);
+			this.ui.setFocus(this.editor);
+			this.ui.requestRender();
+		};
+		this.editorContainer.clear();
+		this.editorContainer.addChild(dialog);
+		this.ui.setFocus(dialog);
+		this.ui.requestRender();
+
+		try {
+			const name = (await dialog.showPrompt("Provider name:", "My inference server")).trim();
+			const providerId = (await dialog.showPrompt("Provider ID:", "my-inference-server")).trim();
+			const baseUrl = (await dialog.showPrompt("OpenAI-compatible base URL:", "http://localhost:1234/v1")).trim();
+			const authChoice = (await dialog.showPrompt("Does this endpoint require an API key? (yes/no)", "yes"))
+				.trim()
+				.toLowerCase();
+			if (authChoice !== "yes" && authChoice !== "no") {
+				throw new Error('Enter "yes" or "no" for API key authentication');
+			}
+			const requiresApiKey = authChoice === "yes";
+			if (!name || !providerId || !baseUrl) {
+				throw new Error("Provider name, ID, and URL are required");
+			}
+			if (!/^[a-z0-9][a-z0-9._-]*$/.test(providerId)) {
+				throw new Error(
+					"Provider ID must start with a lowercase letter or number and contain only lowercase letters, numbers, '.', '_' or '-'",
+				);
+			}
+			const parsedUrl = new URL(baseUrl);
+			if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+				throw new Error("Endpoint URL must use http or https");
+			}
+			const configPath = path.join(getAgentDir(), "models.json");
+			await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+			let config: { providers?: Record<string, unknown> } = { providers: {} };
+			let originalConfig: string | undefined;
+			try {
+				originalConfig = await fs.promises.readFile(configPath, "utf8");
+				config = JSON.parse(stripJsonComments(originalConfig)) as typeof config;
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			}
+			if (
+				config.providers !== undefined &&
+				(typeof config.providers !== "object" || config.providers === null || Array.isArray(config.providers))
+			) {
+				throw new Error("models.json providers must be an object");
+			}
+			config.providers ??= {};
+			const existingProvider = config.providers[providerId];
+			let existingConfig: Record<string, unknown> | undefined;
+			const existingModelIds: string[] = [];
+			if (existingProvider !== undefined) {
+				if (typeof existingProvider !== "object" || existingProvider === null || Array.isArray(existingProvider)) {
+					throw new Error(`Provider "${providerId}" has an invalid models.json entry`);
+				}
+				existingConfig = existingProvider as Record<string, unknown>;
+				const existingBaseUrl = existingConfig.baseUrl;
+				if (
+					typeof existingBaseUrl !== "string" ||
+					existingConfig.api !== "openai-completions" ||
+					new URL(existingBaseUrl).href.replace(/\/+$/, "") !== parsedUrl.href.replace(/\/+$/, "")
+				) {
+					throw new Error(
+						`Provider "${providerId}" already exists with a different endpoint or API. Use its existing endpoint or choose another ID.`,
+					);
+				}
+				if (Array.isArray(existingConfig.models)) {
+					for (const model of existingConfig.models) {
+						if (typeof model === "object" && model !== null && "id" in model && typeof model.id === "string") {
+							existingModelIds.push(model.id);
+						}
+					}
+				}
+			}
+			let modelIds: string[] = [];
+			try {
+				modelIds = await fetchOpenAICompatibleModelIds(baseUrl);
+			} catch {
+				// Protected endpoints may reject unauthenticated catalog requests; allow manual model IDs below.
+			}
+			modelIds = [...new Set([...existingModelIds, ...modelIds])];
+			if (modelIds.length === 0) {
+				modelIds = (await dialog.showPrompt("Model IDs (comma-separated):", "model-name"))
+					.split(",")
+					.map((modelId) => modelId.trim())
+					.filter(Boolean);
+				modelIds = [...new Set(modelIds)];
+			}
+			if (modelIds.length === 0) throw new Error("At least one model ID is required");
+			if (originalConfig !== undefined && (await fs.promises.readFile(configPath, "utf8")) !== originalConfig) {
+				throw new Error("models.json changed during setup; retry to avoid overwriting those changes");
+			}
+			const providerConfig = { ...existingConfig };
+			if (!requiresApiKey) delete providerConfig.apiKey;
+			config.providers[providerId] = {
+				...providerConfig,
+				name,
+				baseUrl,
+				api: "openai-completions",
+				noAuth: !requiresApiKey,
+				authHeader: requiresApiKey ? existingConfig?.authHeader : false,
+				models: modelIds.map((id) => ({ id })),
+			};
+			await fs.promises.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+			await this.session.modelRuntime.refresh({ providers: [providerId], allowNetwork: false });
+			restoreEditor();
+			if (requiresApiKey) {
+				await this.showApiKeyLoginDialog(providerId, name);
+			} else {
+				this.showStatus(`Added ${name}; its models are available without API-key login.`);
+				this.ui.requestRender();
+			}
+		} catch (error) {
+			restoreEditor();
+			this.showError(`Could not add custom endpoint: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
+
 	private showLoginProviderSelector(authType?: AuthSelectorProvider["authType"], initialSearchInput?: string): void {
 		const providerOptions = this.getLoginProviderOptions(authType);
+		if (!authType || authType === "api_key") {
+			providerOptions.push({
+				id: "__add_custom_openai_provider__",
+				name: "Add OpenAI-compatible endpoint",
+				authType: "api_key",
+			});
+		}
 		if (providerOptions.length === 0) {
 			const message =
 				authType === "oauth"
@@ -5767,6 +5899,10 @@ export class InteractiveMode {
 				providerOptions,
 				async (providerId, selectedAuthType) => {
 					done();
+					if (providerId === "__add_custom_openai_provider__") {
+						await this.addCustomOpenAIProvider();
+						return;
+					}
 
 					const providerOption = providerOptions.find(
 						(provider) => provider.id === providerId && provider.authType === selectedAuthType,
