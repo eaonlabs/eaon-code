@@ -1,10 +1,14 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.4] - 2026-09-27
 
 ### New Features
 
 - Added built-in BetterWright browser control with persistent, policy-guarded sessions; the browser tools stay active without appearing in the Extensions list. See the [browser control guide](../../README.md#browser-control).
+
+### Fixed
+
+- Updated the Fireworks default model to the current Kimi Latest catalog entry.
 
 ## [1.0.3] - 2026-09-25
 
