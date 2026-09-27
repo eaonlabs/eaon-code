@@ -68,9 +68,9 @@ async function capture(model: Model<"anthropic-messages">, context: Context): Pr
 // Follow-up to #9323: Fireworks thinking support alone did not enable tool references.
 describe("Fireworks deferred tools", () => {
 	it.each([
-		"accounts/fireworks/models/deepseek-v4-flash-0731",
+		"accounts/fireworks/models/deepseek-v4p1-flash",
 		"accounts/fireworks/models/qwen3p8-max",
-		"accounts/fireworks/models/kimi-k2p6",
+		"accounts/fireworks/routers/kimi-latest",
 	] as const)("serializes discovery and replay for %s", async (id) => {
 		const model = getModel("fireworks", id);
 		for (const name of ["ToolSearch", "tool_search", "discover_tools"]) {
@@ -165,7 +165,7 @@ describe("Fireworks deferred tools", () => {
 	});
 
 	it("deduplicates references across multiple results and preserves ordinary text", async () => {
-		const model = getModel("fireworks", "accounts/fireworks/models/kimi-k2p6");
+		const model = getModel("fireworks", "accounts/fireworks/routers/kimi-latest");
 		const context = discoveryContext(model);
 		const assistant = context.messages[1] as AssistantMessage;
 		assistant.content.push({ type: "toolCall", id: "search2", name: "tool_search", arguments: { query: "lookup" } });
@@ -188,7 +188,7 @@ describe("Fireworks deferred tools", () => {
 	it.each(["no-discovery", "no-markers", "no-immediate", "already-used", "disabled"])(
 		"keeps normal schemas for %s",
 		async (scenario) => {
-			const base = getModel("fireworks", "accounts/fireworks/models/kimi-k2p6");
+			const base = getModel("fireworks", "accounts/fireworks/routers/kimi-latest");
 			const model = { ...base, compat: { ...base.compat, supportsToolReferences: scenario !== "disabled" } };
 			const context = discoveryContext(model);
 			if (scenario === "no-discovery") context.messages = context.messages.slice(0, 1);
