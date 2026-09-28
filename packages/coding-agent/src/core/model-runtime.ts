@@ -560,12 +560,13 @@ export class ModelRuntime implements Models {
 	}
 
 	getProviderAuthStatus(providerId: string): AuthStatus {
-		if (this.credentials.hasRuntimeApiKey(providerId)) return { configured: true, source: "runtime" };
-		if (this.snapshot.storedProviders.has(providerId)) return { configured: true, source: "stored" };
 		const configured = configuredRequestAuthStatus(
 			this.config.getProvider(providerId),
 			this.extensionProviders.get(providerId),
 		);
+		if (configured?.source === "no_auth") return configured;
+		if (this.credentials.hasRuntimeApiKey(providerId)) return { configured: true, source: "runtime" };
+		if (this.snapshot.storedProviders.has(providerId)) return { configured: true, source: "stored" };
 		if (configured) return configured;
 		const check = this.snapshot.auth.get(providerId);
 		return check ? { configured: true, source: "environment", label: check.source } : { configured: false };

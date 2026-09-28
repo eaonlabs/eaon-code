@@ -92,6 +92,24 @@ describe("openai-completions empty tools handling", () => {
 		expect("tools" in (params as object)).toBe(false);
 	});
 
+	it("allows requests with an explicitly omitted Authorization header", async () => {
+		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
+		const model = { ...baseModel, api: "openai-completions" } as const;
+
+		await streamSimple(
+			model,
+			{ messages: [{ role: "user", content: "hi", timestamp: Date.now() }] },
+			{ headers: { Authorization: null } },
+		).result();
+
+		const clientOptions = mockState.lastClientOptions as {
+			apiKey?: string;
+			defaultHeaders?: Record<string, unknown>;
+		};
+		expect(clientOptions.apiKey).toBe("unused");
+		expect(clientOptions.defaultHeaders?.Authorization).toBeNull();
+	});
+
 	it("sends default maxTokens", async () => {
 		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;

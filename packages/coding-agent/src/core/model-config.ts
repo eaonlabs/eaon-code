@@ -230,6 +230,7 @@ const ProviderConfigSchema = Type.Object({
 	name: Type.Optional(Type.String({ minLength: 1 })),
 	baseUrl: Type.Optional(Type.String({ minLength: 1 })),
 	apiKey: Type.Optional(Type.String({ minLength: 1 })),
+	noAuth: Type.Optional(Type.Boolean()),
 	api: Type.Optional(Type.String({ minLength: 1 })),
 	oauth: Type.Optional(Type.Literal("radius")),
 	headers: Type.Optional(Type.Record(Type.String(), Type.String())),
