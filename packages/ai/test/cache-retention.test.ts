@@ -504,13 +504,21 @@ describe("Cache Retention (PI_CACHE_RETENTION)", () => {
 			expect(capturedPayload.prompt_cache_retention).toBeUndefined();
 		});
 
+		const openCodeGoWithoutLongCacheRetention = {
+			...MODELS["opencode-go"]["deepseek-v4-flash"],
+			compat: {
+				...MODELS["opencode-go"]["deepseek-v4-flash"].compat,
+				supportsLongCacheRetention: false,
+			},
+		} as const;
+
 		it.each([
 			MODELS.opencode["deepseek-v4-flash"],
 			MODELS.opencode["deepseek-v4-pro"],
 			MODELS.opencode["kimi-k2.5"],
 			MODELS.opencode["kimi-k2.6"],
 			MODELS.opencode["minimax-m2.7"],
-			MODELS["opencode-go"]["kimi-k2.6"],
+			openCodeGoWithoutLongCacheRetention,
 		] as const)("should omit long cache retention for $provider/$id", async (metadata) => {
 			const model = metadata as Model<"openai-completions">;
 			let capturedPayload: OpenAICompletionsCachePayload | undefined;
