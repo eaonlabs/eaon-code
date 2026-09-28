@@ -5635,14 +5635,79 @@ export class InteractiveMode {
 	}
 
 	private async getLogoutProviderOptions(): Promise<AuthSelectorProvider[]> {
-		return (await this.session.modelRuntime.listCredentials({ signal: AbortSignal.timeout(15_000) }))
-			.map(({ providerId, type }) => ({
+		const modelRuntime = this.session.modelRuntime;
+		const providers = new Map<string, AuthSelectorProvider>(
+			(await modelRuntime.listCredentials({ signal: AbortSignal.timeout(15_000) })).map(({ providerId, type }) => [
+				providerId,
+				{
+					id: providerId,
+					name: modelRuntime.getProvider(providerId)?.name ?? providerId,
+					authType: type,
+					status: { type, source: "stored credential" },
+				},
+			]),
+		);
+
+		let modelsJson: string;
+		try {
+			modelsJson = await fs.promises.readFile(path.join(getAgentDir(), "models.json"), "utf8");
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+				return [...providers.values()].sort((a, b) => a.name.localeCompare(b.name));
+			}
+			throw error;
+		}
+
+		const config = JSON.parse(stripJsonComments(modelsJson)) as { providers?: Record<string, unknown> };
+		for (const [providerId, rawConfig] of Object.entries(config.providers ?? {})) {
+			if (typeof rawConfig !== "object" || rawConfig === null || Array.isArray(rawConfig)) continue;
+			const providerConfig = rawConfig as Record<string, unknown>;
+			if (providerConfig.apiKey === undefined || providerConfig.noAuth === true || providers.has(providerId))
+				continue;
+			const provider = modelRuntime.getProvider(providerId);
+			if (!provider?.getModels().some((model) => model.api === "openai-completions")) continue;
+			if (!modelRuntime.getProviderAuthStatus(providerId).configured) continue;
+
+			providers.set(providerId, {
 				id: providerId,
-				name: this.session.modelRuntime.getProvider(providerId)?.name ?? providerId,
-				authType: type,
-				status: { type, source: "stored credential" },
-			}))
-			.sort((a, b) => a.name.localeCompare(b.name));
+				name: provider.name,
+				authType: "api_key",
+				status: { type: "api_key", source: "models.json" },
+			});
+		}
+
+		return [...providers.values()].sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	private async removeConfiguredOpenAIProviderApiKey(providerId: string): Promise<boolean> {
+		const modelRuntime = this.session.modelRuntime;
+		const provider = modelRuntime.getProvider(providerId);
+		if (!provider?.getModels().some((model) => model.api === "openai-completions")) return false;
+
+		const configPath = path.join(getAgentDir(), "models.json");
+		let originalConfig: string;
+		try {
+			originalConfig = await fs.promises.readFile(configPath, "utf8");
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+			throw error;
+		}
+
+		const config = JSON.parse(stripJsonComments(originalConfig)) as { providers?: Record<string, unknown> };
+		const rawProviderConfig = config.providers?.[providerId];
+		if (typeof rawProviderConfig !== "object" || rawProviderConfig === null || Array.isArray(rawProviderConfig)) {
+			return false;
+		}
+		const providerConfig = rawProviderConfig as Record<string, unknown>;
+		if (providerConfig.apiKey === undefined || providerConfig.noAuth === true) return false;
+
+		if ((await fs.promises.readFile(configPath, "utf8")) !== originalConfig) {
+			throw new Error("models.json changed during logout; retry to avoid overwriting those changes");
+		}
+		delete providerConfig.apiKey;
+		await fs.promises.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+		await modelRuntime.refresh({ providers: [providerId], allowNetwork: false });
+		return true;
 	}
 
 	private findLoginProviderOptions(providerRef: string): AuthSelectorProvider[] {
@@ -5938,12 +6003,12 @@ export class InteractiveMode {
 		try {
 			providerOptions = await this.getLogoutProviderOptions();
 		} catch (error) {
-			this.showError(`Could not read stored credentials: ${error instanceof Error ? error.message : String(error)}`);
+			this.showError(`Could not read logout providers: ${error instanceof Error ? error.message : String(error)}`);
 			return;
 		}
 		if (providerOptions.length === 0) {
 			this.showStatus(
-				"No stored credentials to remove. /logout only removes credentials saved by /login; environment variables and models.json config are unchanged.",
+				"No stored credentials or configured custom OpenAI-compatible API keys to remove. Environment variables and model definitions are unchanged.",
 			);
 			return;
 		}
@@ -5961,12 +6026,16 @@ export class InteractiveMode {
 					}
 
 					try {
+						const removedConfiguredApiKey = await this.removeConfiguredOpenAIProviderApiKey(providerOption.id);
 						await this.session.modelRuntime.logout(providerOption.id, {
 							signal: AbortSignal.timeout(15_000),
 						});
 						await this.updateAvailableProviderCount();
-						const message =
-							providerOption.authType === "oauth"
+						const message = removedConfiguredApiKey
+							? providerOption.status?.source === "stored credential"
+								? `Removed stored and models.json API keys for ${providerOption.name}.`
+								: `Removed API key configuration for ${providerOption.name} from models.json.`
+							: providerOption.authType === "oauth"
 								? `Logged out of ${providerOption.name}`
 								: `Removed stored API key for ${providerOption.name}. Environment variables and models.json config are unchanged.`;
 						this.showStatus(message);

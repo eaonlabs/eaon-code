@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Show configured OpenAI-compatible providers in `/logout` and remove their `models.json` API key setting when selected.
+
 ## [1.0.4] - 2026-09-27
 
 ### New Features
