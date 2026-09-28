@@ -75,7 +75,7 @@ function hasHeader(headers: ProviderHeaders | undefined, name: string): boolean 
 	if (!headers) return false;
 	const expected = name.toLowerCase();
 	for (const [key, value] of Object.entries(headers)) {
-		if (key.toLowerCase() === expected && value !== null && value.trim().length > 0) return true;
+		if (key.toLowerCase() === expected && (value === null || value.trim().length > 0)) return true;
 	}
 	return false;
 }
