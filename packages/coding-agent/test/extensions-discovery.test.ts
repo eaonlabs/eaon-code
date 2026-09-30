@@ -69,6 +69,41 @@ describe("extensions discovery", () => {
 		expect(result.extensions).toHaveLength(1);
 	});
 
+	it("does not infer package ownership from ancestor manifests", async () => {
+		// Regression for #9863.
+		const dependencyDir = path.join(tempDir, "node_modules", "@eaonlabs", "eaon-code");
+		fs.mkdirSync(dependencyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(tempDir, "package.json"),
+			JSON.stringify({
+				name: "application",
+				type: "module",
+				dependencies: { "@eaonlabs/eaon-code": "1.0.0" },
+			}),
+		);
+		fs.writeFileSync(
+			path.join(dependencyDir, "package.json"),
+			JSON.stringify({ name: "@eaonlabs/eaon-code", type: "module", exports: "./index.js" }),
+		);
+		fs.writeFileSync(path.join(dependencyDir, "index.js"), "export const physicalDependency = true;");
+		fs.writeFileSync(
+			path.join(extensionsDir, "compiled-esm-extension.js"),
+			`
+				import { physicalDependency } from "@eaonlabs/eaon-code";
+				export default function(pi) {
+					if (physicalDependency) pi.registerCommand("physical-dependency", { handler: async () => {} });
+				}
+			`,
+		);
+
+		const result = await discoverAndLoadExtensions([], tempDir, tempDir);
+
+		expect(result.errors).toEqual([]);
+		expect(result.extensions).toHaveLength(1);
+		expect(result.extensions[0].commands.has("physical-dependency")).toBe(true);
+		expect(result.warnings).toEqual([]);
+	});
+
 	it("keeps the type-only pi-ai OAuth compatibility barrel resolvable", async () => {
 		fs.writeFileSync(
 			path.join(extensionsDir, "oauth-import.ts"),

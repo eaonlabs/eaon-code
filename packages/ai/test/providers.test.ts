@@ -2,11 +2,17 @@ import { describe, expect, it } from "vitest";
 import { lazyApi } from "../src/api/lazy.ts";
 import { envApiKeyAuth } from "../src/auth/helpers.ts";
 import type { AuthContext, AuthEvent } from "../src/auth/types.ts";
+import { getModel as getCompatModel, getModels as getCompatModels } from "../src/compat.ts";
 import { createModels, createProvider, getSupportedThinkingLevels } from "../src/models.ts";
 import { InMemoryModelsStore } from "../src/models-store.ts";
 import {
 	builtinModels,
 	builtinProviders,
+	getAllBuiltinModels,
+	getBuiltinClassifierModel,
+	getBuiltinClassifierModels,
+	getBuiltinImageModel,
+	getBuiltinImageModels,
 	getBuiltinModel,
 	getBuiltinModels,
 	getBuiltinProviders,
@@ -52,7 +58,6 @@ describe("builtin providers", () => {
 		const providers = models.getProviders();
 		expect(providers.length).toBe(builtinProviders().length);
 		expect(providers.map((p) => p.id)).toContain("anthropic");
-		expect(providers.map((p) => p.id)).toContain("aicheap");
 
 		const anthropic = models.getModel("anthropic", "claude-haiku-4-5");
 		expect(anthropic?.api).toBe("anthropic-messages");
@@ -61,14 +66,33 @@ describe("builtin providers", () => {
 		expect(all.length).toBeGreaterThan(500);
 
 		for (const provider of providers) {
-			const list = models.getModels(provider.id);
-			if (!provider.refreshModels || list.length > 0) expect(list.length).toBeGreaterThan(0);
+			if (provider.id === "aicheap") {
+				expect(models.getAllModels(provider.id)).toEqual([]);
+				continue; // AICheap discovers its models from the configured live endpoint.
+			}
+			const list = models.getAllModels(provider.id);
+			expect(list.length).toBeGreaterThan(0);
 			expect(list.every((m) => m.provider === provider.id)).toBe(true);
 		}
 		expect(getBuiltinModel("radius", "balanced")).toMatchObject({
 			api: "pi-messages",
 			provider: "radius",
 		});
+	});
+
+	it("returns empty results for unknown provider ids", () => {
+		const unknownProvider = "not-a-provider" as never;
+		const unknownModel = "x" as never;
+
+		expect(getBuiltinModel(unknownProvider, unknownModel)).toBeUndefined();
+		expect(getBuiltinImageModel(unknownProvider, unknownModel)).toBeUndefined();
+		expect(getBuiltinClassifierModel(unknownProvider, unknownModel)).toBeUndefined();
+		expect(getBuiltinModels(unknownProvider)).toEqual([]);
+		expect(getBuiltinImageModels(unknownProvider)).toEqual([]);
+		expect(getBuiltinClassifierModels(unknownProvider)).toEqual([]);
+		expect(getAllBuiltinModels(unknownProvider)).toEqual([]);
+		expect(getCompatModel(unknownProvider, unknownModel)).toBeUndefined();
+		expect(getCompatModels(unknownProvider)).toEqual([]);
 	});
 
 	it("stores native constrained-sampling capabilities in model metadata", () => {
@@ -172,7 +196,7 @@ describe("builtin providers", () => {
 			["openrouter", "openai/gpt-5.6-terra"],
 		] as const;
 		const unsupported = [
-			["fireworks", "accounts/fireworks/models/inkling"],
+			["fireworks", "accounts/fireworks/models/nemotron-3-ultra-nvfp4"],
 			["openai", "gpt-4.1"],
 			["openai", "gpt-5.2"],
 			["anthropic", "claude-sonnet-4-5"],

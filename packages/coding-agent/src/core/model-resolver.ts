@@ -10,15 +10,15 @@ import { isValidThinkingLevel } from "../cli/args.ts";
 import { DEFAULT_THINKING_LEVEL } from "./defaults.ts";
 import type { ModelRuntime } from "./model-runtime.ts";
 
-/** Default model IDs for each known provider */
-export const defaultModelPerProvider: Record<KnownProvider, string> = {
+/** Default chat model IDs for providers with built-in chat models. */
+export const defaultModelPerProvider: Partial<Record<KnownProvider, string>> = {
 	aicheap: "gpt-5.4",
 	"amazon-bedrock": "us.anthropic.claude-opus-4-6-v1",
 	"ant-ling": "Ring-2.6-1T",
 	anthropic: "claude-opus-4-8",
 	openai: "gpt-5.5",
 	"azure-openai-responses": "gpt-5.4",
-	"openai-codex": "gpt-5.5",
+	"openai-codex": "gpt-6.1-sol",
 	radius: "balanced",
 	nvidia: "nvidia/nemotron-3-super-120b-a12b",
 	deepseek: "deepseek-v4-pro",
@@ -38,11 +38,11 @@ export const defaultModelPerProvider: Record<KnownProvider, string> = {
 	moonshotai: "kimi-k2.6",
 	"moonshotai-cn": "kimi-k2.6",
 	huggingface: "moonshotai/Kimi-K2.6",
-	fireworks: "accounts/fireworks/routers/kimi-latest",
-	together: "moonshotai/Kimi-K2.6",
+	fireworks: "accounts/fireworks/models/kimi-k3",
+	together: "moonshotai/Kimi-K3",
 	baseten: "zai-org/GLM-5.2",
 	opencode: "kimi-k2.6",
-	"opencode-go": "kimi-k2.6",
+	"opencode-go": "kimi-k3",
 	"kimi-coding": "kimi-for-coding",
 	meta: "muse-spark-1.3",
 	"cloudflare-workers-ai": "@cf/moonshotai/kimi-k2.6",

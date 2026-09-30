@@ -2,7 +2,9 @@
 	"compilerOptions": {
 		"target": "ES2022",
 		"module": "Node16",
-		"lib": ["ES2022"],
+		"lib": [
+			"ES2024"
+		],
 		"strict": true,
 		"erasableSyntaxOnly": true,
 		"esModuleInterop": true,
@@ -20,6 +22,8 @@
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"useDefineForClassFields": false,
-		"types": ["node"]
+		"types": [
+			"node"
+		]
 	}
 }

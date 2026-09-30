@@ -5,50 +5,136 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"paths": {
-			"*": ["./*"],
-			"@eaonlabs/chord": ["./packages/chord/src/index.ts"],
-			"@eaonlabs/chord/bundler": ["./packages/chord/src/bundler.ts"],
-			"@eaonlabs/chord/context": ["./packages/chord/src/context/index.ts"],
-			"@eaonlabs/chord/delta": ["./packages/chord/src/delta/index.ts"],
-			"@eaonlabs/chord/node": ["./packages/chord/src/node.ts"],
-			"@eaonlabs/eaon-telemetry": ["./packages/telemetry/src/index.ts"],
-			"@eaonlabs/eaon-telemetry/testing": ["./packages/telemetry/src/testing/index.ts"],
-			"@eaonlabs/eaon-ai": ["./packages/ai/src/index.ts"],
-			"@eaonlabs/eaon-ai/oauth": ["./packages/ai/src/oauth.ts"],
-			"@eaonlabs/eaon-ai/*": ["./packages/ai/src/*.ts", "./packages/ai/src/providers/*.ts"],
-			"@eaonlabs/eaon-ai/dist/*": ["./packages/ai/src/*"],
-			"@eaonlabs/eaon-agent-core": ["./packages/agent/src/index.ts"],
+			"*": [
+				"./*"
+			],
+			"@eaonlabs/chord": [
+				"./packages/chord/src/index.ts"
+			],
+			"@eaonlabs/chord/bundler": [
+				"./packages/chord/src/bundler.ts"
+			],
+			"@eaonlabs/chord/context": [
+				"./packages/chord/src/context/index.ts"
+			],
+			"@eaonlabs/chord/delta": [
+				"./packages/chord/src/delta/index.ts"
+			],
+			"@eaonlabs/chord/node": [
+				"./packages/chord/src/node.ts"
+			],
+			"@eaonlabs/eaon-telemetry": [
+				"./packages/telemetry/src/index.ts"
+			],
+			"@eaonlabs/eaon-telemetry/testing": [
+				"./packages/telemetry/src/testing/index.ts"
+			],
+			"@eaonlabs/eaon-ai": [
+				"./packages/ai/src/index.ts"
+			],
+			"@eaonlabs/eaon-ai/oauth": [
+				"./packages/ai/src/oauth.ts"
+			],
+			"@eaonlabs/eaon-ai/*": [
+				"./packages/ai/src/*.ts",
+				"./packages/ai/src/providers/*.ts"
+			],
+			"@eaonlabs/eaon-ai/dist/*": [
+				"./packages/ai/src/*"
+			],
+			"@eaonlabs/eaon-agent-core": [
+				"./packages/agent/src/index.ts"
+			],
 			"@eaonlabs/eaon-agent-core/harness/session/testing": [
 				"./packages/agent/src/harness/session/testing/index.ts"
 			],
-			"@eaonlabs/eaon-agent-core/node": ["./packages/agent/src/node.ts"],
+			"@eaonlabs/eaon-agent-core/node": [
+				"./packages/agent/src/node.ts"
+			],
 			"@eaonlabs/eaon-agent-core/*": [
 				"./packages/agent/src/*.ts",
 				"./packages/agent/src/*/index.ts",
 				"./packages/agent/src/*"
 			],
-			"@eaonlabs/eaon-session-backend-sqlite-node": ["./packages/session-backends/sqlite-node/src/index.ts"],
-			"@eaonlabs/eaon-code": ["./packages/coding-agent/src/index.ts"],
+			"@eaonlabs/eaon-session-backend-sqlite-node": [
+				"./packages/session-backends/sqlite-node/src/index.ts"
+			],
+			"@eaonlabs/eaon-code": [
+				"./packages/coding-agent/src/index.ts"
+			],
 			"@eaonlabs/eaon-code/experimental/plugin": [
 				"./packages/coding-agent/src/experimental/plugin.ts"
 			],
-			"@eaonlabs/eaon-code/hooks": ["./packages/coding-agent/src/core/hooks/index.ts"],
-			"@eaonlabs/eaon-code/*": ["./packages/coding-agent/src/*"],
-			"@eaonlabs/eaon-protocol": ["./packages/protocol/src/index.ts"],
-			"@eaonlabs/eaon-protocol/*": ["./packages/protocol/src/*"],
-			"@eaonlabs/eaon-client": ["./packages/client/src/index.ts"],
-			"@eaonlabs/eaon-client/unix": ["./packages/client/src/unix.ts"],
-			"@eaonlabs/eaon-client/*": ["./packages/client/src/*"],
-			"@eaonlabs/eaon-server": ["./packages/server/src/index.ts"],
-			"@eaonlabs/eaon-server/unix": ["./packages/server/src/transports/unix/index.ts"],
-			"@eaonlabs/eaon-server/*": ["./packages/server/src/*"],
-			"typebox": ["./node_modules/typebox"],
-			"@eaonlabs/eaon-tui": ["./packages/tui/src/index.ts"],
-			"@eaonlabs/eaon-tui/*": ["./packages/tui/src/*"],
-			"@eaonlabs/eaon-agent-old": ["./packages/agent-old/src/index.ts"],
-			"@eaonlabs/eaon-agent-old/*": ["./packages/agent-old/src/*"]
+			"@eaonlabs/eaon-code/hooks": [
+				"./packages/coding-agent/src/core/hooks/index.ts"
+			],
+			"@eaonlabs/eaon-code/*": [
+				"./packages/coding-agent/src/*"
+			],
+			"@eaonlabs/eaon-protocol": [
+				"./packages/protocol/src/index.ts"
+			],
+			"@eaonlabs/eaon-protocol/*": [
+				"./packages/protocol/src/*"
+			],
+			"@eaonlabs/eaon-client": [
+				"./packages/client/src/index.ts"
+			],
+			"@eaonlabs/eaon-client/unix": [
+				"./packages/client/src/unix.ts"
+			],
+			"@eaonlabs/eaon-client/*": [
+				"./packages/client/src/*"
+			],
+			"@eaonlabs/eaon-server": [
+				"./packages/server/src/index.ts"
+			],
+			"@eaonlabs/eaon-server/unix": [
+				"./packages/server/src/transports/unix/index.ts"
+			],
+			"@eaonlabs/eaon-server/*": [
+				"./packages/server/src/*"
+			],
+			"typebox": [
+				"./node_modules/typebox"
+			],
+			"@eaonlabs/eaon-tui": [
+				"./packages/tui/src/index.ts"
+			],
+			"@eaonlabs/eaon-tui/*": [
+				"./packages/tui/src/*"
+			],
+			"@eaonlabs/eaon-agent-old": [
+				"./packages/agent-old/src/index.ts"
+			],
+			"@eaonlabs/eaon-agent-old/*": [
+				"./packages/agent-old/src/*"
+			],
+			"@eaonlabs/eaon-mcp": [
+				"./packages/mcp/src/index.ts"
+			],
+			"@eaonlabs/eaon-mcp/*": [
+				"./packages/mcp/src/*.ts",
+				"./packages/mcp/src/*/index.ts"
+			],
+			"@eaonlabs/eaon-codemode": [
+				"./packages/codemode/src/index.ts"
+			],
+			"@eaonlabs/eaon-codemode/*": [
+				"./packages/codemode/src/*.ts",
+				"./packages/codemode/src/*/index.ts"
+			]
 		}
 	},
-	"include": ["packages/*/src/**/*", "packages/*/test/**/*", "packages/session-backends/*/src/**/*", "packages/session-backends/*/test/**/*", "packages/coding-agent/examples/**/*"],
-	"exclude": ["**/dist/**", "packages/coding-agent/examples/extensions/gondolin/**"]
+	"include": [
+		"packages/*/src/**/*",
+		"packages/*/test/**/*",
+		"packages/session-backends/*/src/**/*",
+		"packages/session-backends/*/test/**/*",
+		"packages/coding-agent/examples/**/*"
+	],
+	"exclude": [
+		"**/dist/**",
+		"packages/coding-agent/examples/extensions/gondolin/**"
+	]
 }

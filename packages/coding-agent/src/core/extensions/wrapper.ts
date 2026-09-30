@@ -12,33 +12,31 @@ import type { RegisteredTool } from "./types.ts";
 
 /**
  * Wrap a RegisteredTool into an AgentTool.
- * Uses the runner's createContext() for consistent context across tools and event handlers.
+ * Uses the runner's createToolContext() for consistent context across tools and event handlers.
  */
 export function wrapRegisteredTool(registeredTool: RegisteredTool, runner: ExtensionRunner): AgentTool {
-	const tool = wrapToolDefinition(registeredTool.definition, () => runner.createContext());
+	const tool = wrapToolDefinition(registeredTool.definition, (toolCallId, signal) =>
+		runner.createToolContext(toolCallId, signal),
+	);
 	const execute = tool.execute;
 	return {
 		...tool,
 		execute: async (toolCallId, params, signal, onUpdate) => {
-			const activeBefore = runner.getActiveTools();
+			const before = new Set(runner.getActiveTools());
 			const result = await execute(toolCallId, params, signal, onUpdate);
-			const activeAfter = runner.getActiveTools();
-			if (!activeBefore.every((name) => activeAfter.includes(name))) return result;
-
-			const beforeNames = new Set(activeBefore);
-			const addedToolNames = activeAfter.filter((name) => !beforeNames.has(name));
-			if (addedToolNames.length === 0) return result;
-			return {
-				...result,
-				addedToolNames: [...new Set([...(result.addedToolNames ?? []), ...addedToolNames])],
-			};
+			const after = runner.getActiveTools();
+			if (![...before].every((name) => after.includes(name))) return result;
+			const added = after.filter((name) => !before.has(name));
+			return added.length
+				? { ...result, addedToolNames: [...new Set([...(result.addedToolNames ?? []), ...added])] }
+				: result;
 		},
 	};
 }
 
 /**
  * Wrap all registered tools into AgentTools.
- * Uses the runner's createContext() for consistent context across tools and event handlers.
+ * Uses the runner's createToolContext() for consistent context across tools and event handlers.
  */
 export function wrapRegisteredTools(registeredTools: RegisteredTool[], runner: ExtensionRunner): AgentTool[] {
 	return registeredTools.map((tool) => wrapRegisteredTool(tool, runner));

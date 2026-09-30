@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/eaon-ai",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Unified LLM API with automatic model discovery and provider configuration",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -57,7 +57,6 @@
 		"generate-models": "node scripts/generate-models.ts --strict",
 		"hydrate-model-data": "node scripts/generate-models.ts --strict --data-only",
 		"generate-model-catalog": "node scripts/generate-models.ts --strict --json-only --json-output ../../.artifacts/model-catalog",
-		"generate-image-models": "node scripts/generate-image-models.ts --strict",
 		"check:model-data": "node scripts/check-model-data.ts",
 		"build": "npm run generate-models && npm run build:offline",
 		"build:offline": "npm run check:model-data && tsgo -p tsconfig.build.json && shx rm -rf dist/providers/data && shx cp -r src/providers/data dist/providers/data",
@@ -67,12 +66,12 @@
 	"dependencies": {
 		"@anthropic-ai/sdk": "0.124.0",
 		"@aws-sdk/client-bedrock-runtime": "3.1127.0",
-		"@eaonlabs/eaon-telemetry": "^1.0.5",
+		"@eaonlabs/eaon-telemetry": "^1.0.6",
 		"@google/genai": "2.21.0",
 		"@smithy/node-http-handler": "4.12.1",
 		"http-proxy-agent": "9.1.0",
 		"https-proxy-agent": "9.1.0",
-		"openai": "6.40.0",
+		"openai": "7.19.0",
 		"partial-json": "0.1.7",
 		"typebox": "1.3.27"
 	},

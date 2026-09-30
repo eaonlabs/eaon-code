@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/eaon-code",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Eaon Code — full-screen terminal coding agent with multi-provider support and extensibility",
 	"type": "module",
 	"eaonConfig": {
@@ -41,7 +41,7 @@
 		"clean": "shx rm -rf dist",
 		"build": "npm run build:unbundled && node ../../scripts/build-coding-agent-bundle.mjs",
 		"build:unbundled": "tsgo -p tsconfig.build.json && shx chmod +x dist/cli.js dist/rpc-entry.js && npm run copy-assets",
-		"build:binary": "npm --prefix ../tui run build && npm --prefix ../telemetry run build && npm --prefix ../ai run build && npm --prefix ../agent run build && npm --prefix ../protocol run build && npm --prefix ../client run build && npm run build && bun build --compile --no-compile-autoload-bunfig ./src/bun/cli.ts ./src/utils/image-resize-worker.ts --outfile dist/eaon-code && npm run copy-binary-assets",
+		"build:binary": "npm --prefix ../tui run build && npm --prefix ../telemetry run build && npm --prefix ../ai run build && npm --prefix ../agent run build && npm --prefix ../protocol run build && npm --prefix ../client run build && npm run build && bun build --compile --no-compile-autoload-bunfig ./src/bun/cli.ts ./src/utils/image-resize-worker.ts ./src/extensions/codemode/worker.ts --outfile dist/eaon-code && npm run copy-binary-assets",
 		"copy-assets": "shx mkdir -p dist/modes/interactive/theme && shx cp src/modes/interactive/theme/*.json dist/modes/interactive/theme/ && shx mkdir -p dist/modes/interactive/assets && shx cp src/modes/interactive/assets/*.png dist/modes/interactive/assets/ && shx mkdir -p dist/core/export-html/vendor && shx cp src/core/export-html/template.html src/core/export-html/template.css src/core/export-html/template.js dist/core/export-html/ && shx cp src/core/export-html/vendor/*.js dist/core/export-html/vendor/ && shx mkdir -p dist/extensions/pi-subagents && shx cp -r ../../node_modules/@tintinweb/pi-subagents/src dist/extensions/pi-subagents/ && shx cp ../../node_modules/@tintinweb/pi-subagents/package.json ../../node_modules/@tintinweb/pi-subagents/LICENSE dist/extensions/pi-subagents/",
 		"copy-binary-assets": "shx cp package.json dist/ && shx cp README.md dist/ && shx cp CHANGELOG.md dist/ && shx mkdir -p dist/theme && shx cp src/modes/interactive/theme/*.json dist/theme/ && shx mkdir -p dist/assets && shx cp src/modes/interactive/assets/*.png dist/assets/ && shx mkdir -p dist/export-html/vendor && shx cp src/core/export-html/template.html dist/export-html/ && shx cp src/core/export-html/vendor/*.js dist/export-html/vendor/ && shx cp -r docs dist/ && shx cp -r examples dist/ && shx cp ../../node_modules/@silvia-odwyer/photon-node/photon_rs_bg.wasm dist/ && shx mkdir -p dist/extensions/pi-subagents && shx cp -r ../../node_modules/@tintinweb/pi-subagents/src dist/extensions/pi-subagents/ && shx cp ../../node_modules/@tintinweb/pi-subagents/package.json ../../node_modules/@tintinweb/pi-subagents/LICENSE dist/extensions/pi-subagents/",
 		"test": "vitest --run",
@@ -49,10 +49,10 @@
 		"prepublishOnly": "npm run clean && npm run build && npm run shrinkwrap"
 	},
 	"dependencies": {
-		"@eaonlabs/chord": "^1.0.5",
-		"@eaonlabs/eaon-agent-core": "^1.0.5",
-		"@eaonlabs/eaon-ai": "^1.0.5",
-		"@eaonlabs/eaon-tui": "^1.0.5",
+		"@eaonlabs/chord": "^1.0.6",
+		"@eaonlabs/eaon-agent-core": "^1.0.6",
+		"@eaonlabs/eaon-ai": "^1.0.6",
+		"@eaonlabs/eaon-tui": "^1.0.6",
 		"@silvia-odwyer/photon-node": "0.3.4",
 		"@sinclair/typebox": "0.34.52",
 		"@tintinweb/pi-subagents": "0.19.0",
@@ -72,15 +72,18 @@
 		"semver": "7.8.5",
 		"typebox": "1.3.27",
 		"undici": "8.10.2",
-		"yaml": "2.9.0"
+		"yaml": "2.9.0",
+		"@eaonlabs/eaon-codemode": "^1.0.6",
+		"@eaonlabs/eaon-mcp": "^1.0.6",
+		"quickjs-wasi": "3.6.2"
 	},
 	"overrides": {
 		"protobufjs": "7.6.6"
 	},
 	"devDependencies": {
-		"@eaonlabs/eaon-client": "^1.0.5",
-		"@eaonlabs/eaon-protocol": "^1.0.5",
-		"@eaonlabs/eaon-server": "^1.0.5",
+		"@eaonlabs/eaon-client": "^1.0.6",
+		"@eaonlabs/eaon-protocol": "^1.0.6",
+		"@eaonlabs/eaon-server": "^1.0.6",
 		"@types/cross-spawn": "6.0.6",
 		"@types/hosted-git-info": "3.0.5",
 		"@types/node": "22.19.19",

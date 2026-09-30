@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Ported Pi 0.99.0/0.99.1 core APIs and fixes for Eaon Code 1.0.6; see `packages/coding-agent/docs/pi-0.99-updates.md`.
+
 ## [1.0.5] - 2026-09-28
 
 ## [1.0.4] - 2026-09-27

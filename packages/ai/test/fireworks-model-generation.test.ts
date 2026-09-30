@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { ModelsDevReasoningOption } from "../scripts/models-dev-reasoning-options.ts";
 import { streamSimple } from "../src/api/anthropic-messages.ts";
 import { getSupportedThinkingLevels, hasApi } from "../src/models.ts";
-import { DEFAULT_RADIUS_GATEWAY } from "../src/providers/radius-config.ts";
 import type { Api, Model } from "../src/types.ts";
 import { normalizeContext } from "../src/utils/transcript.ts";
 
@@ -25,21 +24,6 @@ function generateFireworksModels(
 	temporaryRoots.push(root);
 	const preloadPath = join(root, "mock-catalog.mjs");
 	const outputPath = join(root, "catalog");
-	const radiusConfigUrl = `${DEFAULT_RADIUS_GATEWAY}/v1/config`;
-	const radiusConfig = {
-		baseUrl: DEFAULT_RADIUS_GATEWAY,
-		models: [
-			{
-				id: "test",
-				name: "Test",
-				reasoning: false,
-				input: ["text"],
-				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-				contextWindow: 4096,
-				maxTokens: 4096,
-			},
-		],
-	};
 	const catalog = {
 		"fireworks-ai": {
 			models: Object.fromEntries(
@@ -56,8 +40,9 @@ function generateFireworksModels(
 			`globalThis.fetch = async (input) => {\n` +
 			`  const url = String(input);\n` +
 			`  if (url === "https://models.dev/api.json") return Response.json(catalog);\n` +
-			`  if (url === "https://openrouter.ai/api/v1/models" || url === "https://ai-gateway.vercel.sh/v1/models") return Response.json({ data: [] });\n` +
-			`  if (url === ${JSON.stringify(radiusConfigUrl)}) return Response.json(${JSON.stringify(radiusConfig)});\n` +
+			`  if (url === "https://models.dev/models.json?type=decision") return Response.json({ "typesafe/jev-latest": { name: "Jev", type: "decision", limit: { context: 64000, output: 0 } } });\n` +
+			`  if (url.startsWith("https://openrouter.ai/api/v1/models") || url === "https://ai-gateway.vercel.sh/v1/models") return Response.json({ data: [] });\n` +
+			`  if (url === "https://radius.pi.dev/v1/config") return Response.json({ baseUrl: "https://radius.pi.dev", models: [{ id: "test", name: "Test", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 4096, maxTokens: 4096 }] });\n` +
 			`  throw new Error(\`Unexpected fetch: \${url}\`);\n` +
 			`};\n`,
 	);

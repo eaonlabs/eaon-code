@@ -1,6 +1,6 @@
 {
 	"name": "eaon-code-monorepo",
-	"description": "Eaon Code — Eaon's full-screen terminal coding agent",
+	"description": "Eaon Code \u2014 Eaon's full-screen terminal coding agent",
 	"private": true,
 	"type": "module",
 	"workspaces": [
@@ -14,9 +14,9 @@
 	],
 	"scripts": {
 		"clean": "npm run clean --workspaces",
-		"build": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../coding-agent && npm run build",
+		"build": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../mcp && npm run build && cd ../codemode && npm run build && cd ../coding-agent && npm run build",
 		"try:local": "npm run build && node packages/coding-agent/dist/bundle/cli.js",
-		"build:offline": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build:offline && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../coding-agent && npm run build",
+		"build:offline": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build:offline && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../mcp && npm run build && cd ../codemode && npm run build && cd ../coding-agent && npm run build",
 		"build:native:darwin": "npm --prefix packages/tui run build:native:darwin",
 		"build:native:linux": "npm --prefix packages/tui run build:native:linux",
 		"build:native:win32": "npm --prefix packages/tui run build:native:win32",
@@ -29,7 +29,7 @@
 		"check:install-lock:coding-agent": "node scripts/generate-coding-agent-install-lock.mjs --check",
 		"check:ts-imports": "node scripts/check-ts-relative-imports.mjs",
 		"check:entry-graphs": "node scripts/check-entry-graphs.mjs",
-		"generate:models": "npm --prefix packages/ai run generate-models && npm --prefix packages/ai run generate-image-models",
+		"generate:models": "npm --prefix packages/ai run generate-models",
 		"hydrate:model-data": "npm --prefix packages/ai run hydrate-model-data",
 		"check:model-data": "npm --prefix packages/ai run check:model-data",
 		"generate:model-catalog": "npm --prefix packages/ai run generate-model-catalog",
@@ -70,7 +70,7 @@
 	"engines": {
 		"node": ">=22.19.0"
 	},
-	"version": "1.0.0",
+	"version": "1.0.6",
 	"overrides": {
 		"protobufjs": "7.6.6"
 	}

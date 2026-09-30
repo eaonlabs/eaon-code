@@ -1320,7 +1320,7 @@ describe("openai-completions tool_choice", () => {
 			},
 		];
 
-		const { compat: _compat, ...baseModel } = getModel("opencode-go", "deepseek-v4-flash")!;
+		const { compat: _compat, ...baseModel } = getModel("opencode-go", "kimi-k3")!;
 		const model = { ...baseModel, api: "openai-completions" } as const;
 		const response = await streamSimple(
 			model,
@@ -1367,7 +1367,7 @@ describe("openai-completions tool_choice", () => {
 	});
 
 	it("replays OpenCode Go reasoning thinking blocks as reasoning_content", () => {
-		const { compat: _compat, ...baseModel } = getModel("opencode-go", "deepseek-v4-flash")!;
+		const { compat: _compat, ...baseModel } = getModel("opencode-go", "kimi-k3")!;
 		const model = { ...baseModel, api: "openai-completions" } as Model<"openai-completions">;
 		const messages = convertMessages(
 			model,
@@ -1377,7 +1377,7 @@ describe("openai-completions tool_choice", () => {
 						role: "assistant",
 						api: "openai-completions",
 						provider: "opencode-go",
-						model: "deepseek-v4-flash",
+						model: "kimi-k3",
 						content: [
 							{ type: "thinking", thinking: "think", thinkingSignature: "reasoning" },
 							{ type: "toolCall", id: "call_1", name: "read", arguments: { path: "README.md" } },
@@ -1425,8 +1425,8 @@ describe("openai-completions tool_choice", () => {
 		expect(messages[0]).not.toHaveProperty("reasoning");
 	});
 
-	it("sends thinking disabled for OpenCode Go DeepSeek V4 Flash when thinking is off", async () => {
-		const model = getModel("opencode-go", "deepseek-v4-flash")!;
+	it("sends thinking disabled for OpenCode Kimi K2.6 when thinking is off", async () => {
+		const model = getModel("opencode", "kimi-k2.6")!;
 		let payload: unknown;
 
 		await streamSimple(
@@ -1447,8 +1447,8 @@ describe("openai-completions tool_choice", () => {
 		expect(params.reasoning_effort).toBeUndefined();
 	});
 
-	it("sends thinking enabled for OpenCode Go DeepSeek V4 Flash when thinking is enabled", async () => {
-		const model = getModel("opencode-go", "deepseek-v4-flash")!;
+	it("sends thinking enabled for OpenCode Kimi K2.6 when thinking is enabled", async () => {
+		const model = getModel("opencode", "kimi-k2.6")!;
 		let payload: unknown;
 
 		await streamSimple(
@@ -1467,7 +1467,7 @@ describe("openai-completions tool_choice", () => {
 
 		const params = (payload ?? mockState.lastParams) as { thinking?: unknown; reasoning_effort?: string };
 		expect(params.thinking).toEqual({ type: "enabled" });
-		expect(params.reasoning_effort).toBe("high");
+		expect(params.reasoning_effort).toBeUndefined();
 	});
 
 	it("omits disabled thinking for Moonshot Kimi K2.7 Code models", async () => {
@@ -1519,7 +1519,7 @@ describe("openai-completions tool_choice", () => {
 	});
 
 	it("sends max_tokens for OpenCode completions models", async () => {
-		const cases = [getModel("opencode-go", "deepseek-v4-flash")!, getModel("opencode", "kimi-k2.6")!] as const;
+		const cases = [getModel("opencode-go", "kimi-k3")!, getModel("opencode", "kimi-k2.6")!] as const;
 
 		for (const model of cases) {
 			let payload: unknown;
