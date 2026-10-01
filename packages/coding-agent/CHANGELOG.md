@@ -2,10 +2,22 @@
 
 ## [Unreleased]
 
+### New Features
+
+- Run sandboxed JavaScript tool workflows with `+codemode`, combining tools and returning structured results. See [CLI tool options](usage.md#tool-options) and [MCP tool exposure](mcp.md#control-tool-exposure).
+- Connect MCP servers in the background and wait on demand for their tools, with OAuth or configured provider-token authentication. See [MCP connection behavior](mcp.md#diagnose-connection-problems) and [OAuth](mcp.md#authenticate-with-oauth).
+- Authenticate Anthropic through workload identity federation instead of a long-lived API key. See [Providers](providers.md).
+
 ### Added
 
 - Ported Pi 0.99.0/0.99.1 core APIs and fixes for Eaon Code 1.0.6; see `packages/coding-agent/docs/pi-0.99-updates.md`.
-- Ported Pi 0.99.2 coding-agent updates: background MCP connections with on-demand waits, provider-token MCP auth and namespace guidance, codemode loadout filtering, safer visual previews, and `/reload` activation of newly added default tools.
+- Added MCP provider-token authentication and namespace guidance, and codemode tool-loadout filtering. See [MCP](mcp.md#configure-servers) and [extension tools](extensions.md#custom-tools).
+- Added Anthropic workload identity federation for configured provider credentials.
+
+### Fixed
+
+- Validate codemode image output and preserve detected MIME types; improve visual previews and apply newly added default tools after `/reload`.
+- Improve Anthropic strict-schema compatibility and handle non-finite retry delays and z.ai context-overflow responses.
 
 ## [1.0.5] - 2026-09-28
 
