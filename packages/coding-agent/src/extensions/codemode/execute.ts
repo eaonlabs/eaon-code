@@ -18,8 +18,8 @@ import {
 	renderToolSample,
 	toCodemodeIdentifier,
 } from "@eaonlabs/eaon-codemode";
-import { getCodemodeWorkerUrl, getQuickJSWasmPath } from "../../config.ts";
-import type { ExtensionToolContext } from "../../core/extensions/types.ts";
+import { getCodemodeWorkerSpecifier, getQuickJSWasmPath } from "../../config.ts";
+import type { ExtensionToolContext, ToolNamespace } from "../../core/extensions/types.ts";
 import type { SessionEntry } from "../../core/session-manager.ts";
 import { combineUsage } from "../../core/usage-totals.ts";
 import { Bm25Ranker, createToolSearchDocument, DEFAULT_TOOL_SEARCH_LIMIT } from "../tool-search/tool.ts";
@@ -277,7 +277,7 @@ export async function executeCodemode(
 		timeoutMs: sourceOptions.timeoutMs ?? Number.POSITIVE_INFINITY,
 		memoryLimitBytes: CODEMODE_MEMORY_LIMIT_BYTES,
 		wasm: loadQuickJSWasm(getQuickJSWasmPath()),
-		workerUrl: getCodemodeWorkerUrl(),
+		workerUrl: getCodemodeWorkerSpecifier(),
 	});
 
 	let result: CodemodeResult;
@@ -319,7 +319,21 @@ export async function executeCodemode(
 	};
 }
 
-/** `searchTools()` and `describeTool()`: ranked search and lookup over the script's nested tools. */
+/**
+ * Whether `query` names the namespace: its name, its script identifier (`mcp__dev-radius` is
+ * `mcp__dev_radius`), or the part after its last `__` in either form (`dev-radius`, `dev_radius`).
+ */
+function isNamespaceName(namespace: string, query: string): boolean {
+	const id = toCodemodeIdentifier(namespace);
+	const queryId = toCodemodeIdentifier(query);
+	const suffix = (name: string) => (name.includes("__") ? name.slice(name.lastIndexOf("__") + 2) : undefined);
+	return namespace === query || id === queryId || suffix(namespace) === query || suffix(id) === queryId;
+}
+
+/**
+ * `searchTools()`, `describeTool()`, and `describeNamespace()`: ranked search and lookup over the
+ * script's nested tools and their namespaces.
+ */
 function createDiscoveryGlobals(
 	tools: readonly AgentTool<any>[],
 	samples: ReadonlyMap<string, string>,
@@ -344,7 +358,7 @@ function createDiscoveryGlobals(
 				}
 				const documents = tools.flatMap((tool) => {
 					const toolNamespace = options.getToolNamespace?.(tool.name);
-					if (namespace && toolNamespace?.name !== namespace) return [];
+					if (namespace && (!toolNamespace || !isNamespaceName(toolNamespace.name, namespace))) return [];
 					return [createToolSearchDocument(tool, toolNamespace)];
 				});
 				return ranker.rank(query, documents, limit).map((match) => entry(match.name));
@@ -360,6 +374,29 @@ function createDiscoveryGlobals(
 					(candidate) => candidate.name === name || toCodemodeIdentifier(candidate.name) === name,
 				);
 				return tool ? samples.get(tool.name) : undefined;
+			},
+		},
+		{
+			name: "describeNamespace",
+			spread: true,
+			execute: (args) => {
+				const [name] = args as unknown[];
+				if (typeof name !== "string") throw new Error("describeNamespace() expects a namespace name");
+				let namespace: ToolNamespace | undefined;
+				const names: string[] = [];
+				for (const tool of tools) {
+					const toolNamespace = options.getToolNamespace?.(tool.name);
+					if (!toolNamespace || !isNamespaceName(toolNamespace.name, name)) continue;
+					namespace ??= toolNamespace;
+					names.push(toCodemodeIdentifier(tool.name));
+				}
+				if (!namespace) return undefined;
+				return {
+					name: namespace.name,
+					...(namespace.description ? { description: namespace.description } : {}),
+					...(namespace.instructions ? { instructions: namespace.instructions } : {}),
+					tools: names,
+				};
 			},
 		},
 	];

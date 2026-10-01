@@ -32,6 +32,10 @@ const WORKSPACE = {
  */
 const BUDGETS = {
 	"packages/ai": {
+		"./models": {
+			maxFiles: 15,
+			forbid: ["providers/", "models.generated.ts", "index.ts", "utils/validation.ts", "utils/typebox-helpers.ts"],
+		},
 		"./utils/*": { maxFiles: 3, forbid: ["providers/", "api/", "index.ts"] },
 	},
 	"packages/agent": {

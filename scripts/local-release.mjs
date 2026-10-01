@@ -7,19 +7,7 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { installCodingAgentConsumer, packReleasePackages, smokeTestCodingAgentConsumer } from "./coding-agent-consumer.mjs";
-
-const packages = [
-	{ directory: "packages/chord", name: "@eaonlabs/chord" },
-	{ directory: "packages/telemetry", name: "@eaonlabs/eaon-telemetry" },
-	{ directory: "packages/ai", name: "@eaonlabs/eaon-ai" },
-	{ directory: "packages/tui", name: "@eaonlabs/eaon-tui" },
-	{ directory: "packages/agent", name: "@eaonlabs/eaon-agent-core" },
-	{ directory: "packages/protocol", name: "@eaonlabs/eaon-protocol" },
-	{ directory: "packages/client", name: "@eaonlabs/eaon-client" },
-	{ directory: "packages/session-backends/sqlite-node", name: "@eaonlabs/eaon-session-backend-sqlite-node" },
-	{ directory: "packages/server", name: "@eaonlabs/eaon-server" },
-	{ directory: "packages/coding-agent", name: "@eaonlabs/eaon-code" },
-];
+import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 function printUsage() {
 	console.log(`Usage: node scripts/local-release.mjs [options]
@@ -94,6 +82,7 @@ function run(command, args, options = {}) {
 	const result = spawnSync(command, args, {
 		cwd: options.cwd,
 		encoding: "utf8",
+		env: options.env,
 		shell: process.platform === "win32",
 		stdio: options.capture ? ["inherit", "pipe", "inherit"] : "inherit",
 	});
@@ -160,7 +149,9 @@ function buildBunBinaryRelease(targetDirectory, archiveDirectory) {
 		platform,
 		"--out",
 		binaryBuildDirectory,
-	]);
+	], {
+		env: { ...process.env, EAON_CODE_BINARY_NAME: "eaon-code" },
+	});
 	rmSync(targetDirectory, { force: true, recursive: true });
 	cpSync(join(binaryBuildDirectory, platform), targetDirectory, { recursive: true });
 	const archiveName = platform.startsWith("windows-") ? `eaon-code-${platform}.zip` : `eaon-code-${platform}.tar.gz`;
@@ -186,6 +177,7 @@ function createEaonCodeShim(installDirectory) {
 const options = parseArgs();
 const repoRoot = process.cwd();
 const rootPackageJson = readPackageJson(repoRoot);
+const packages = getPublicWorkspacePackages();
 
 if (rootPackageJson.name !== "eaon-code-monorepo") {
 	throw new Error("Run this script from the repository root");

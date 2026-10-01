@@ -152,6 +152,7 @@ const DESCRIPTION_INTRO = `Run JavaScript code to orchestrate/compose tool calls
 - \`ALL_TOOLS\`: metadata for the enabled nested tools as \`{ name, description }\` entries.
 - \`searchTools(query: string, options?: { limit?: number; namespace?: string })\`: resolves to the nested tools that best match the query (BM25, default limit 8), as \`{ name, description }\` entries like \`ALL_TOOLS\`.
 - \`describeTool(name: string)\`: resolves to the description and declaration of a nested tool, or \`undefined\`.
+- \`describeNamespace(name: string)\`: resolves to \`{ name, description?, instructions?, tools }\` for a namespace of nested tools, such as an MCP server: its usage instructions and the names of its tools, or \`undefined\`.
 - \`console.log(...)\` and the other \`console\` methods append a text item like \`text()\`.
 - \`return value\` at the top level appends the value like \`text()\`.`;
 
@@ -216,8 +217,8 @@ export const MODEL_GLOBAL_DECLARATIONS: readonly Omit<CodemodeTool, "execute">[]
 	},
 ];
 
-const DEFERRED_TOOLS_GUIDANCE = `Some deferred nested tools may be omitted from this description. They are still available on the global \`tools\` object and listed in \`ALL_TOOLS\`.
-To find one, call \`await searchTools(query)\`, or filter \`ALL_TOOLS\` by \`name\` and \`description\`.`;
+const DEFERRED_TOOLS_GUIDANCE = `Some nested tools may be omitted from this description, such as deferred tools and MCP tools. They are still available on the global \`tools\` object and listed in \`ALL_TOOLS\`.
+To find one, call \`await searchTools(query)\` (pass \`{ namespace }\` to search one namespace), or filter \`ALL_TOOLS\` by \`name\` and \`description\`. \`await describeNamespace(name)\` returns a namespace's usage instructions and the names of its tools.`;
 
 /** Default for {@link CodemodeDescriptionOptions.inlineBudget}, in estimated tokens. */
 export const DEFAULT_CODEMODE_INLINE_BUDGET = 3000;
@@ -264,7 +265,6 @@ interface CatalogEntry {
 	name: string;
 	section: string;
 	cost: number;
-	deferred: boolean;
 }
 
 interface CatalogGroup {
@@ -279,9 +279,8 @@ interface CatalogGroup {
  * represented before any namespace is complete.
  */
 function selectCatalog(groups: readonly CatalogGroup[], budget: number | undefined): Set<string> {
-	const listable = groups.map((group) => group.entries.filter((entry) => !entry.deferred));
-	if (budget === undefined) return new Set(listable.flat().map((entry) => entry.name));
-	const queues = listable.map((entries) => [...entries].sort((a, b) => a.cost - b.cost));
+	if (budget === undefined) return new Set(groups.flatMap((group) => group.entries.map((entry) => entry.name)));
+	const queues = groups.map((group) => [...group.entries].sort((a, b) => a.cost - b.cost));
 	const shown = new Set<string>();
 	let remaining = budget;
 	let active = queues.filter((queue) => queue.length > 0);
@@ -299,16 +298,19 @@ function selectCatalog(groups: readonly CatalogGroup[], budget: number | undefin
 }
 
 /**
- * Model-facing description: the helper list, guidance for omitted tools, the shared MCP types when
- * MCP tools are callable, the `models` API, and one section per tool, grouped by namespace. Tool
- * sections are limited to `inlineBudget`; every namespace is listed with its tool count either
- * way, and the listing states whether it is complete.
+ * Model-facing description: the helper list, guidance for finding tools that are not listed, the
+ * shared MCP types when listed tools need them, the `models` API, and one section per listed tool,
+ * grouped by namespace. Deferred tools are never listed and do not affect the description at all, so
+ * it stays the same while MCP servers connect or change their tools. Tool sections are limited to
+ * `inlineBudget`.
  */
 export function createCodemodeDescription(
 	tools: readonly AgentTool<any>[],
 	options: CodemodeDescriptionOptions = {},
 ): string {
-	const declarations = getCodemodeCallableTools(tools).map(toCodemodeDeclaration);
+	const declarations = getCodemodeCallableTools(tools)
+		.filter((tool) => !options.deferred?.has(tool.name))
+		.map(toCodemodeDeclaration);
 	const groups = new Map<string, CatalogGroup>([["", { namespace: undefined, entries: [] }]]);
 	for (const declaration of declarations) {
 		const namespace = options.namespaces?.get(declaration.name);
@@ -316,22 +318,20 @@ export function createCodemodeDescription(
 		const group = groups.get(key) ?? { namespace, entries: [] };
 		groups.set(key, group);
 		const section = renderToolSection(declaration);
-		group.entries.push({
-			name: declaration.name,
-			section,
-			cost: Math.ceil(section.length / CHARS_PER_TOKEN),
-			deferred: options.deferred?.has(declaration.name) === true,
-		});
+		group.entries.push({ name: declaration.name, section, cost: Math.ceil(section.length / CHARS_PER_TOKEN) });
 	}
 	const ordered = [...groups.values()].sort((a, b) =>
 		a.namespace === undefined ? -1 : b.namespace === undefined ? 1 : a.namespace.name.localeCompare(b.namespace.name),
 	);
 	const shown = selectCatalog(ordered, options.inlineBudget);
-	const complete = shown.size === declarations.length;
 
-	const sections = [DESCRIPTION_INTRO];
-	if (!complete) sections.push(DEFERRED_TOOLS_GUIDANCE);
-	if (declarations.some((declaration) => mcpStructuredContentSchema(declaration.outputSchema) !== undefined)) {
+	const sections = [DESCRIPTION_INTRO, DEFERRED_TOOLS_GUIDANCE];
+	if (
+		declarations.some(
+			(declaration) =>
+				shown.has(declaration.name) && mcpStructuredContentSchema(declaration.outputSchema) !== undefined,
+		)
+	) {
 		sections.push(`Shared MCP Types:\n\`\`\`ts\n${MCP_TYPESCRIPT_PREAMBLE}\n\`\`\``);
 	}
 	if (options.models) {
@@ -343,23 +343,19 @@ export function createCodemodeDescription(
 	}
 	if (declarations.length === 0) return sections.join("\n\n");
 
-	const toolSections = [
-		complete
-			? `Nested tools: COMPLETE list (${declarations.length} tool${declarations.length === 1 ? "" : "s"}).`
-			: `Nested tools: PARTIAL - ${shown.size} of ${declarations.length} shown.`,
-	];
+	const toolSections = ["Nested tools:"];
 	for (const { namespace, entries } of ordered) {
 		const visible = entries.filter((entry) => shown.has(entry.name));
 		if (namespace) {
-			const count = `${entries.length} tool${entries.length === 1 ? "" : "s"}`;
-			const suffix =
+			// Only tools that did not fit the budget are counted as not listed here.
+			const listing =
 				visible.length === entries.length
 					? ""
 					: visible.length === 0
-						? ", none shown"
-						: `, ${visible.length} shown`;
+						? " (tools not listed)"
+						: " (some tools not listed)";
 			const description = namespace.description?.trim();
-			toolSections.push(`## ${namespace.name} (${count}${suffix})${description ? `\n${description}` : ""}`);
+			toolSections.push(`## ${namespace.name}${listing}${description ? `\n${description}` : ""}`);
 		}
 		for (const entry of visible) toolSections.push(entry.section);
 	}

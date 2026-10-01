@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fall back to exponential retry delay when `Retry-After` headers contain non-finite values.
+
 ## [0.99.1] - 2026-09-29
 
 ## [0.99.0] - 2026-09-29

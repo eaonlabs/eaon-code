@@ -86,6 +86,10 @@
           "path": "environment-variables.md"
         },
         {
+          "title": "Eaon Code 1.0.6 update notes",
+          "path": "pi-0.99-updates.md"
+        },
+        {
           "title": "Session Format",
           "path": "session-format.md"
         }

@@ -1920,6 +1920,10 @@ export default function (eaon: ExtensionAPI) {
 
 Register tools the LLM can call via `eaon.registerTool()`. Tools appear in the system prompt and can have custom rendering.
 
+Set `namespace: { name, description, instructions }` to group related tools, as MCP servers do. Codemode lists each namespace under one heading with its description. `instructions` holds longer usage guidance; it is not listed in tool descriptions, and codemode scripts can read it with `describeNamespace(name)`.
+
+A tool that orchestrates other tools can use `prepareLoadout(loadout)` to adjust what the model sees while it is active. It runs whenever the active tools change and receives the declared tools, the callable tools, and all registered tools with their exposure and namespace. Return replacement `descriptions` for declared tools (including the orchestrating tool) and `hiddenDeclarations` for active tools whose declarations should be omitted while they remain callable. Codemode uses this hook, `exposure`, and `ctx.executeTool()`; other tools can implement the same behavior under another name.
+
 Use `promptSnippet` for a short one-line entry in the `Available tools` section in the default system prompt. If omitted, custom tools are left out of that section.
 
 Use `promptGuidelines` to add tool-specific bullets to the default system prompt `Guidelines` section. These bullets are included only while the tool is active (for example, after `eaon.setActiveTools([...])`).
@@ -2319,6 +2323,7 @@ renderResult(result, { expanded, isPartial }, theme, context) {
 }
 ```
 
+If a slot intentionally has no visible content, return an empty `Component` such as an empty `Container`.
 If a slot intentionally has no visible content, return an empty `Component` such as an empty `Container`.
 
 #### Keybinding Hints
@@ -2781,6 +2786,7 @@ const result = await ctx.ui.custom<string | null>(
 );
 ```
 
+For advanced positioning (anchors, margins, percentages, responsive visibility), pass `overlayOptions`. Use `onHandle` to control focus or visibility programmatically:
 For advanced positioning (anchors, margins, percentages, responsive visibility), pass `overlayOptions`. Use `onHandle` to control focus or visibility programmatically:
 
 ```typescript

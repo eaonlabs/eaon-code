@@ -260,6 +260,8 @@ Windows paths in JSON must use forward slashes or escaped backslashes:
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `defaultTools` | string[] | - | Built-in tools enabled initially. When omitted, Eaon Code uses its standard defaults |
+| `codemode.mode` | `"on"` \| `"only"` | `"on"` | How codemode presents tools. `on` adds its declaration to visible tools and lists undeclared tools; `only` lists all callable tools and hides active built-in and extension tools from the model. |
+| `codemode.inlineBudget` | number | `3000` | Estimated tokens the codemode description may spend on tool declarations. Tools that do not fit can be found with `searchTools()`; `0` lists only namespaces. |
 
 `defaultTools` selects the built-in tools enabled at startup. Extension and SDK custom tools remain enabled. Available built-ins are `read`, `bash`, `powershell`, `edit`, `write`, `grep`, `find`, and `ls`:
 
@@ -278,6 +280,8 @@ On Windows, select `powershell` instead of `bash`, or include both:
 ```
 
 An empty array starts with no built-in tools while preserving extension and SDK custom tools. `--tools` replaces this behavior with a strict allowlist for all tools, `--no-tools` disables all tools, and `--no-builtin-tools` disables the built-in defaults. `--exclude-tools` filters the resulting list. A project `defaultTools` array replaces the global array.
+
+`/reload` enables tools newly added to `defaultTools`. It does not disable tools removed from it or re-enable unchanged tools you turned off. `--tools`, `--no-tools`, and `--no-builtin-tools` override `defaultTools`, also on reload. CLI tool options override this setting for one invocation; `--tools` does not accept `+name` or `-name`. See [CLI tool options](usage.md#tool-options).
 
 ### Sessions
 

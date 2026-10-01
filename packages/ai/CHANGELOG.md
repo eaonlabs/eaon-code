@@ -5,6 +5,7 @@
 ### Added
 
 - Ported Pi 0.99.0/0.99.1 core APIs and fixes for Eaon Code 1.0.6; see `packages/coding-agent/docs/pi-0.99-updates.md`.
+- Ported Pi 0.99.2 AI updates: Anthropic workload identity federation and strict-schema fallback, safer `Retry-After` parsing, z.ai context-overflow detection, and a lightweight `@eaonlabs/eaon-ai/models` entry point.
 
 ## [1.0.5] - 2026-09-28
 
