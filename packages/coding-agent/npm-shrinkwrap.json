@@ -1,18 +1,18 @@
 {
 	"name": "@eaonlabs/eaon-code",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"lockfileVersion": 3,
 	"requires": true,
 	"packages": {
 		"": {
 			"name": "@eaonlabs/eaon-code",
-			"version": "1.0.6",
+			"version": "1.0.7",
 			"license": "MIT",
 			"dependencies": {
-				"@eaonlabs/chord": "^1.0.6",
-				"@eaonlabs/eaon-agent-core": "^1.0.6",
-				"@eaonlabs/eaon-ai": "^1.0.6",
-				"@eaonlabs/eaon-tui": "^1.0.6",
+				"@eaonlabs/chord": "^1.0.7",
+				"@eaonlabs/eaon-agent-core": "^1.0.7",
+				"@eaonlabs/eaon-ai": "^1.0.7",
+				"@eaonlabs/eaon-tui": "^1.0.7",
 				"@silvia-odwyer/photon-node": "0.3.4",
 				"@sinclair/typebox": "0.34.52",
 				"@tintinweb/pi-subagents": "0.19.0",
@@ -33,8 +33,8 @@
 				"typebox": "1.3.27",
 				"undici": "8.10.2",
 				"yaml": "2.9.0",
-				"@eaonlabs/eaon-codemode": "^1.0.6",
-				"@eaonlabs/eaon-mcp": "^1.0.6",
+				"@eaonlabs/eaon-codemode": "^1.0.7",
+				"@eaonlabs/eaon-mcp": "^1.0.7",
 				"quickjs-wasi": "3.6.2"
 			},
 			"bin": {
@@ -416,8 +416,8 @@
 			}
 		},
 		"node_modules/@eaonlabs/chord": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/chord/-/chord-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/chord/-/chord-1.0.7.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"esbuild": "0.28.2"
@@ -427,13 +427,13 @@
 			}
 		},
 		"node_modules/@eaonlabs/eaon-agent-core": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-agent-core/-/eaon-agent-core-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-agent-core/-/eaon-agent-core-1.0.7.tgz",
 			"license": "MIT",
 			"dependencies": {
-				"@eaonlabs/chord": "^1.0.6",
-				"@eaonlabs/eaon-ai": "^1.0.6",
-				"@eaonlabs/eaon-telemetry": "^1.0.6",
+				"@eaonlabs/chord": "^1.0.7",
+				"@eaonlabs/eaon-ai": "^1.0.7",
+				"@eaonlabs/eaon-telemetry": "^1.0.7",
 				"diff": "8.0.4",
 				"ignore": "7.0.8",
 				"typebox": "1.3.27",
@@ -444,13 +444,13 @@
 			}
 		},
 		"node_modules/@eaonlabs/eaon-ai": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-ai/-/eaon-ai-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-ai/-/eaon-ai-1.0.7.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"@anthropic-ai/sdk": "0.124.0",
 				"@aws-sdk/client-bedrock-runtime": "3.1127.0",
-				"@eaonlabs/eaon-telemetry": "^1.0.6",
+				"@eaonlabs/eaon-telemetry": "^1.0.7",
 				"@google/genai": "2.21.0",
 				"@smithy/node-http-handler": "4.12.1",
 				"http-proxy-agent": "9.1.0",
@@ -491,8 +491,8 @@
 			}
 		},
 		"node_modules/@eaonlabs/eaon-codemode": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-codemode/-/eaon-codemode-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-codemode/-/eaon-codemode-1.0.7.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"quickjs-wasi": "3.6.2"
@@ -502,8 +502,8 @@
 			}
 		},
 		"node_modules/@eaonlabs/eaon-mcp": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-mcp/-/eaon-mcp-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-mcp/-/eaon-mcp-1.0.7.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"cross-spawn": "7.0.6"
@@ -513,16 +513,16 @@
 			}
 		},
 		"node_modules/@eaonlabs/eaon-telemetry": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-telemetry/-/eaon-telemetry-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-telemetry/-/eaon-telemetry-1.0.7.tgz",
 			"license": "MIT",
 			"engines": {
 				"node": ">=22.19.0"
 			}
 		},
 		"node_modules/@eaonlabs/eaon-tui": {
-			"version": "1.0.6",
-			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-tui/-/eaon-tui-1.0.6.tgz",
+			"version": "1.0.7",
+			"resolved": "https://registry.npmjs.org/@eaonlabs/eaon-tui/-/eaon-tui-1.0.7.tgz",
 			"license": "MIT",
 			"dependencies": {
 				"get-east-asian-width": "1.6.0",

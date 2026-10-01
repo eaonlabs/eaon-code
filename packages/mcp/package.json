@@ -1,6 +1,6 @@
 {
 	"name": "@eaonlabs/eaon-mcp",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"description": "Standalone Model Context Protocol client for pi and other applications",
 	"type": "module",
 	"main": "./dist/index.js",
