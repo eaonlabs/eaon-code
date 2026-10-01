@@ -80,11 +80,9 @@ npm run release:minor
 npm run release:major
 ```
 
-The release script updates every public workspace package to one shared version, refreshes release metadata, runs the repository checks/build/tests and consumer-install smoke test, then pushes the release commits and an `eaon-vX.Y.Z` tag to `main`. That tag runs `.github/workflows/eaon-release.yml`, which publishes the packages to npm with provenance and creates the matching GitHub Release. Do not use a `vX.Y.Z` tag; that prefix is reserved for the inherited Pi release workflow.
+The release script updates every public workspace package to one shared version, refreshes release metadata, runs the repository checks/build/tests and consumer-install smoke test, then pushes the release commits and an `eaon-vX.Y.Z` tag to `main`. That tag runs `.github/workflows/eaon-release.yml`, which validates the package versions and creates the matching GitHub Release. Installer-managed source installs follow `main` and rebuild when a new commit is available. Do not use a `vX.Y.Z` tag; that prefix is reserved for the inherited Pi release workflow.
 
-Before the first automated release, all public `@eaonlabs` packages must already exist on npm and each package must have a GitHub Actions trusted publisher configured for repository `eaonlabs/eaon-code` and workflow `eaon-release.yml`. Do not add a long-lived npm token to GitHub secrets. Initial package registration is a one-time manual publish; subsequent releases use GitHub's OIDC trusted publishing.
-
-The release script refuses to run until every public package is registered on npm and the full test and smoke-test gates pass. Resolve any failing gate before tagging a release.
+The release process does not publish workspace packages to npm or require them to be registered there. The release script runs the full test and smoke-test gates before tagging; resolve any failing gate before release.
 
 ## Questions?
 
