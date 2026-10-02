@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added an Anthropic OAuth copy-code login option for headless environments.
+
+### Fixed
+
+- Dropped foreign OpenAI Responses item IDs when replaying tool calls across providers.
+
 ## [1.0.7] - 2026-10-01
 
 ### Added

@@ -1,6 +1,7 @@
 import { setKeybindings } from "@eaonlabs/eaon-tui";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { KeybindingsManager } from "../src/core/keybindings.ts";
+import { ExtensionSelectorComponent } from "../src/modes/interactive/components/extension-selector.ts";
 import { OAuthSelectorComponent } from "../src/modes/interactive/components/oauth-selector.ts";
 import { InteractiveMode } from "../src/modes/interactive/interactive-mode.ts";
 import { initTheme } from "../src/modes/interactive/theme/theme.ts";
@@ -71,7 +72,79 @@ describe("OAuthSelectorComponent", () => {
 		]);
 	});
 
-	it("renders an option without compiled auth status as unconfigured", () => {
+	it("routes /login anthropic to its OAuth provider", async () => {
+		const provider = { id: "anthropic", name: "Anthropic", authType: "oauth" as const };
+		let startedProvider: typeof provider | undefined;
+		const handleLoginCommand = (
+			InteractiveMode as unknown as {
+				prototype: {
+					handleLoginCommand(this: object, providerRef?: string): Promise<void>;
+				};
+			}
+		).prototype.handleLoginCommand;
+
+		await handleLoginCommand.call(
+			{
+				findLoginProviderOptions: () => [provider],
+				startProviderLogin: async (selected: typeof provider) => {
+					startedProvider = selected;
+				},
+			},
+			"anthropic",
+		);
+
+		expect(startedProvider).toBe(provider);
+	});
+
+	it("shows Anthropic's browser and copy-code choices in the login selector", async () => {
+		type SelectPrompt = {
+			type: "select";
+			message: string;
+			options: readonly { id: string; label: string }[];
+		};
+		const prompt: SelectPrompt = {
+			type: "select",
+			message: "Select Anthropic login method:",
+			options: [
+				{ id: "browser", label: "Browser login (default)" },
+				{ id: "copy_code", label: "Copy code login (headless)" },
+			],
+		};
+		const children: unknown[] = [];
+		const showAuthSelect = (
+			InteractiveMode as unknown as {
+				prototype: {
+					showAuthSelect(this: object, dialog: object, prompt: SelectPrompt, providerId: string): Promise<string>;
+				};
+			}
+		).prototype.showAuthSelect;
+		const result = showAuthSelect.call(
+			{
+				editorContainer: {
+					clear: () => {
+						children.length = 0;
+					},
+					addChild: (child: unknown) => children.push(child),
+				},
+				ui: { setFocus: () => {}, requestRender: () => {} },
+				toggleToolOutputExpansion: () => {},
+			},
+			{},
+			prompt,
+			"anthropic",
+		);
+
+		const selector = children.find(
+			(child): child is ExtensionSelectorComponent => child instanceof ExtensionSelectorComponent,
+		);
+		expect(selector).toBeDefined();
+		selector!.handleInput("j");
+		selector!.handleInput("\n");
+
+		await expect(result).resolves.toBe("copy_code");
+	});
+
+	it("renders an option without compiled auth status as not configured", () => {
 		const selector = new OAuthSelectorComponent(
 			"login",
 			[{ id: "google", name: "Google", authType: "api_key", status: undefined }],
@@ -80,7 +153,7 @@ describe("OAuthSelectorComponent", () => {
 		);
 
 		const output = stripAnsi(selector.render(120).join("\n"));
-		expect(output).toContain("unconfigured");
+		expect(output).toContain("not configured");
 		expect(output).not.toContain("✓ configured");
 	});
 
@@ -106,7 +179,7 @@ describe("OAuthSelectorComponent", () => {
 
 		const output = stripAnsi(selector.render(120).join("\n"));
 		expect(output).toContain("✓ env: OPENAI_API_KEY");
-		expect(output).not.toContain("unconfigured");
+		expect(output).not.toContain("not configured");
 	});
 
 	it("shows models.json API key auth as configured", () => {

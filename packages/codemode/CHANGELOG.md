@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added image-model generation through the codemode runtime API.
+
+### Changed
+
+- Added actionable guidance for invalid model calls and clearer descriptions of script tool results.
+
 ## [1.0.7] - 2026-10-01
 
 ### Fixed

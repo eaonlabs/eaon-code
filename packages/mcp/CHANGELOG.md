@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for configured authorization-server metadata URLs and RFC 9207 issuer validation in MCP OAuth flows.
+
+### Fixed
+
+- Preserved granted scopes across authorization-code exchange, refresh, and step-up authorization; accepted empty pagination cursors and scope values from MCP servers.
+
 ## [1.0.7] - 2026-10-01
 
 ### Fixed

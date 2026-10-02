@@ -133,6 +133,8 @@ When the server rejects an unauthenticated connection, `/mcp` shows that it need
 
 Eaon Code registers itself with the authorization server, stores tokens in `~/.eaon/agent/mcp-auth.json`, and refreshes access tokens when they expire or the server rejects them. If a server later requests additional scope, Eaon Code asks for sign-in again. Signing out deletes the stored credentials.
 
+Credentials belong to a server name and URL. Servers with the same URL under different names, such as one per account, sign in separately; servers with the same name and URL in different `mcp.json` files share one sign-in.
+
 OAuth applies to HTTP servers without an `Authorization` header. For a server that does not support dynamic client registration, configure a registered client:
 
 ```json
@@ -161,6 +163,21 @@ Eaon Code registers as `eaon-code`. Some servers only accept registrations from 
 ```
 
 The name is only sent when Eaon Code registers a client. To register again under a new name, sign out first.
+
+Eaon Code finds the authorization server through the server's protected resource metadata (RFC 9728) and checks that the authorization server's metadata names the expected issuer (RFC 8414). Some servers advertise the wrong authorization server or none, so sign-in opens a page that does not exist. Set `authServerMetadataUrl` to the metadata document of the right authorization server:
+
+```json
+{
+  "mcpServers": {
+    "example": {
+      "url": "https://mcp.example.com/mcp",
+      "oauth": { "authServerMetadataUrl": "https://example.okta.com/.well-known/openid-configuration" }
+    }
+  }
+}
+```
+
+Eaon Code uses that document instead of discovery and trusts it as configured, so only point it at a document you trust. The URL must use HTTPS, except on `localhost`, `127.0.0.1`, or `[::1]`.
 
 ## Control tool exposure
 

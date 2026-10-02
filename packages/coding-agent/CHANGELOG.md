@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### New Features
+
+- Generate images and classify data from codemode scripts. See [Codemode](codemode.md).
+- Sign in to Radius from `/login` and add its MCP server after authentication. See [MCP configuration](mcp.md#configure-servers).
+- Choose browser or copy-code sign-in with `/login anthropic`.
+
+### Added
+
+- Ported selected Pi 1.0.0 OAuth and MCP improvements, including Radius sign-in and authorization-server setup.
+- Added codemode access to image models and documented its tools, model APIs, state storage, and limits. See [Codemode](codemode.md).
+- Added Anthropic's browser and copy-code OAuth choices to the interactive `/login` flow.
+
+### Changed
+
+- Improved codemode tool descriptions and recovery guidance for invalid model calls and tool output shapes.
+- Reduced retained Markdown token memory and flattened cached TUI render lines for long sessions.
+
+### Fixed
+
+- Preserved tool-search-loaded MCP tools when resuming a session.
+- Fixed OpenAI Responses tool-call replay when switching between providers.
+- Fixed slash command completion after leading whitespace and ANSI reset ordering when slicing rendered text.
+
 ## [1.0.7] - 2026-10-01
 
 ### New Features

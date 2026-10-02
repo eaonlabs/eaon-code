@@ -57,6 +57,10 @@
           "path": "skills.md"
         },
         {
+          "title": "Codemode",
+          "path": "codemode.md"
+        },
+        {
           "title": "Prompt Templates",
           "path": "prompt-templates.md"
         },

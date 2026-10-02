@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Reduced retained Markdown token memory and flattened cached rendered lines to limit memory use during long sessions.
+
+### Fixed
+
+- Preserved ANSI style reset order when slicing rendered text and completed slash commands after leading whitespace.
+
 ## [1.0.7] - 2026-10-01
 
 ### Added

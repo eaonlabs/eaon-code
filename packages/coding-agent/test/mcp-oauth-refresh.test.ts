@@ -1,9 +1,15 @@
 import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type OAuthChallenge, OAuthIssuerMismatchError } from "@eaonlabs/eaon-mcp/oauth";
 import { afterEach, describe, expect, it } from "vitest";
 import { InMemoryAuthStorageBackend } from "../src/core/auth-storage.ts";
-import { createMcpAuthProvider, McpOAuthCredentialStore, signInMcpServer } from "../src/extensions/mcp/oauth.ts";
+import {
+	createMcpAuthProvider,
+	McpOAuthCredentialStore,
+	type McpOAuthSettings,
+	signInMcpServer,
+} from "../src/extensions/mcp/oauth.ts";
 import { startOAuthMcpServer } from "./suite/mcp-oauth-server.ts";
 
 describe("MCP OAuth refresh", () => {
@@ -21,7 +27,7 @@ describe("MCP OAuth refresh", () => {
 		// Stores sharing the credential file and lock directory stand in for separate pi processes.
 		const backend = new InMemoryAuthStorageBackend();
 		const process = () => {
-			const store = new McpOAuthCredentialStore(backend, lockDir).forServer(server.url);
+			const store = new McpOAuthCredentialStore(backend, lockDir).forServer("test", server.url);
 			const provider = createMcpAuthProvider({
 				serverUrl: server.url,
 				store,
@@ -80,5 +86,74 @@ describe("MCP OAuth refresh", () => {
 		await provider.settled();
 		expect((await store.load())?.tokens?.access_token).toBe("access-2");
 		await refresh;
+	});
+});
+
+describe("MCP OAuth sign-in", () => {
+	async function signIn(options: { iss?: string }, settings: (serverUrl: string) => McpOAuthSettings = () => ({})) {
+		const server = await startOAuthMcpServer(options);
+		try {
+			await signInMcpServer({
+				serverUrl: server.url,
+				store: new McpOAuthCredentialStore(new InMemoryAuthStorageBackend()).forServer("test", server.url),
+				settings: settings(server.url),
+				prompt: {
+					showAuthorizationUrl: (url) => void fetch(url),
+					promptForRedirectUrl: (signal) =>
+						new Promise((resolve) => signal.addEventListener("abort", () => resolve(undefined), { once: true })),
+				},
+			});
+		} finally {
+			await server.close();
+		}
+	}
+
+	it("rejects an authorization response from another issuer", async () => {
+		await expect(signIn({ iss: "https://attacker.example" })).rejects.toBeInstanceOf(OAuthIssuerMismatchError);
+	});
+
+	it("keeps the granted scope when the server asks for more", async () => {
+		const server = await startOAuthMcpServer();
+		try {
+			const store = new McpOAuthCredentialStore(new InMemoryAuthStorageBackend()).forServer("test", server.url);
+			const opened: URL[] = [];
+			const signInWith = (challenge: OAuthChallenge) =>
+				signInMcpServer({
+					serverUrl: server.url,
+					store,
+					settings: {},
+					challenge,
+					prompt: {
+						showAuthorizationUrl: (url) => {
+							opened.push(url);
+							void fetch(url);
+						},
+						promptForRedirectUrl: (signal) =>
+							new Promise((resolve) =>
+								signal.addEventListener("abort", () => resolve(undefined), { once: true }),
+							),
+					},
+				});
+
+			await signInWith({ scope: "issues:read" });
+			// The token response names no scope, so the grant has the requested one.
+			expect((await store.load())?.tokens?.scope).toBe("issues:read");
+			// The step-up challenge lists only the missing scope. Requesting just that would lose
+			// issues:read, so the next request would ask for sign-in again.
+			await signInWith({ error: "insufficient_scope", scope: "issues:write" });
+			expect(opened.map((url) => url.searchParams.get("scope"))).toEqual([
+				"issues:read",
+				"issues:read issues:write",
+			]);
+			expect((await store.load())?.tokens?.scope).toBe("issues:read issues:write");
+		} finally {
+			await server.close();
+		}
+	});
+
+	// #10172
+	it("uses the configured authorization server metadata URL", async () => {
+		const settings = (serverUrl: string) => ({ authServerMetadataUrl: new URL("/missing", serverUrl) });
+		await expect(signIn({}, settings)).rejects.toThrow("HTTP 404 loading authorization server metadata");
 	});
 });
