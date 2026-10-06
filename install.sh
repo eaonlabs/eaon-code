@@ -74,6 +74,8 @@ npm --prefix packages/session-backends/sqlite-node run build
 npm --prefix packages/protocol run build
 npm --prefix packages/client run build
 npm --prefix packages/server run build
+npm --prefix packages/mcp run build
+npm --prefix packages/codemode run build
 npm --prefix packages/coding-agent run build
 
 CLI="$AGENT_DIR/dist/bundle/cli.js"
