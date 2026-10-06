@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { afterEach, describe, expect, it } from "vitest";
-import { CodemodeSandbox, type CodemodeTool } from "../src/index.ts";
+import { CodemodeSandbox, type CodemodeTool, MAX_OUTPUT_CHARS, MAX_OUTPUT_ITEMS } from "../src/index.ts";
 import { PRELUDE_SOURCE } from "../src/runtime/prelude-source.ts";
 
 const sandboxes: CodemodeSandbox[] = [];
@@ -38,6 +38,24 @@ describe("script execution", () => {
 			return { safe: true };
 		`);
 		expect(result).toMatchObject({ ok: true, value: { safe: true } });
+	});
+
+	it("fails scripts that exceed the output character limit before forwarding oversized text", async () => {
+		const sandbox = createSandbox();
+		const result = await sandbox.execute(`text("x".repeat(${MAX_OUTPUT_CHARS + 1}));`);
+		expect(result).toMatchObject({ ok: false, error: { kind: "script", name: "RangeError" }, output: [] });
+		if (result.ok) return;
+		expect(result.error.message).toContain(`${MAX_OUTPUT_CHARS} characters`);
+	});
+
+	it("fails scripts after the output item limit", async () => {
+		const sandbox = createSandbox([], 30_000);
+		const result = await sandbox.execute(`for (let i = 0; i <= ${MAX_OUTPUT_ITEMS}; i++) text("");`);
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error).toMatchObject({ kind: "script", name: "RangeError" });
+		expect(result.error.message).toContain(`${MAX_OUTPUT_ITEMS} text(), image(), and console calls`);
+		expect(result.output).toHaveLength(MAX_OUTPUT_ITEMS);
 	});
 
 	it("returns the script's return value after a JSON round trip", async () => {

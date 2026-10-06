@@ -27,6 +27,8 @@
  */
 export const MAX_STORE_VALUE_CHARS = 256 * 1024;
 export const MAX_STORE_TOTAL_CHARS = 1024 * 1024;
+export const MAX_OUTPUT_CHARS = 16 * 1024 * 1024;
+export const MAX_OUTPUT_ITEMS = 100_000;
 
 const IMAGE_HELPER_EXPECTS =
 	"image expects a non-empty image URL string, an object with image_url, or a raw MCP image block";
@@ -115,6 +117,7 @@ export const PRELUDE_SOURCE: string = `(function (bridge, toolsJson, globalsJson
 	const promiseThen = Promise.prototype.then;
 	const ErrorCtor = Error;
 	const TypeErrorCtor = TypeError;
+	const RangeErrorCtor = RangeError;
 	const pending = new Map();
 	let nextId = 1;
 	let finished = false;
@@ -300,6 +303,23 @@ export const PRELUDE_SOURCE: string = `(function (bridge, toolsJson, globalsJson
 	Object.defineProperty(globalThis, "store", { value: store, enumerable: true });
 	Object.defineProperty(globalThis, "load", { value: load, enumerable: true });
 
+	let outputChars = 0;
+	let outputItems = 0;
+	function output(kind, data, mimeType) {
+		if (finished) return;
+		outputChars += data.length;
+		outputItems++;
+		if (outputChars > ${MAX_OUTPUT_CHARS} || outputItems > ${MAX_OUTPUT_ITEMS}) {
+			const error = new RangeErrorCtor(
+				"script output exceeded the limit of ${MAX_OUTPUT_CHARS} characters or ${MAX_OUTPUT_ITEMS} text(), image(), and console calls. " +
+					"Print a summary instead, or write large data to a file with a tool.",
+			);
+			done(false, describeError(error));
+			throw error;
+		}
+		bridge("output", kind, data, mimeType);
+	}
+
 	// Primitives become their string form, everything else JSON.
 	function outputText(value) {
 		if (value === undefined || value === null || typeof value !== "object" && typeof value !== "function") {
@@ -316,7 +336,7 @@ export const PRELUDE_SOURCE: string = `(function (bridge, toolsJson, globalsJson
 		} catch (error) {
 			throw new TypeErrorCtor(error instanceof ErrorCtor ? error.message : String(error));
 		}
-		if (!finished) bridge("output", "text", rendered);
+		output("text", rendered);
 	}
 
 	function imageUrl(value) {
@@ -371,7 +391,7 @@ export const PRELUDE_SOURCE: string = `(function (bridge, toolsJson, globalsJson
 		if (!signature) {
 			throw new TypeErrorCtor("invalid image output. The image data is not a PNG, JPEG, GIF, or WebP image");
 		}
-		if (!finished) bridge("output", "image", data, signature[0]);
+		output("image", data, signature[0]);
 	}
 
 	function exit() {
@@ -389,7 +409,7 @@ export const PRELUDE_SOURCE: string = `(function (bridge, toolsJson, globalsJson
 	const console = {};
 	for (const level of ["log", "info", "warn", "error", "debug"]) {
 		console[level] = (...args) => {
-			if (!finished) bridge("output", "text", args.map(format).join(" "));
+			output("text", args.map(format).join(" "));
 		};
 	}
 	Object.freeze(console);

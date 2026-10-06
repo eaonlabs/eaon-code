@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.9] - 2026-10-06
 
 ### New Features
 
@@ -12,6 +12,7 @@
 
 - Registered loopback MCP OAuth clients as native applications.
 - Prevented codemode scripts from changing built-ins used to serialize their results.
+- Limited codemode output to 16 Mi characters and 100,000 items to prevent runaway scripts from exhausting memory.
 
 ## [1.0.8] - 2026-10-02
 

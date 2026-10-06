@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.9] - 2026-10-06
+
+### Added
+
+- Limited script output to 16 Mi characters and 100,000 items to avoid unbounded output growth.
 
 ### Fixed
 

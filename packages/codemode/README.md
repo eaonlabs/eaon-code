@@ -64,6 +64,8 @@ if (result.ok) {
 
 `load` returns a copy, so mutating it does not change the store. Storing `undefined` deletes the key. A value may be at most `MAX_STORE_VALUE_CHARS` (256 Ki) characters of JSON and all values together at most `MAX_STORE_TOTAL_CHARS` (1 Mi); larger writes throw a `RangeError` inside the script.
 
+Scripts may return at most `MAX_OUTPUT_CHARS` (16 Mi) characters and `MAX_OUTPUT_ITEMS` (100,000) calls to `text()`, `image()`, and `console.*` combined. Exceeding either limit fails the script before the excess output is forwarded.
+
 ## Source format
 
 `parseCodemodeSource()` accepts a script whose first line may be an options line:
