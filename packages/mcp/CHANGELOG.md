@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Registered loopback MCP OAuth clients with the native application type required by OpenID Connect servers.
+
 ## [1.0.8] - 2026-10-02
 
 ### Added

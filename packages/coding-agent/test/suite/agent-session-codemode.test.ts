@@ -1,4 +1,4 @@
-import { readFileSync, rmSync } from "node:fs";
+import { readFileSync, rmSync, statSync } from "node:fs";
 import type { AgentTool } from "@eaonlabs/eaon-agent-core";
 import {
 	type AssistantImages,
@@ -330,8 +330,41 @@ describe("AgentSession codemode tool", () => {
 		await harness.session.prompt("go");
 
 		const result = codemodeResult(harness);
-		expect(resultText(result)).toBe("captured\n<image>\nafter");
-		expect(result.content[2]).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
+		expect(resultText(result)).toMatch(/^captured\n\[Image saved to .+\.png \(image\/png, .+\)\]\n<image>\nafter$/);
+		expect(result.content[3]).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
+	});
+
+	it("saves each distinct codemode image once to a private temporary file", async () => {
+		const harness = await setup();
+		harness.setResponses([
+			fauxAssistantMessage(
+				[
+					fauxToolCall("codemode", {
+						code: `image("data:image/png;base64,${TINY_PNG_BASE64}"); image("data:image/png;base64,${TINY_PNG_BASE64}");`,
+					}),
+				],
+				{ stopReason: "toolUse" },
+			),
+			fauxAssistantMessage("done"),
+		]);
+
+		await harness.session.prompt("go");
+
+		const result = codemodeResult(harness);
+		const savedPaths = [...resultText(result).matchAll(/\[Image saved to (.+\.png) \(image\/png, .+\)\]/g)].map(
+			(match) => match[1],
+		);
+		expect(savedPaths).toHaveLength(2);
+		expect(savedPaths[0]).toBe(savedPaths[1]);
+		const savedPath = savedPaths[0];
+		expect(savedPath).toBeDefined();
+		if (!savedPath) return;
+		try {
+			expect(readFileSync(savedPath)).toEqual(Buffer.from(TINY_PNG_BASE64, "base64"));
+			expect(statSync(savedPath).mode & 0o777).toBe(0o600);
+		} finally {
+			rmSync(savedPath, { force: true });
+		}
 	});
 
 	it("reports script failures as results that keep partial output and the calls that ran", async () => {
@@ -446,6 +479,8 @@ describe("codemode options and store", () => {
 			expect(text).toContain(`[Full output: ${path} (read with offset/limit)]`);
 			// Images follow the truncated text.
 			expect(result.content.at(-1)).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
+			expect(resultText(result)).toContain("[Image saved to ");
+			expect(resultText(result)).toContain("image/png, ");
 			expect(readFileSync(path, "utf8")).toBe(Array.from({ length: 100 }, (_, i) => `row ${i}`).join("\n"));
 		} finally {
 			rmSync(path, { force: true });
@@ -749,15 +784,16 @@ describe("codemode models", () => {
 		expect(result.isError).toBe(false);
 		const [text, ...rest] = resultText(result).split("\n");
 		expect(text).toBe("painted a fox");
-		expect(rest[0]).toBe("<image>");
-		expect(JSON.parse(rest.slice(1).join("\n"))).toEqual({
+		expect(rest[0]).toMatch(/^\[Image saved to .+\.png \(image\/png, .+\)\]$/);
+		expect(rest[1]).toBe("<image>");
+		expect(JSON.parse(rest.slice(2).join("\n"))).toEqual({
 			id: "painter",
 			stopReason: "stop",
 			failed: ["error", "painter exploded"],
 			wrongType:
 				'"scorer/judge" is a classifier model, not an image model. List the image models you can use with models.getAvailableOfType("image").',
 		});
-		expect(result.content[2]).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
+		expect(result.content[3]).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
 		expect(imageRequests.map((request) => [request.baseUrl, request.apiKey])).toEqual([
 			["https://images.test/v1", "secret-key"],
 			["https://images.test/v1", "secret-key"],

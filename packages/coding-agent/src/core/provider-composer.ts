@@ -69,6 +69,7 @@ export interface ProviderChatModelConfig extends ProviderModelConfigBase {
 	contextWindow: number;
 	maxTokens: number;
 	samplingParams?: Record<string, unknown>;
+	samplingParamsByThinkingLevel?: Model<Api>["samplingParamsByThinkingLevel"];
 	compat?: Model<Api>["compat"];
 }
 
@@ -160,6 +161,19 @@ function mergeInputLimits(
 	};
 }
 
+function mergeSamplingParamsByThinkingLevel(
+	base: Model<Api>["samplingParamsByThinkingLevel"],
+	override: ModelsJsonModelOverride["samplingParamsByThinkingLevel"],
+): Model<Api>["samplingParamsByThinkingLevel"] {
+	if (!override) return base;
+	const result = { ...base };
+	for (const level of ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const) {
+		const params = override[level];
+		if (params !== undefined) result[level] = { ...base?.[level], ...params };
+	}
+	return result;
+}
+
 function applyModelOverride(model: Model<Api>, override: ModelsJsonModelOverride): Model<Api> {
 	return {
 		...model,
@@ -185,6 +199,10 @@ function applyModelOverride(model: Model<Api>, override: ModelsJsonModelOverride
 		samplingParams: override.samplingParams
 			? { ...model.samplingParams, ...override.samplingParams }
 			: model.samplingParams,
+		samplingParamsByThinkingLevel: mergeSamplingParamsByThinkingLevel(
+			model.samplingParamsByThinkingLevel,
+			override.samplingParamsByThinkingLevel,
+		),
 		compat: mergeCompat(model.compat, override.compat),
 	};
 }
@@ -224,6 +242,7 @@ function modelFromJson(
 		contextWindow: definition.contextWindow ?? 128000,
 		maxTokens: definition.maxTokens ?? 16384,
 		samplingParams: definition.samplingParams,
+		samplingParamsByThinkingLevel: definition.samplingParamsByThinkingLevel,
 		headers: undefined,
 		compat: mergeCompat(providerConfig.compat, definition.compat),
 	};

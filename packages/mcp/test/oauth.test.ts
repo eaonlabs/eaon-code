@@ -91,6 +91,34 @@ class TestOAuthProvider implements OAuthClientProvider {
 afterEach(closeServers);
 
 describe("MCP OAuth", () => {
+	it("registers loopback redirect URIs as native clients", async () => {
+		const provider = new TestOAuthProvider("http://127.0.0.1:4312/oauth/callback");
+		provider.discovery = {
+			authorizationServerUrl: "https://auth.example",
+			authorizationServerMetadata: {
+				issuer: "https://auth.example",
+				authorization_endpoint: "https://auth.example/authorize",
+				token_endpoint: "https://auth.example/token",
+				registration_endpoint: "https://auth.example/register",
+				response_types_supported: ["code"],
+			},
+		};
+		let registration: Record<string, unknown> | undefined;
+
+		await expect(
+			authorizeMcp(provider, {
+				serverUrl: "https://mcp.example/mcp",
+				fetch: async (_input, init) => {
+					registration = JSON.parse(String(init?.body)) as Record<string, unknown>;
+					return new Response(JSON.stringify({ client_id: "test-client" }), { status: 201 });
+				},
+			}),
+		).resolves.toBe("REDIRECT");
+
+		expect(registration?.application_type).toBe("native");
+		expect(registration?.redirect_uris).toEqual(["http://127.0.0.1:4312/oauth/callback"]);
+	});
+
 	it("discovers, registers, authorizes with PKCE, and refreshes on 401", async () => {
 		let expectedChallenge: string | undefined;
 		let refreshes = 0;
@@ -125,6 +153,7 @@ describe("MCP OAuth", () => {
 			}
 			if (url.pathname === "/register") {
 				const metadata = JSON.parse(await readBody(request)) as Record<string, unknown>;
+				expect(metadata.application_type).toBe("native");
 				response.writeHead(201, { "content-type": "application/json" });
 				// Empty and null optional fields count as absent (#10266).
 				response.end(JSON.stringify({ ...metadata, client_id: "test-client", client_secret: "" }));

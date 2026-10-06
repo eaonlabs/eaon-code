@@ -776,7 +776,9 @@ export async function main(args: string[], options?: MainOptions) {
 				noContextFiles: parsed.noContextFiles,
 				systemPrompt: parsed.systemPrompt,
 				appendSystemPrompt: parsed.appendSystemPrompt,
-				extensionFactories,
+				extensionFactories: parsed.noMcp
+					? extensionFactories.filter((factory) => typeof factory === "function" || factory.name !== "mcp")
+					: extensionFactories,
 				extensionsOverride: hideBundledExtensions,
 			},
 		});

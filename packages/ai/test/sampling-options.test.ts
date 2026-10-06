@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stream, streamSimple } from "../src/compat.ts";
-import type { Api, Context, Model, StreamOptions } from "../src/types.ts";
+import type { Api, Context, Model, SimpleStreamOptions, StreamOptions } from "../src/types.ts";
 
 interface SamplingPayload {
 	temperature?: number;
@@ -22,7 +22,11 @@ function makeContext(): Context {
 	};
 }
 
-function makeModel(api: Api, samplingParams?: Record<string, unknown>): Model<Api> {
+function makeModel(
+	api: Api,
+	samplingParams?: Record<string, unknown>,
+	overrides?: Partial<Pick<Model<Api>, "reasoning" | "samplingParamsByThinkingLevel" | "thinkingLevelMap">>,
+): Model<Api> {
 	return {
 		id: "custom-model",
 		name: "Custom Model",
@@ -35,6 +39,7 @@ function makeModel(api: Api, samplingParams?: Record<string, unknown>): Model<Ap
 		contextWindow: 128000,
 		maxTokens: 16384,
 		samplingParams,
+		...overrides,
 	};
 }
 
@@ -51,7 +56,7 @@ function capturingOptions(onCapture: (payload: SamplingPayload) => void) {
 async function capturePayload(model: Model<Api>, options?: StreamOptions): Promise<SamplingPayload> {
 	let capturedPayload: SamplingPayload | undefined;
 
-	await stream(model, makeContext(), {
+	const result = await stream(model, makeContext(), {
 		...options,
 		...capturingOptions((payload) => {
 			capturedPayload = payload;
@@ -59,7 +64,28 @@ async function capturePayload(model: Model<Api>, options?: StreamOptions): Promi
 	}).result();
 
 	if (!capturedPayload) {
-		throw new Error("Expected payload to be captured before request failure");
+		throw new Error(
+			`Expected payload to be captured before request failure: ${result.errorMessage ?? result.stopReason}`,
+		);
+	}
+
+	return capturedPayload;
+}
+
+async function captureSimplePayload(model: Model<Api>, options?: SimpleStreamOptions): Promise<SamplingPayload> {
+	let capturedPayload: SamplingPayload | undefined;
+
+	const result = await streamSimple(model, makeContext(), {
+		...options,
+		...capturingOptions((payload) => {
+			capturedPayload = payload;
+		}),
+	}).result();
+
+	if (!capturedPayload) {
+		throw new Error(
+			`Expected payload to be captured before request failure: ${result.errorMessage ?? result.stopReason}`,
+		);
 	}
 
 	return capturedPayload;
@@ -93,6 +119,25 @@ describe("sampling params", () => {
 
 			expect(payload.top_p).toBe(0.5);
 			expect(payload.min_p).toBe(0.05);
+		},
+	);
+
+	it.each(["openai-completions", "openai-responses", "azure-openai-responses"] as const)(
+		"selects sampling params for the thinking level and applies request params last for %s",
+		async (api) => {
+			const model = makeModel(
+				api,
+				{ temperature: 1, top_p: 0.95 },
+				{ reasoning: true, samplingParamsByThinkingLevel: { high: { temperature: 0.8, top_k: 64 } } },
+			);
+			const payload = await captureSimplePayload(model, {
+				reasoning: "high",
+				samplingParams: { top_k: 40 },
+			});
+
+			expect(payload.temperature).toBe(0.8);
+			expect(payload.top_p).toBe(0.95);
+			expect(payload.top_k).toBe(40);
 		},
 	);
 

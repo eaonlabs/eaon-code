@@ -40,6 +40,7 @@ export interface OAuthTokens {
 
 export interface OAuthClientMetadata {
 	redirect_uris: string[];
+	application_type?: "web" | "native";
 	token_endpoint_auth_method?: string;
 	grant_types?: string[];
 	response_types?: string[];

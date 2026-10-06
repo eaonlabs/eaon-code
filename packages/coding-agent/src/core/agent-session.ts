@@ -138,6 +138,7 @@ import {
 	type NormalizedBuildSystemPromptOptions,
 	normalizeBuildSystemPromptOptions,
 } from "./system-prompt.ts";
+import { createToolNameMatcher, isMcpToolName } from "./tool-name-matcher.ts";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.ts";
 import { createAllToolDefinitions } from "./tools/index.ts";
 import { createToolDefinitionFromAgentTool } from "./tools/tool-definition-wrapper.ts";
@@ -429,8 +430,9 @@ export class AgentSession {
 	 */
 	private _pendingToolNames = new Set<string>();
 	private _usesDefaultTools: boolean;
-	private _allowedToolNames?: Set<string>;
-	private _excludedToolNames?: Set<string>;
+	private _allowedToolNames?: (name: string) => boolean;
+	private _excludedToolNames?: (name: string) => boolean;
+	private _allowlistFiltersMcp = false;
 	private _baseToolsOverride?: Record<string, AgentTool>;
 	private _sessionStartEvent: SessionStartEvent;
 	private _extensionUIContext?: ExtensionUIContext;
@@ -475,8 +477,12 @@ export class AgentSession {
 		this._extensionRunnerRef = config.extensionRunnerRef;
 		this._initialActiveToolNames = config.initialActiveToolNames;
 		this._usesDefaultTools = config.usesDefaultTools ?? false;
-		this._allowedToolNames = config.allowedToolNames ? new Set(config.allowedToolNames) : undefined;
-		this._excludedToolNames = config.excludedToolNames ? new Set(config.excludedToolNames) : undefined;
+		if (config.allowedToolNames) {
+			this._allowedToolNames = createToolNameMatcher(config.allowedToolNames);
+			this._allowlistFiltersMcp =
+				config.allowedToolNames.length === 0 || config.allowedToolNames.some((entry) => entry.startsWith("mcp__"));
+		}
+		this._excludedToolNames = config.excludedToolNames ? createToolNameMatcher(config.excludedToolNames) : undefined;
 		this._baseToolsOverride = config.baseToolsOverride;
 		this._sessionStartEvent = config.sessionStartEvent ?? { type: "session_start", reason: "startup" };
 
@@ -1514,7 +1520,9 @@ export class AgentSession {
 	}
 
 	private _isAllowedTool(name: string): boolean {
-		return (!this._allowedToolNames || this._allowedToolNames.has(name)) && !this._excludedToolNames?.has(name);
+		const explicitlyAllowed = !this._allowedToolNames || this._allowedToolNames(name);
+		const keptForMcpDiscovery = !this._allowlistFiltersMcp && isMcpToolName(name);
+		return (explicitlyAllowed || keptForMcpDiscovery) && !this._excludedToolNames?.(name);
 	}
 
 	private _getToolExposure(name: string): ToolExposure {
@@ -3536,7 +3544,7 @@ export class AgentSession {
 		if (allowedToolNames) {
 			for (const toolName of this._toolRegistry.keys()) {
 				// Naming a tool activates it even when it is not active by default.
-				if (allowedToolNames.has(toolName) && this._isDeclarable(toolName)) {
+				if (allowedToolNames(toolName) && this._isDeclarable(toolName)) {
 					nextActiveToolNames.push(toolName);
 				}
 			}

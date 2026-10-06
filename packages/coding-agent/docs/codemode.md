@@ -102,7 +102,7 @@ for (const block of result.output) {
 }
 ```
 
-Do not print base64 image data as text. The `image()` helper accepts PNG, JPEG, GIF, and WebP blocks; generated images are not saved automatically.
+Do not print base64 image data as text. The `image()` helper accepts PNG, JPEG, GIF, and WebP blocks. Each distinct image returned by codemode is saved to a private temporary file, with its path shown next to the image in the tool output.
 
 ## Limits
 

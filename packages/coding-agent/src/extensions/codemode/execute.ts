@@ -30,6 +30,7 @@ import {
 import { getCodemodeWorkerSpecifier, getQuickJSWasmPath } from "../../config.ts";
 import type { ExtensionToolContext, ToolNamespace } from "../../core/extensions/types.ts";
 import type { SessionEntry } from "../../core/session-manager.ts";
+import { formatSize } from "../../core/tools/truncate.ts";
 import { combineUsage } from "../../core/usage-totals.ts";
 import { Bm25Ranker, createToolSearchDocument, DEFAULT_TOOL_SEARCH_LIMIT } from "../tool-search/tool.ts";
 import {
@@ -299,6 +300,44 @@ async function truncateOutput(
 	};
 }
 
+const IMAGE_OUTPUT_EXTENSIONS: Record<string, string> = {
+	"image/png": ".png",
+	"image/jpeg": ".jpg",
+	"image/gif": ".gif",
+	"image/webp": ".webp",
+};
+
+async function saveImageOutputs(
+	items: readonly (TextContent | ImageContent)[],
+): Promise<(TextContent | ImageContent)[]> {
+	const labels = new Map<string, Promise<string>>();
+	const label = async ({ data, mimeType }: ImageContent): Promise<string> => {
+		const bytes = Buffer.from(data, "base64");
+		const kind = `${mimeType}, ${formatSize(bytes.length)}`;
+		const extension = IMAGE_OUTPUT_EXTENSIONS[mimeType];
+		if (!extension) return `[Image (${kind}) could not be saved: unsupported image type]`;
+		try {
+			const path = join(tmpdir(), `eaon-codemode-${randomBytes(8).toString("hex")}${extension}`);
+			await writeFile(path, bytes, { mode: 0o600, flag: "wx" });
+			return `[Image saved to ${path} (${kind})]`;
+		} catch (error) {
+			return `[Image (${kind}) could not be saved: ${error instanceof Error ? error.message : String(error)}]`;
+		}
+	};
+	const result = await Promise.all(
+		items.map(async (item): Promise<(TextContent | ImageContent)[]> => {
+			if (item.type !== "image") return [item];
+			let pending = labels.get(item.data);
+			if (!pending) {
+				pending = label(item);
+				labels.set(item.data, pending);
+			}
+			return [{ type: "text", text: await pending }, item];
+		}),
+	);
+	return result.flat();
+}
+
 /**
  * The value a script receives for a nested call: a tool that declares
  * `outputSchema` resolves to its `structuredContent`, also for error results that carry one (such
@@ -421,12 +460,13 @@ export async function executeCodemode(
 	}
 
 	const truncated = await truncateOutput(items, sourceOptions.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS);
+	const outputItems = await saveImageOutputs(truncated.items);
 	const wallTime = ((performance.now() - startedAt) / 1000).toFixed(1);
 	const header = `${result.ok ? "Script completed" : "Script failed"}\nWall time ${wallTime} seconds\nOutput:\n`;
 	const details = snapshot();
 	if (truncated.fullOutputPath) details.fullOutputPath = truncated.fullOutputPath;
 	return {
-		content: [{ type: "text", text: header }, ...truncated.items],
+		content: [{ type: "text", text: header }, ...outputItems],
 		details,
 		...(modelUsage ? { usage: modelUsage } : {}),
 		...(result.ok ? {} : { isError: true }),

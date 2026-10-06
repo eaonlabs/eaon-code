@@ -31,6 +31,15 @@ describe("embedded sources", () => {
 });
 
 describe("script execution", () => {
+	it("prevents scripts from changing built-ins used to serialize results", async () => {
+		const sandbox = createSandbox();
+		const result = await sandbox.execute(`
+			Object.prototype.toJSON = () => "polluted";
+			return { safe: true };
+		`);
+		expect(result).toMatchObject({ ok: true, value: { safe: true } });
+	});
+
 	it("returns the script's return value after a JSON round trip", async () => {
 		const sandbox = createSandbox();
 		expect(await sandbox.execute("return { a: 1, b: [true, 'x'] }")).toMatchObject({

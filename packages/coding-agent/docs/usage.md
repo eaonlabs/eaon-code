@@ -207,12 +207,14 @@ cat README.md | eaon-code -p "Summarize this text"
 
 | Option | Description |
 |--------|-------------|
-| `--tools <list>`, `-t <list>` | Allowlist specific built-in, extension, and custom tools |
-| `--exclude-tools <list>`, `-xt <list>` | Disable specific built-in, extension, and custom tools |
+| `--tools <list>`, `-t <list>` | Allowlist built-in, extension, custom, and MCP tools by name or `*` pattern |
+| `--exclude-tools <list>`, `-xt <list>` | Disable built-in, extension, custom, and MCP tools by name or `*` pattern |
 | `--no-builtin-tools`, `-nbt` | Disable built-in tools but keep extension/custom tools enabled |
 | `--no-tools`, `-nt` | Disable all tools |
+| `--no-mcp` | Disable built-in MCP support for this run |
 
 Built-in tools: `read`, `bash`, `powershell` (Windows), `edit`, `write`, `grep`, `find`, `ls`.
+Use `*` as a wildcard in tool patterns. An allowlist keeps MCP tools available for discovery unless it contains an entry starting with `mcp__`; denied patterns always apply to MCP tools. For example, `--tools read,mcp__radius__* --exclude-tools mcp__radius__delete` allows `read` and Radius MCP tools except `mcp__radius__delete`.
 
 ### Resource Options
 

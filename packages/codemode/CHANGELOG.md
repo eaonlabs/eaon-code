@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevented scripts from changing JavaScript built-ins used to serialize codemode results.
+
 ## [1.0.8] - 2026-10-02
 
 ### Added

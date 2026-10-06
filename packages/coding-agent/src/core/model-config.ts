@@ -62,6 +62,15 @@ const ThinkingLevelMapSchema = Type.Object({
 	xhigh: Type.Optional(ThinkingLevelMapValueSchema),
 	max: Type.Optional(ThinkingLevelMapValueSchema),
 });
+const SamplingParamsByThinkingLevelSchema = Type.Object({
+	off: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	minimal: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	low: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	medium: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	high: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	xhigh: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	max: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+});
 
 const ChatTemplateKwargScalarSchema = Type.Union([Type.String(), Type.Number(), Type.Boolean(), Type.Null()]);
 const ChatTemplateKwargVariableSchema = Type.Object({
@@ -199,6 +208,7 @@ const ModelDefinitionSchema = Type.Object({
 	contextWindow: Type.Optional(Type.Number()),
 	maxTokens: Type.Optional(Type.Number()),
 	samplingParams: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	samplingParamsByThinkingLevel: Type.Optional(SamplingParamsByThinkingLevelSchema),
 	headers: Type.Optional(Type.Record(Type.String(), Type.String())),
 	compat: Type.Optional(ProviderCompatSchema),
 });
@@ -222,6 +232,7 @@ const ModelOverrideSchema = Type.Object({
 	contextWindow: Type.Optional(Type.Number()),
 	maxTokens: Type.Optional(Type.Number()),
 	samplingParams: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+	samplingParamsByThinkingLevel: Type.Optional(SamplingParamsByThinkingLevelSchema),
 	headers: Type.Optional(Type.Record(Type.String(), Type.String())),
 	compat: Type.Optional(ProviderCompatSchema),
 });

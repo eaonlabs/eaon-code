@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added per-thinking-level sampling parameter overrides for OpenAI-compatible models.
+
 ## [1.0.8] - 2026-10-02
 
 ### Added

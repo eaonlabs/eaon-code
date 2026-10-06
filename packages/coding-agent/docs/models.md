@@ -208,6 +208,7 @@ If your command is slow, expensive, rate-limited, or should keep using a previou
 | `contextWindow` | No | `128000` | Context window size in tokens |
 | `maxTokens` | No | `16384` | Maximum output tokens |
 | `samplingParams` | No | omitted | Sampling parameters merged verbatim into every request body (see below) |
+| `samplingParamsByThinkingLevel` | No | omitted | Sampling parameter overrides selected by the effective thinking level |
 | `cost` | No | all zeros | Per-million-token rates with optional request-wide input pricing tiers |
 | `compat` | No | provider `compat` | Provider compatibility overrides. Merged with provider-level `compat` when both are set. |
 
@@ -254,6 +255,19 @@ Current behavior:
 ```
 
 Only OpenAI-compatible APIs apply it (`openai-completions`, `openai-responses`, `azure-openai-responses`); other APIs ignore it. Keys override Eaon Code's named request fields (for example a `temperature` key here beats the request-level temperature), so prefer it as the single source of sampling truth for a model. In `modelOverrides`, `samplingParams` merges per key with the base model's value.
+
+`samplingParamsByThinkingLevel` sets overrides for `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max`. The matching entry is merged after model-level `samplingParams` and before request-level sampling parameters:
+
+```json
+{
+  "id": "deepseek-v4-flash",
+  "samplingParams": { "temperature": 1.0, "top_p": 0.95 },
+  "samplingParamsByThinkingLevel": {
+    "low": { "temperature": 0.7 },
+    "high": { "temperature": 0.4, "top_k": 64 }
+  }
+}
+```
 
 A constant thinking-token cap can go here too, but it will not follow `thinkingBudgets` or leave room for the answer. Prefer `compat.thinkingTokenBudgetField` (or the `supportsThinkingTokenBudget` alias) for that.
 
@@ -360,7 +374,7 @@ Use `modelOverrides` to customize built-in models and matching extension-registe
 }
 ```
 
-`modelOverrides` supports these fields per model: `name`, `reasoning`, `thinkingLevelMap`, `input`, `cost` (partial), `contextWindow`, `maxTokens`, `samplingParams` (merged per key), `headers`, `compat`.
+`modelOverrides` supports these fields per model: `name`, `reasoning`, `thinkingLevelMap`, `input`, `cost` (partial), `contextWindow`, `maxTokens`, `samplingParams` (merged per key), `samplingParamsByThinkingLevel` (merged per thinking level and key), `headers`, `compat`.
 
 Direct OpenAI GPT-5.6 Sol, Terra, and Luna default to a `272000` context window so requests remain within OpenAI's short-context pricing tier. To opt into OpenAI's 1.05M context window, increase it for each model you use:
 

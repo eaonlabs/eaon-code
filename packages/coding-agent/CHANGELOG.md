@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### New Features
+
+- Configure OpenAI-compatible sampling parameters per thinking level and filter CLI tools with wildcard patterns. See [models.json](models.md#sampling-parameters) and [CLI usage](usage.md#tool-options).
+- Disable MCP server loading for a run with `--no-mcp`.
+- Save images returned by codemode scripts to private temporary files and include their paths in the output. See [Codemode](codemode.md).
+
+### Fixed
+
+- Registered loopback MCP OAuth clients as native applications.
+- Prevented codemode scripts from changing built-ins used to serialize their results.
+
 ## [1.0.8] - 2026-10-02
 
 ### New Features

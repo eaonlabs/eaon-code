@@ -12,6 +12,19 @@ import { SettingsManager } from "../src/core/settings-manager.ts";
 
 type ToolOptions = Pick<CreateAgentSessionOptions, "tools" | "excludeTools" | "noTools" | "customTools">;
 
+const registerMcpTools: InlineExtension = (pi) => {
+	for (const name of ["mcp__radius__search", "mcp__other__search"]) {
+		pi.registerTool({
+			name,
+			label: name,
+			description: name,
+			parameters: Type.Object({}),
+			execute: async () => ({ content: [{ type: "text", text: "ok" }], details: {} }),
+			defaultActive: false,
+		});
+	}
+};
+
 describe("defaultTools setting", () => {
 	let tempDir: string;
 	let agentDir: string;
@@ -154,6 +167,24 @@ describe("defaultTools setting", () => {
 		expect(toolLessSession.getAllTools()).toEqual([]);
 		expect(toolLessSession.getActiveToolNames()).toEqual([]);
 		toolLessSession.dispose();
+	});
+
+	it("matches wildcard allow and deny patterns while retaining MCP tools for discovery", async () => {
+		const excluded = await createSession(["read", "grep"], { excludeTools: ["r*"] });
+		expect(excluded.getActiveToolNames()).toEqual(["grep"]);
+		excluded.dispose();
+
+		const retainedMcp = await createSession(["read"], { tools: ["read"] }, [registerMcpTools]);
+		expect(retainedMcp.getActiveToolNames()).toEqual(["read"]);
+		expect(retainedMcp.getAllTools().map((tool) => tool.name)).toEqual(
+			expect.arrayContaining(["mcp__radius__search", "mcp__other__search"]),
+		);
+		retainedMcp.dispose();
+
+		const filteredMcp = await createSession(["read"], { tools: ["mcp__radius__*"] }, [registerMcpTools]);
+		expect(filteredMcp.getActiveToolNames()).toEqual(["mcp__radius__search"]);
+		expect(filteredMcp.getAllTools().map((tool) => tool.name)).toEqual(["mcp__radius__search"]);
+		filteredMcp.dispose();
 	});
 
 	describe("reload", () => {
