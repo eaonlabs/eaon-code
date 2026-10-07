@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Fixed
+
+- Propagated cancellation through OAuth discovery, registration, and token requests, and validated callback redirect paths.
+- Avoided refreshing credentials during transport shutdown by reusing the token from the last request.
+
 ## [1.0.9] - 2026-10-06
 
 ### Fixed

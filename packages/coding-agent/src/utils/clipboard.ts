@@ -19,17 +19,18 @@ function emitOsc52(text: string): boolean {
 
 /** Read plain text from the system clipboard. */
 export async function readClipboardText(): Promise<string | null> {
+	const commands: [string, string[]][] = [];
+	// Termux reports platform "android", not "linux" (#10391).
+	if (process.env.TERMUX_VERSION) commands.push(["termux-clipboard-get", []]);
 	if (platform() === "linux") {
-		const commands: [string, string[]][] = [];
-		if (process.env.TERMUX_VERSION) commands.push(["termux-clipboard-get", []]);
 		if (process.env.WAYLAND_DISPLAY) commands.push(["wl-paste", ["--no-newline", "--type", "text"]]);
 		if (process.env.DISPLAY) {
 			commands.push(["xclip", ["-selection", "clipboard", "-out"]], ["xsel", ["--clipboard", "--output"]]);
 		}
-		for (const [command, args] of commands) {
-			const bytes = await runClipboardCommand(command, args, { timeoutMs: 5000 });
-			if (bytes !== undefined) return bytes.toString("utf8") || null;
-		}
+	}
+	for (const [command, args] of commands) {
+		const bytes = await runClipboardCommand(command, args, { timeoutMs: 5000 });
+		if (bytes !== undefined) return bytes.toString("utf8") || null;
 	}
 	try {
 		return (await getNativeClipboard()?.getText()) || null;
@@ -46,6 +47,7 @@ export async function readClipboardFilePaths(): Promise<string[] | null> {
 
 export async function copyToClipboard(text: string): Promise<void> {
 	const p = platform();
+	const env = process.env;
 	let copied = false;
 	// Direct writes precede OSC 52 so the terminal cannot race the native writer.
 	// Linux tools retain clipboard selection ownership after this call returns.
@@ -65,9 +67,9 @@ export async function copyToClipboard(text: string): Promise<void> {
 		if (p === "darwin") commands.push(["pbcopy", []]);
 		else if (p === "win32") commands.push(["clip", []]);
 		else {
-			if (process.env.TERMUX_VERSION) commands.push(["termux-clipboard-set", []]);
-			if (process.env.WAYLAND_DISPLAY) commands.push(["wl-copy", []]);
-			if (process.env.DISPLAY) {
+			if (env.TERMUX_VERSION) commands.push(["termux-clipboard-set", []]);
+			if (env.WAYLAND_DISPLAY) commands.push(["wl-copy", []]);
+			if (env.DISPLAY) {
 				commands.push(["xclip", ["-selection", "clipboard"]], ["xsel", ["--clipboard", "--input"]]);
 			}
 		}
@@ -78,20 +80,27 @@ export async function copyToClipboard(text: string): Promise<void> {
 			}
 		}
 	}
-	if (isRemoteSession()) copied = emitOsc52(text) || copied;
-	if (!copied) {
-		if (p === "linux") {
-			if (process.env.TERMUX_VERSION) {
-				throw new Error("Clipboard unavailable: install the Termux:API app and `termux-api` package");
-			}
-			if (process.env.WAYLAND_DISPLAY) {
-				throw new Error("Clipboard unavailable: install `wl-clipboard` (`wl-copy`) or check Wayland access");
-			}
-			if (process.env.DISPLAY) {
-				throw new Error("Clipboard unavailable: install `xclip` or `xsel`, or check X11 access");
-			}
-			throw new Error("Clipboard unavailable: no Wayland or X11 display detected");
-		}
-		throw new Error("Clipboard unavailable");
+	let osc52Emitted = false;
+	const headless = p === "linux" && !env.DISPLAY && !env.WAYLAND_DISPLAY && !env.TERMUX_VERSION;
+	let oversized = false;
+	if (isRemoteSession(env) || (!copied && headless)) {
+		osc52Emitted = emitOsc52(text);
+		copied = osc52Emitted || copied;
+		oversized = !osc52Emitted;
 	}
+	if (copied) return;
+	if (oversized) throw new Error("Clipboard unavailable: text exceeds the OSC 52 size limit");
+	if (env.TERMUX_VERSION) {
+		throw new Error("Clipboard unavailable: install the Termux:API app and `termux-api` package");
+	}
+	if (p === "linux") {
+		if (env.WAYLAND_DISPLAY) {
+			throw new Error("Clipboard unavailable: install `wl-clipboard` (`wl-copy`) or check Wayland access");
+		}
+		if (env.DISPLAY) {
+			throw new Error("Clipboard unavailable: install `xclip` or `xsel`, or check X11 access");
+		}
+		throw new Error("Clipboard unavailable: no Wayland or X11 display detected");
+	}
+	throw new Error("Clipboard unavailable");
 }

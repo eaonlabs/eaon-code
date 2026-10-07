@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Changed
+
+- Marked text item boundaries and identified `console.*` output separately after returned content, so models can distinguish each source.
+
 ## [1.0.9] - 2026-10-06
 
 ### Added

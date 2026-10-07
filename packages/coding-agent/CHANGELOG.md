@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Added
+
+- Added `+name`/`-name` default-tool modifiers, terminal program status reporting, and image-aware classifier support in codemode.
+- Added Claude Haiku 5.5 and native llama.cpp decision models to provider selection, and adopted Pi 1.1's tool duration and output-padding metadata.
+- Kept the MCP manager responsive while servers connect, disconnect, or reconnect, and cancelled OAuth sign-in requests when a session shuts down.
+- Added Kitty image transcoding and clearer boundaries between codemode text and console output.
+
+### Fixed
+
+- Removed `/mcp` from built-in interactive commands so the MCP extension command is available in autocomplete.
+
 ## [1.0.9] - 2026-10-06
 
 ### New Features

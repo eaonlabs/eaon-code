@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Added
+
+- Added OSC 7501 program status reporting, Kitty image transcoding, and `TuiAltScreen.resetTextSelection()`.
+- Added horizontal padding setters for `Box` and `Text` components.
+
+### Changed
+
+- Added configurable horizontal padding across interactive tool and message rendering, and enabled OSC 8 hyperlinks in Herdr.
+
 ## [1.0.9] - 2026-10-06
 
 ## [1.0.8] - 2026-10-02

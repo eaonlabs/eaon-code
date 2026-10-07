@@ -1,4 +1,5 @@
-import { readFileSync, rmSync, statSync } from "node:fs";
+import { readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { AgentTool } from "@eaonlabs/eaon-agent-core";
 import {
 	type AssistantImages,
@@ -186,7 +187,7 @@ describe("AgentSession codemode tool", () => {
 		const result = codemodeResult(harness);
 		expect(result.isError).toBe(false);
 		expect(resultText(result)).toBe(
-			'files 2\necho,stats,screenshot\n{"a":"echo: one","b":"echo: two","names":["a","b"]}',
+			'==> text 1/2 <==\necho,stats,screenshot\n==> text 2/2 <==\n{"a":"echo: one","b":"echo: two","names":["a","b"]}\n<console_output>\nfiles 2\n</console_output>',
 		);
 		const details = result.details as unknown as CodemodeToolDetails;
 		expect(details.calls.map((call) => [call.name, call.status])).toEqual([
@@ -330,8 +331,39 @@ describe("AgentSession codemode tool", () => {
 		await harness.session.prompt("go");
 
 		const result = codemodeResult(harness);
-		expect(resultText(result)).toMatch(/^captured\n\[Image saved to .+\.png \(image\/png, .+\)\]\n<image>\nafter$/);
+		const lines = resultText(result).split("\n");
+		expect(lines).toHaveLength(6);
+		expect(lines[0]).toBe("==> text 1/2 <==");
+		expect(lines[1]).toBe("captured");
+		expect(lines[2]).toMatch(/^\[Image saved to .+\.png \(image\/png, .+\)\]$/);
+		expect(lines[3]).toBe("<image>");
+		expect(lines[4]).toBe("==> text 2/2 <==");
+		expect(lines[5]).toBe("after");
 		expect(result.content[3]).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
+	});
+
+	it("marks where each text item starts and puts console lines last in one text block", async () => {
+		const harness = await setup();
+		harness.setResponses([
+			fauxAssistantMessage(
+				[
+					fauxToolCall("codemode", {
+						code: 'text("one\\ntwo");\nconsole.log("a");\nconsole.log("b");\ntext("three\\n");\nreturn 4;',
+					}),
+				],
+				{ stopReason: "toolUse" },
+			),
+			fauxAssistantMessage("done"),
+		]);
+
+		await harness.session.prompt("go");
+
+		// Providers join adjacent text blocks with nothing or a newline, so the output is one block.
+		const result = codemodeResult(harness);
+		expect(result.content).toHaveLength(2);
+		expect(resultText(result)).toBe(
+			"==> text 1/3 <==\none\ntwo\n==> text 2/3 <==\nthree\n==> text 3/3 <==\n4\n<console_output>\na\nb\n</console_output>",
+		);
 	});
 
 	it("saves each distinct codemode image once to a private temporary file", async () => {
@@ -373,7 +405,7 @@ describe("AgentSession codemode tool", () => {
 			fauxAssistantMessage(
 				[
 					fauxToolCall("codemode", {
-						code: `text("partial");\nawait tools.echo({ text: "x" });\nthrow new Error("boom");`,
+						code: `text("partial");\nconsole.log("log");\nawait tools.echo({ text: "x" });\nthrow new Error("boom");`,
 					}),
 				],
 				{ stopReason: "toolUse" },
@@ -387,8 +419,8 @@ describe("AgentSession codemode tool", () => {
 		expect(result.isError).toBe(true);
 		expect((result.content[0] as { text: string }).text).toMatch(/^Script failed\n/);
 		const text = resultText(result);
-		expect(text).toMatch(/^partial\nScript error:\nError: boom\n/);
-		expect(text).toContain("codemode.js:3");
+		expect(text).toMatch(/^partial\n<console_output>\nlog\n<\/console_output>\nScript error:\nError: boom\n/);
+		expect(text).toContain("codemode.js:4");
 		expect(text).toContain("Tool calls made before the failure (they are not undone): echo (ok)");
 		expect((result.details as unknown as CodemodeToolDetails).calls.map((call) => call.name)).toEqual(["echo"]);
 	});
@@ -464,7 +496,7 @@ describe("codemode options and store", () => {
 		const harness = await setup();
 		const result = await run(
 			harness,
-			`// @options: {"max_output_tokens": 10}\nfor (let i = 0; i < 100; i++) text("row " + i);\nimage("data:image/png;base64,${TINY_PNG_BASE64}");`,
+			`// @options: {"max_output_tokens": 30}\nfor (let i = 0; i < 100; i++) text("row " + i);\nimage("data:image/png;base64,${TINY_PNG_BASE64}");`,
 		);
 		const details = result.details as unknown as CodemodeToolDetails;
 		const path = details.fullOutputPath;
@@ -481,7 +513,10 @@ describe("codemode options and store", () => {
 			expect(result.content.at(-1)).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
 			expect(resultText(result)).toContain("[Image saved to ");
 			expect(resultText(result)).toContain("image/png, ");
-			expect(readFileSync(path, "utf8")).toBe(Array.from({ length: 100 }, (_, i) => `row ${i}`).join("\n"));
+			expect(text.split("\n").at(-2) ?? "").toMatch(/^\[Image saved to .+\.png \(image\/png, .+\)\]$/);
+			expect(readFileSync(path, "utf8")).toBe(
+				Array.from({ length: 100 }, (_, i) => `==> text ${i + 1}/100 <==\nrow ${i}`).join("\n"),
+			);
 		} finally {
 			rmSync(path, { force: true });
 		}
@@ -504,6 +539,25 @@ describe("codemode options and store", () => {
 		expect(resultText(result)).toBe('["out\\n",3,"number"]');
 	});
 
+	// https://github.com/earendil-works/pi/issues/10251
+	it("resolves read calls to text for text files and to image blocks that image() shows", async () => {
+		const harness = await createHarness({
+			initialActiveToolNames: ["codemode", "read"],
+			extensionFactories: [createCodemodeExtension()],
+		});
+		harnesses.push(harness);
+		writeFileSync(join(harness.tempDir, "notes.txt"), "hello");
+		writeFileSync(join(harness.tempDir, "pixel.png"), Buffer.from(TINY_PNG_BASE64, "base64"));
+		const result = await run(
+			harness,
+			'text(await tools.read({ path: "notes.txt" }));\nconst shot = await tools.read({ path: "pixel.png" });\ntext(shot.note);\nimage(shot);',
+		);
+		expect(result.isError).toBe(false);
+		expect(resultText(result)).toMatch(
+			/^==> text 1\/2 <==\nhello\n==> text 2\/2 <==\nRead image file \[image\/png\]\n\[Image saved to .+\.png \(image\/png, .+\)\]\n<image>$/,
+		);
+		expect(result.content.at(-1)).toEqual({ type: "image", data: TINY_PNG_BASE64, mimeType: "image/png" });
+	});
 	it("persists store() writes as custom entries for later calls", async () => {
 		const harness = await setup();
 		expect(resultText(await run(harness, increment))).toBe("1");
@@ -782,11 +836,13 @@ describe("codemode models", () => {
 		`,
 		);
 		expect(result.isError).toBe(false);
-		const [text, ...rest] = resultText(result).split("\n");
+		const [header, text, ...rest] = resultText(result).split("\n");
+		expect(header).toBe("==> text 1/2 <==");
 		expect(text).toBe("painted a fox");
 		expect(rest[0]).toMatch(/^\[Image saved to .+\.png \(image\/png, .+\)\]$/);
 		expect(rest[1]).toBe("<image>");
-		expect(JSON.parse(rest.slice(2).join("\n"))).toEqual({
+		expect(rest[2]).toBe("==> text 2/2 <==");
+		expect(JSON.parse(rest.slice(3).join("\n"))).toEqual({
 			id: "painter",
 			stopReason: "stop",
 			failed: ["error", "painter exploded"],
@@ -834,9 +890,18 @@ describe("codemode models", () => {
 			`
 			const model = await models.getModelOfType("classifier", "scorer", "judge");
 			const failed = await models.classify(model, { state: { text: "explode" }, questions: ${questions} });
+			const textOnly = await models.classify(model, {
+				state: { text: "good" },
+				images: [{ type: "image", data: "aW1hZ2U=", mimeType: "image/png" }],
+				questions: ${questions},
+			});
 			const attempt = async (fn) => { try { await fn(); return "ok"; } catch (error) { return error.message; } };
 			return {
 				failed: [failed.stopReason, failed.errorMessage],
+				textOnly: [textOnly.stopReason, textOnly.errorMessage],
+				badClassifierImage: await attempt(() =>
+					models.classify(model, { state: {}, images: [{ data: "aW1hZ2U=" }], questions: ${questions} }),
+				),
 				badType: await attempt(() => models.getModelsOfType("video")),
 				unknown: await attempt(() => models.classify({ provider: "scorer", id: "nope" }, {})),
 				noModel: await attempt(() => models.classify("judge", {})),
@@ -853,6 +918,10 @@ describe("codemode models", () => {
 		expect(result.isError).toBe(false);
 		const value = JSON.parse(resultText(result));
 		expect(value.failed).toEqual(["error", "classifier exploded"]);
+		expect(value.textOnly).toEqual(["error", "Model scorer/judge does not accept image input"]);
+		expect(value.badClassifierImage).toContain(
+			"models.classify() context.images[0] must be an image block, got { data }.",
+		);
 		expect(value.badType).toContain('Unknown model type "video"');
 		expect(value.unknown).toBe(
 			'Unknown classifier model "scorer/nope". List the classifier models you can use with models.getAvailableOfType("classifier").',
@@ -875,6 +944,7 @@ describe("codemode models", () => {
 		const details = result.details as unknown as CodemodeToolDetails;
 		expect(details.calls.map((call) => [call.name, call.status, call.error])).toEqual([
 			["models.classify", "error", "classifier exploded"],
+			["models.classify", "error", "Model scorer/judge does not accept image input"],
 		]);
 		expect(result.usage).toBeUndefined();
 	});

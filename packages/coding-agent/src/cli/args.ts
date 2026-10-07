@@ -6,7 +6,7 @@ import type { ThinkingLevel } from "@eaonlabs/eaon-agent-core";
 import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME, ENV_AGENT_DIR, ENV_SESSION_DIR } from "../config.ts";
 import type { ExtensionFlag } from "../core/extensions/types.ts";
-import type { TuiMode } from "../core/settings-manager.ts";
+import { getToolListError, type TuiMode } from "../core/settings-manager.ts";
 
 export type Mode = "text" | "json" | "rpc";
 
@@ -146,10 +146,16 @@ export function parseArgs(args: string[]): Args {
 		} else if (arg === "--no-builtin-tools" || arg === "-nbt") {
 			result.noBuiltinTools = true;
 		} else if ((arg === "--tools" || arg === "-t") && i + 1 < args.length) {
-			result.tools = args[++i]
+			const tools = args[++i]
 				.split(",")
 				.map((s) => s.trim())
 				.filter((name) => name.length > 0);
+			const error = getToolListError(tools);
+			if (error) {
+				result.diagnostics.push({ type: "error", message: `${arg}: ${error}` });
+			} else {
+				result.tools = tools;
+			}
 		} else if ((arg === "--exclude-tools" || arg === "-xt") && i + 1 < args.length) {
 			result.excludeTools = args[++i]
 				.split(",")
@@ -314,6 +320,7 @@ ${chalk.bold("Options:")}
   --exclude-tools, -xt <tools>   Comma-separated denylist of tool names or * patterns to disable
                                  Applies to built-in, extension, and custom tools
                                  Also applies to MCP tools
+                                 Only +name/-name entries add to or remove from the defaults
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max
   --extension, -e <path>         Load an extension file or builtin:<name> (can be used multiple times)
   --no-extensions, -ne           Disable extension discovery and built-in extensions (explicit -e paths still work)
@@ -393,6 +400,12 @@ ${chalk.bold("Examples:")}
 
   # Read-only mode (no file modifications possible)
   ${APP_NAME} --tools read,grep,find,ls -p "Review the code in src/"
+
+  # Add codemode to the default tools
+  ${APP_NAME} --tools +codemode
+
+  # Codemode with only the tools of one MCP server
+  ${APP_NAME} --tools read,bash,codemode,'mcp__radius__*'
 
   # Disable one tool while keeping the rest available
   ${APP_NAME} --exclude-tools ask_question

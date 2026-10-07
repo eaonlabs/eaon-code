@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Added
+
+- Added OpenAI Decisions and native llama.cpp classifier APIs, including image input for compatible classifier models.
+- Added Claude Haiku 5.5 model support with adaptive thinking, prompt caching, and model-specific pricing.
+- Added response duration metadata for assistant event streams.
+
+### Changed
+
+- Improved retry handling, context-limit estimates, model pricing, and OAuth cancellation across providers.
+- Sent reasoning effort to OpenAI models through Bedrock and hardened OpenAI Codex response headers and request handling.
+
 ## [1.0.9] - 2026-10-06
 
 ### Added

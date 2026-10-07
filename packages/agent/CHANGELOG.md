@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Added
+
+- Added monotonic execution duration metadata to tool result messages and `tool_execution_end` events; proxy responses now use the typed assistant event stream.
+
 ## [1.0.9] - 2026-10-06
 
 ## [1.0.8] - 2026-10-02
