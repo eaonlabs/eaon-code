@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-11
+
+### Fixed
+
+- Kept `/mcp` autocomplete on the MCP extension command instead of treating it as a built-in interactive command.
+
+### Removed
+
+- Removed the dedicated “Sign in with Radius” option from the top-level `/login` menu.
+
 ## [1.1.0] - 2026-10-07
 
 ### Added

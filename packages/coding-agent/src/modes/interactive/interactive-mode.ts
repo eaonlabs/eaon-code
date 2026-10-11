@@ -148,11 +148,9 @@ import { createMermaidMarkdownTransformer } from "./components/mermaid.ts";
 import { ModelSelectorComponent } from "./components/model-selector.ts";
 import {
 	type AuthSelectorProvider,
-	formatAuthSelectorProviderStatus,
 	formatAuthSelectorProviderType,
 	OAuthSelectorComponent,
 } from "./components/oauth-selector.ts";
-import { createLoginMenuSelector } from "./components/radius-login-selector.ts";
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.ts";
 import { SessionSelectorComponent } from "./components/session-selector.ts";
 import { SettingsSelectorComponent } from "./components/settings-selector.ts";
@@ -336,9 +334,13 @@ type LoginProviderCompletionOption = {
 	subscription?: boolean;
 };
 
-const RADIUS_LOGIN_INTRO = "Radius is an AI gateway service from Earendil Works, the team behind Pi.";
-
 const AUTH_TYPE_ORDER = { oauth: 0, api_key: 1 } satisfies Record<AuthSelectorProvider["authType"], number>;
+
+const EXTENSION_PROVIDED_COMMANDS = new Set(["mcp"]);
+
+function getAutocompleteBuiltinCommands() {
+	return BUILTIN_SLASH_COMMANDS.filter((command) => !EXTENSION_PROVIDED_COMMANDS.has(command.name));
+}
 
 function createFuzzyAutocompleteItems<T>(
 	items: T[],
@@ -675,7 +677,7 @@ export class InteractiveMode {
 	}
 
 	private getBuiltInCommandConflictDiagnostics(extensionRunner: ExtensionRunner): ResourceDiagnostic[] {
-		const builtinNames = new Set(BUILTIN_SLASH_COMMANDS.map((command) => command.name));
+		const builtinNames = new Set(getAutocompleteBuiltinCommands().map((command) => command.name));
 		return extensionRunner
 			.getRegisteredCommands()
 			.filter((command) => builtinNames.has(command.name))
@@ -691,7 +693,7 @@ export class InteractiveMode {
 
 	private createBaseAutocompleteProvider(): AutocompleteProvider {
 		// Define commands for autocomplete
-		const slashCommands: SlashCommand[] = BUILTIN_SLASH_COMMANDS.map((command) => ({
+		const slashCommands: SlashCommand[] = getAutocompleteBuiltinCommands().map((command) => ({
 			name: command.name,
 			description: command.description,
 			...(command.argumentHint && { argumentHint: command.argumentHint }),
@@ -5861,12 +5863,6 @@ export class InteractiveMode {
 	}
 
 	private showLoginAuthTypeSelector(providerOptions?: AuthSelectorProvider[]): void {
-		// The top-level selector offers Radius directly, as its last option.
-		const radiusOption = providerOptions
-			? undefined
-			: this.getLoginProviderOptions("oauth").find((provider) => provider.id === RADIUS_PROVIDER_ID);
-		const radiusText = radiusOption ? `Sign in with ${radiusOption.name}` : undefined;
-		const radiusLabel = radiusOption ? `${radiusText}${formatAuthSelectorProviderStatus(radiusOption)}` : undefined;
 		const oauthProvider = providerOptions?.find((provider) => provider.authType === "oauth");
 		const oauthLoginLabel =
 			oauthProvider?.method && "loginLabel" in oauthProvider.method ? oauthProvider.method.loginLabel : undefined;
@@ -5882,8 +5878,6 @@ export class InteractiveMode {
 		if (availableAuthTypes.has("api_key")) {
 			options.push(apiKeyLabel);
 		}
-		if (radiusLabel) options.push(radiusLabel);
-
 		if (options.length === 0) {
 			this.showStatus("No login methods available.");
 			return;
@@ -5903,10 +5897,6 @@ export class InteractiveMode {
 		this.showSelector((done) => {
 			const onSelect = (option: string) => {
 				done();
-				if (radiusOption && option === radiusLabel) {
-					void this.startProviderLogin(radiusOption, () => this.showLoginAuthTypeSelector());
-					return;
-				}
 				const authType = option === subscriptionLabel ? "oauth" : "api_key";
 				if (providerOptions) {
 					const providerOption = providerOptions.find((provider) => provider.authType === authType);
@@ -5921,20 +5911,9 @@ export class InteractiveMode {
 				done();
 				this.ui.requestRender();
 			};
-			const selector =
-				radiusLabel && radiusText
-					? createLoginMenuSelector(
-							this.ui,
-							title,
-							options,
-							{ label: radiusLabel, text: radiusText },
-							onSelect,
-							onCancel,
-							{ onToggleToolsExpanded: () => this.toggleToolOutputExpansion() },
-						)
-					: new ExtensionSelectorComponent(title, options, onSelect, onCancel, {
-							onToggleToolsExpanded: () => this.toggleToolOutputExpansion(),
-						});
+			const selector = new ExtensionSelectorComponent(title, options, onSelect, onCancel, {
+				onToggleToolsExpanded: () => this.toggleToolOutputExpansion(),
+			});
 			return { component: selector, focus: selector, dispose: () => selector.dispose() };
 		});
 	}
@@ -6366,7 +6345,6 @@ export class InteractiveMode {
 	private showAuthSelect(
 		dialog: LoginDialogComponent,
 		prompt: Extract<AuthPrompt, { type: "select" }>,
-		providerId: string,
 	): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const restoreDialog = () => {
@@ -6391,7 +6369,6 @@ export class InteractiveMode {
 				},
 				{
 					onToggleToolsExpanded: () => this.toggleToolOutputExpansion(),
-					description: providerId === RADIUS_PROVIDER_ID ? RADIUS_LOGIN_INTRO : undefined,
 				},
 			);
 			this.editorContainer.clear();
@@ -6401,10 +6378,10 @@ export class InteractiveMode {
 		});
 	}
 
-	private async showAuthPrompt(dialog: LoginDialogComponent, prompt: AuthPrompt, providerId: string): Promise<string> {
+	private async showAuthPrompt(dialog: LoginDialogComponent, prompt: AuthPrompt): Promise<string> {
 		let response: Promise<string>;
 		if (prompt.type === "select") {
-			response = this.showAuthSelect(dialog, prompt, providerId);
+			response = this.showAuthSelect(dialog, prompt);
 		} else if (prompt.type === "manual_code") {
 			response = dialog.showManualInput(prompt.message);
 		} else {
@@ -6451,7 +6428,7 @@ export class InteractiveMode {
 				method,
 				{
 					signal: dialog.signal,
-					prompt: (prompt) => this.showAuthPrompt(dialog, prompt, providerId),
+					prompt: (prompt) => this.showAuthPrompt(dialog, prompt),
 					notify: (event) => this.notifyAuthDialog(dialog, event),
 				},
 				{ getDeviceId: () => this.settingsManager.getOrCreateDeviceId() },
