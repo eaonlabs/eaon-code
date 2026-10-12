@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-10-11
+
+### Fixed
+
+- Render `<think>` blocks from OpenAI-compatible model output as reasoning traces without exposing the tags.
+
 ## [Unreleased]
 
 ## [1.1.1] - 2026-10-11

@@ -131,6 +131,52 @@ function isImageContentBlock(block: { type: string }): block is ImageContent {
 	return block.type === "image";
 }
 
+type ThinkTagSegment = { type: "text" | "thinking"; text: string };
+
+class ThinkTagParser {
+	private type: ThinkTagSegment["type"] = "text";
+	private pending = "";
+
+	push(delta: string): ThinkTagSegment[] {
+		let input = this.pending + delta;
+		this.pending = "";
+		const segments: ThinkTagSegment[] = [];
+
+		while (input.length > 0) {
+			const tag = this.type === "text" ? "<think>" : "</think>";
+			const tagIndex = input.indexOf(tag);
+			if (tagIndex !== -1) {
+				const text = input.slice(0, tagIndex);
+				if (text) segments.push({ type: this.type, text });
+				this.type = this.type === "text" ? "thinking" : "text";
+				input = input.slice(tagIndex + tag.length);
+				continue;
+			}
+
+			let pendingLength = 0;
+			for (let length = Math.min(tag.length - 1, input.length); length > 0; length--) {
+				if (tag.startsWith(input.slice(-length))) {
+					pendingLength = length;
+					break;
+				}
+			}
+			const text = pendingLength === 0 ? input : input.slice(0, -pendingLength);
+			if (text) segments.push({ type: this.type, text });
+			this.pending = pendingLength === 0 ? "" : input.slice(-pendingLength);
+			break;
+		}
+
+		return segments;
+	}
+
+	finish(): ThinkTagSegment[] {
+		if (!this.pending) return [];
+		const text = this.pending;
+		this.pending = "";
+		return [{ type: this.type, text }];
+	}
+}
+
 function isReasoningDetailObject(detail: unknown): detail is Record<string, unknown> {
 	return typeof detail === "object" && detail !== null && !Array.isArray(detail);
 }
@@ -413,12 +459,13 @@ export const stream: StreamFunction<"openai-completions", OpenAICompletionsOptio
 				custom?: { name?: string; input?: string };
 			};
 
-			let textBlock: TextContent | null = null;
-			let thinkingBlock: ThinkingContent | null = null;
+			let activeContentBlock: TextContent | ThinkingContent | null = null;
 			let hasFinishReason = false;
 			const toolCallBlocksByIndex = new Map<number, StreamingToolCallBlock>();
 			const toolCallBlocksById = new Map<string, StreamingToolCallBlock>();
 			const blocks = output.content as StreamingBlock[];
+			const finishedBlocks = new Set<StreamingBlock>();
+			const thinkTagParser = new ThinkTagParser();
 			const getContentIndex = (block: StreamingBlock) => blocks.indexOf(block);
 			const getCustomToolCallInput = (block: StreamingToolCallBlock): string => {
 				const property = block.customInput?.property;
@@ -443,10 +490,12 @@ export const stream: StreamFunction<"openai-completions", OpenAICompletionsOptio
 				return delta;
 			};
 			const finishBlock = (block: StreamingBlock) => {
+				if (finishedBlocks.has(block)) return;
 				const contentIndex = getContentIndex(block);
 				if (contentIndex === -1) {
 					return;
 				}
+				finishedBlocks.add(block);
 				if (block.type === "text") {
 					stream.push({
 						type: "text_end",
@@ -490,24 +539,48 @@ export const stream: StreamFunction<"openai-completions", OpenAICompletionsOptio
 				}
 			};
 			const ensureTextBlock = () => {
-				if (!textBlock) {
-					textBlock = { type: "text", text: "" };
-					blocks.push(textBlock);
-					stream.push({ type: "text_start", contentIndex: getContentIndex(textBlock), partial: output });
-				}
-				return textBlock;
+				if (activeContentBlock?.type === "text") return activeContentBlock;
+				if (activeContentBlock) finishBlock(activeContentBlock);
+				const block: TextContent = { type: "text", text: "" };
+				blocks.push(block);
+				activeContentBlock = block;
+				stream.push({ type: "text_start", contentIndex: getContentIndex(block), partial: output });
+				return block;
 			};
-			const ensureThinkingBlock = (thinkingSignature: string) => {
-				if (!thinkingBlock) {
-					thinkingBlock = {
-						type: "thinking",
-						thinking: "",
-						thinkingSignature,
-					};
-					blocks.push(thinkingBlock);
-					stream.push({ type: "thinking_start", contentIndex: getContentIndex(thinkingBlock), partial: output });
+			const ensureThinkingBlock = (thinkingSignature?: string) => {
+				if (activeContentBlock?.type === "thinking") return activeContentBlock;
+				if (activeContentBlock) finishBlock(activeContentBlock);
+				const block: ThinkingContent = {
+					type: "thinking",
+					thinking: "",
+					...(thinkingSignature === undefined ? {} : { thinkingSignature }),
+				};
+				blocks.push(block);
+				activeContentBlock = block;
+				stream.push({ type: "thinking_start", contentIndex: getContentIndex(block), partial: output });
+				return block;
+			};
+			const appendTextSegment = (segment: ThinkTagSegment) => {
+				if (segment.text.length === 0) return;
+				if (segment.type === "thinking") {
+					const block = ensureThinkingBlock();
+					block.thinking += segment.text;
+					stream.push({
+						type: "thinking_delta",
+						contentIndex: getContentIndex(block),
+						delta: segment.text,
+						partial: output,
+					});
+				} else {
+					const block = ensureTextBlock();
+					block.text += segment.text;
+					stream.push({
+						type: "text_delta",
+						contentIndex: getContentIndex(block),
+						delta: segment.text,
+						partial: output,
+					});
 				}
-				return thinkingBlock;
 			};
 			const ensureToolCallBlock = (toolCall: StreamingToolCallDelta) => {
 				const streamIndex = typeof toolCall.index === "number" ? toolCall.index : undefined;
@@ -607,14 +680,7 @@ export const stream: StreamFunction<"openai-completions", OpenAICompletionsOptio
 						choice.delta.content !== undefined &&
 						choice.delta.content.length > 0
 					) {
-						const block = ensureTextBlock();
-						block.text += choice.delta.content;
-						stream.push({
-							type: "text_delta",
-							contentIndex: getContentIndex(block),
-							delta: choice.delta.content,
-							partial: output,
-						});
+						for (const segment of thinkTagParser.push(choice.delta.content)) appendTextSegment(segment);
 					}
 
 					// Some endpoints return reasoning in reasoning_content (llama.cpp),
@@ -695,6 +761,7 @@ export const stream: StreamFunction<"openai-completions", OpenAICompletionsOptio
 				}
 			}
 
+			for (const segment of thinkTagParser.finish()) appendTextSegment(segment);
 			for (const block of blocks) {
 				finishBlock(block);
 			}
