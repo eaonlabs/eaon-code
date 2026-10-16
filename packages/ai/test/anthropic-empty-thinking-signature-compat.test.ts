@@ -18,7 +18,7 @@ class PayloadCaptured extends Error {
 
 function makeModel(allowEmptySignature?: boolean): Model<"anthropic-messages"> {
 	return {
-		id: "mimo-v2.5-pro",
+		id: "mimo-v2.6-pro",
 		name: "MiMo-V2.5-Pro",
 		api: "anthropic-messages",
 		provider: "xiaomi-token-plan-ams",
@@ -36,7 +36,7 @@ function makeContext(
 	thinkingSignature: string,
 	thinking = "internal reasoning",
 	provider = "xiaomi-token-plan-ams",
-	model = "mimo-v2.5-pro",
+	model = "mimo-v2.6-pro",
 ): Context {
 	const assistant: AssistantMessage = {
 		role: "assistant",
@@ -135,12 +135,8 @@ describe("Anthropic empty thinking signature compat", () => {
 		]);
 	});
 
-	it.each(["k3"] as const)("allows empty signatures for Kimi Coding %s", async (modelId) => {
+	it.each(["k3"] as const)("routes Kimi Coding %s through OpenAI Chat Completions", (modelId) => {
 		const model = getModel("kimi-coding", modelId);
-		expect(model.compat?.allowEmptySignature).toBe(true);
-
-		const payload = await capturePayload(model, makeContext(" ", "internal reasoning", "kimi-coding", modelId));
-		const assistant = payload.messages?.find((message) => message.role === "assistant");
-		expect(assistant?.content).toEqual([{ type: "thinking", thinking: "internal reasoning", signature: "" }]);
+		expect(model.api).toBe("openai-completions");
 	});
 });

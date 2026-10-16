@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-16
+
+### Added
+
+- Added portable inline and remote codemode runtimes, including a Cloudflare Durable Object adapter.
+- Added worker admission and lifecycle callbacks so hosts can bound live workers across sessions.
+
+### Changed
+
+- Added input constraints to tool declarations and elapsed time to codemode results.
+- Described MCP tool results directly in the output schema.
+
+### Fixed
+
+- Made aborts and timeouts return promptly when a worker is running a non-interruptible built-in.
+- Ignored Node watch-mode dependency reports on the codemode worker message channel.
+
 ## [1.1.0] - 2026-10-07
 
 ### Changed

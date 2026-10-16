@@ -9,9 +9,37 @@ import type { OpenAICodexResponsesOptions } from "./api/openai-codex-responses.t
 import type { OpenAICompletionsOptions } from "./api/openai-completions.ts";
 import type { OpenAIResponsesOptions } from "./api/openai-responses.ts";
 import type { PiMessagesOptions } from "./api/pi-messages.ts";
+import type {
+	AnthropicAllowedFallbackModel,
+	ChatTemplateKwargValue,
+	SessionAffinityFormat,
+	ThinkingTokenBudgetField,
+} from "./providers/compat-schema.ts";
+import type {
+	CacheRetention,
+	ModelInputModality,
+	ModelPromptCache,
+	ModelThinkingLevel,
+	ThinkingLevel,
+	ThinkingLevelMap,
+} from "./providers/model-schema.ts";
 import type { AssistantMessageDiagnostic } from "./utils/diagnostics.ts";
 import type { AssistantMessageEventStream } from "./utils/event-stream.ts";
 
+export type {
+	AnthropicAllowedFallbackModel,
+	ChatTemplateKwargValue,
+	SessionAffinityFormat,
+	ThinkingTokenBudgetField,
+} from "./providers/compat-schema.ts";
+export type {
+	CacheRetention,
+	ModelInputModality,
+	ModelPromptCache,
+	ModelThinkingLevel,
+	ThinkingLevel,
+	ThinkingLevelMap,
+} from "./providers/model-schema.ts";
 export type { AssistantMessageEventStream } from "./utils/event-stream.ts";
 
 export type KnownApi =
@@ -87,24 +115,8 @@ export type KnownProvider =
 export type ProviderId = KnownProvider | string;
 
 export type ToolChoice = "auto" | "none";
-export type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-export type ModelThinkingLevel = "off" | ThinkingLevel;
-export type ThinkingLevelMap = Partial<Record<ModelThinkingLevel, string | null>>;
 export type SamplingParams = Record<string, unknown>;
 export type SamplingParamsByThinkingLevel = Partial<Record<ModelThinkingLevel, SamplingParams>>;
-export type ChatTemplateKwargValue =
-	| string
-	| number
-	| boolean
-	| null
-	| {
-			$var: "thinking.enabled" | "thinking.effort" | "thinking.budget";
-			omitWhenOff?: boolean;
-	  };
-
-/** Top-level request field used to cap reasoning tokens on OpenAI-compatible servers. */
-export type ThinkingTokenBudgetField = "thinking_token_budget" | "thinking_budget" | "thinking_budget_tokens";
-
 /** Token budgets for each thinking level (token-based providers only) */
 export interface ThinkingBudgets {
 	minimal?: number;
@@ -114,21 +126,12 @@ export interface ThinkingBudgets {
 }
 
 // Base options all providers share
-export type CacheRetention = "none" | "short" | "long";
-
-/**
- * Best-effort prompt cache lifetime in seconds for each retention tier a request can ask for.
- * A missing tier means the lifetime is unknown; pi does not warm such caches.
- */
-export type ModelPromptCache = Partial<Record<Exclude<CacheRetention, "none">, number>>;
-
 export type Transport = "sse" | "websocket" | "websocket-cached" | "auto";
 
 /** Provider-scoped environment overrides. Values take precedence over process.env. */
 export type ProviderEnv = Record<string, string>;
 export type ProviderHeaders = Record<string, string | null>;
 export type FetchFunction = typeof globalThis.fetch;
-export type SessionAffinityFormat = "openai" | "openai-nosession" | "openrouter";
 
 export interface ProviderResponse {
 	status: number;
@@ -347,12 +350,6 @@ export interface ImagesOptions extends ProviderRequestOptions<ImageModel<ImageAp
 
 export type ProviderImagesOptions = ImagesOptions & Record<string, unknown>;
 
-export interface AnthropicAllowedFallbackModel {
-	provider: ProviderId;
-	model: string;
-	cost: ModelCost;
-}
-
 // Unified options with reasoning passed to streamSimple() and completeSimple()
 export interface SimpleStreamOptions extends StreamOptions {
 	/** Provider-neutral tool selection for simple requests. When omitted, adapters use provider-specific behavior. */
@@ -429,6 +426,11 @@ export interface ToolCall {
 	thoughtSignature?: string; // Google-specific: opaque signature for reusing thought context
 	/** OpenAI Responses namespace for calls to dynamically loaded or namespaced tools. */
 	namespace?: string;
+	/**
+	 * Set when the model's complete arguments text was not a valid JSON object. `arguments` is then `{}`.
+	 * Describes the problem and includes the text the model sent; tool argument validation fails with it.
+	 */
+	argumentsError?: string;
 }
 
 export interface Usage {
@@ -893,6 +895,7 @@ export interface OpenAICompletionsCompat {
 export interface OpenAIResponsesCompat {
 	/** Whether the provider supports the `developer` role (vs `system`). Default: true. */
 	supportsDeveloperRole?: boolean;
+	supportsMidConvoEffort?: boolean;
 	/** Whether the exact model accepts developer or system messages after the conversation has started. When false, later system messages are folded into the leading system message. Default: false; the generated model catalog enables it for verified models. */
 	supportsMidConvoSystemMessages?: boolean;
 	/** Session-affinity header format: `openai` sends `session_id` and `x-client-request-id`; `openai-nosession` sends `x-client-request-id`; `openrouter` sends `x-session-id`. Does not affect the `prompt_cache_key` body param, which is governed by cache retention. Default: auto-detected. */
@@ -1125,7 +1128,7 @@ export interface BaseModel<TApi extends string> {
 	api: TApi;
 	provider: ProviderId;
 	baseUrl: string;
-	input: ("text" | "image")[];
+	input: ModelInputModality[];
 	/** Provider input limits and cache-safe preprocessing metadata. */
 	inputLimits?: ModelInputLimits;
 	cost: ModelCost;

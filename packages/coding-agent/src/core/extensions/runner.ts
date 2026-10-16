@@ -27,8 +27,10 @@ import {
 import type { VirtualModelDefinition } from "../virtual-models.ts";
 import type {
 	AgentBeforeSettleEvent,
+	BeforeAgentStartCustomEvent,
 	BeforeAgentStartEvent,
 	BeforeAgentStartEventResult,
+	BeforeAgentStartUserEvent,
 	BeforeProviderHeadersEvent,
 	BeforeProviderRequestEvent,
 	BoundaryContextPreview,
@@ -161,6 +163,11 @@ function isUserBashEventResult(value: unknown): value is UserBashEventResult {
 		(resultRecord.fullOutputPath === undefined || typeof resultRecord.fullOutputPath === "string")
 	);
 }
+
+/** The message that starts a run: the before_agent_start event without its prompt fields. */
+export type BeforeAgentStartTrigger =
+	| Pick<BeforeAgentStartUserEvent, "messageType" | "prompt" | "images">
+	| Pick<BeforeAgentStartCustomEvent, "messageType" | "message">;
 
 /** Combined result from all before_agent_start handlers. */
 interface BeforeAgentStartCombinedResult {
@@ -1409,10 +1416,31 @@ export class ExtensionRunner {
 	}
 
 	async emitBeforeAgentStart(
+		trigger: BeforeAgentStartTrigger,
+		systemPromptOptions: BuildSystemPromptOptions,
+	): Promise<BeforeAgentStartCombinedResult>;
+	async emitBeforeAgentStart(
 		prompt: string,
 		images: ImageContent[] | undefined,
 		systemPromptOptions: BuildSystemPromptOptions,
+	): Promise<BeforeAgentStartCombinedResult>;
+	async emitBeforeAgentStart(
+		triggerOrPrompt: BeforeAgentStartTrigger | string,
+		optionsOrImages: BuildSystemPromptOptions | ImageContent[] | undefined,
+		legacySystemPromptOptions?: BuildSystemPromptOptions,
 	): Promise<BeforeAgentStartCombinedResult> {
+		const legacyCall = typeof triggerOrPrompt === "string";
+		const trigger: BeforeAgentStartTrigger = legacyCall
+			? {
+					messageType: "user",
+					prompt: triggerOrPrompt,
+					images: Array.isArray(optionsOrImages) ? optionsOrImages : undefined,
+				}
+			: triggerOrPrompt;
+		const systemPromptOptions = legacyCall ? legacySystemPromptOptions : optionsOrImages;
+		if (!systemPromptOptions || Array.isArray(systemPromptOptions)) {
+			throw new TypeError("System prompt options are required");
+		}
 		const currentOptions = normalizeBuildSystemPromptOptions(systemPromptOptions);
 		const renderCurrentSystemPrompt = (): string => buildSystemPrompt(currentOptions);
 		const ctx = Object.defineProperties(
@@ -1430,8 +1458,7 @@ export class ExtensionRunner {
 				try {
 					const event: BeforeAgentStartEvent = {
 						type: "before_agent_start",
-						prompt,
-						images,
+						...trigger,
 						get systemPrompt() {
 							return renderCurrentSystemPrompt();
 						},

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-16
+
+### Changed
+
+- Accepted any JSON value in structured MCP tool results, including arrays and `null`.
+
+### Fixed
+
+- Prevented requests cancelled during OAuth refresh from being sent after the refresh completes.
+- Rejected OAuth responses with an unverified issuer when server metadata is unavailable.
+
 ## [1.1.0] - 2026-10-07
 
 ### Fixed

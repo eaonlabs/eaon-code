@@ -20,7 +20,13 @@ function checkSource(source, manifest) {
 	function checkSpecifier(node) {
 		if (!node || !ts.isStringLiteralLike(node)) return;
 		const specifier = node.text;
-		if (specifier.startsWith(".") || specifier.startsWith("/") || isBuiltin(specifier)) return;
+		if (
+			specifier.startsWith(".") ||
+			specifier.startsWith("/") ||
+			specifier.startsWith("cloudflare:") ||
+			isBuiltin(specifier)
+		)
+			return;
 		const name = specifier.split("/").slice(0, specifier.startsWith("@") ? 2 : 1).join("/");
 		if (declared.has(name)) return;
 		const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));

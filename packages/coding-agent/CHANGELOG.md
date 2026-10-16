@@ -1,12 +1,28 @@
 # Changelog
 
+## [Unreleased]
+
+## [1.1.3] - 2026-10-16
+
+### Added
+
+- Added per-key OpenRouter catalogs, configuration schemas, remote clipboard support, portable codemode runtimes, and clearer MCP and codemode timing and declarations.
+- Added `/share` destination selection and cache-preserving thinking-level changes for supported GPT-6 models.
+
+### Changed
+
+- Incorporated compatible runtime and provider updates from Pi 1.3.0 while retaining Eaon Code's custom providers, web access, plan and swarm modes, themes, and experimental packages.
+- Updated Kimi Code to use OpenAI Chat Completions and preserve prompt caching when tools are added during a conversation.
+
+### Fixed
+
+- Improved model switching and session resume behavior, provider retries, malformed tool-call handling, and Anthropic and Bedrock image tool results.
+
 ## [1.1.2] - 2026-10-11
 
 ### Fixed
 
 - Render `<think>` blocks from OpenAI-compatible model output as reasoning traces without exposing the tags.
-
-## [Unreleased]
 
 ## [1.1.1] - 2026-10-11
 

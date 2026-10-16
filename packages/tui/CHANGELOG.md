@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-16
+
+### Added
+
+- Added remote clipboard copying through OSC 52 when `EAON_CLIPBOARD_OSC52=1`.
+
+### Changed
+
+- Changed hardware cursor mode to use the terminal cursor without drawing a second cursor in the text buffer.
+
+### Fixed
+
+- Fixed cursor marker handling around overlays, mouse-wheel transcript scrolling, fragmented terminal color replies, and shifted key bindings.
+- Restored inline image rendering in Herdr.
+
 ## [1.1.0] - 2026-10-07
 
 ### Added

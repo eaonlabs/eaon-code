@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-16
+
+### Added
+
+- Added per-key OpenRouter model catalogs and schemas for provider compatibility and model configuration.
+
+### Changed
+
+- Updated Kimi Code to use OpenAI Chat Completions, including mid-conversation tool additions that preserve prompt caching.
+- Preserved GPT-6 prompt caching when changing supported reasoning levels and dropped another model's thinking blocks during model switches.
+
+### Fixed
+
+- Improved provider retry handling, malformed tool-call argument parsing, and Anthropic and Bedrock error tool results containing images.
+
 ## [1.1.0] - 2026-10-07
 
 ### Added

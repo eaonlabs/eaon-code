@@ -89,17 +89,12 @@ describe("Anthropic forceAdaptiveThinking compat override", () => {
 		expect(payload.output_config).toEqual({ effort: "xhigh" });
 	});
 
-	it.each([
-		["kimi-for-coding", "medium", "medium"],
-		["k3", "max", "max"],
-		["kimi-for-coding-highspeed", "medium", "medium"],
-	] as const)(
-		"uses adaptive thinking effort without a token budget for Kimi Coding %s",
-		async (modelId, reasoning, effort) => {
-			const payload = await capturePayload(getModel("kimi-coding", modelId), { reasoning });
-
-			expect(payload.thinking).toEqual({ type: "adaptive", display: "summarized" });
-			expect(payload.output_config).toEqual({ effort });
+	it.each(["kimi-for-coding", "k3", "kimi-for-coding-highspeed"] as const)(
+		"uses OpenAI Chat Completions for Kimi Coding %s",
+		(modelId) => {
+			const model = getModel("kimi-coding", modelId);
+			expect(model.api).toBe("openai-completions");
+			expect(model.compat?.thinkingFormat).toBe(modelId === "kimi-for-coding-highspeed" ? "deepseek" : "openai");
 		},
 	);
 
