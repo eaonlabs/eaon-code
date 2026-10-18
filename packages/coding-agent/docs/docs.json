@@ -77,6 +77,10 @@
           "path": "models.md"
         },
         {
+          "title": "Models Configuration",
+          "path": "models-configuration.md"
+        },
+        {
           "title": "Custom Providers",
           "path": "custom-provider.md"
         }

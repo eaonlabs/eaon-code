@@ -18,26 +18,32 @@
           "properties": {
             "name": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "description": "Display name."
             },
             "baseUrl": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "description": "API base URL. Also applies to the provider's built-in models."
             },
             "apiKey": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "description": "Literal key, \"$NAME\" environment interpolation, or \"!command\" output."
             },
             "noAuth": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "Whether to send requests without an API key."
             },
             "api": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "description": "API for the provider's models, such as \"openai-completions\", \"openai-responses\", \"anthropic-messages\", or \"google-generative-ai\"."
             },
             "oauth": {
               "type": "string",
-              "const": "radius"
+              "const": "radius",
+              "description": "OAuth login flow. Requires baseUrl."
             },
             "headers": {
               "type": "object",
@@ -45,14 +51,17 @@
                 "^.*$": {
                   "type": "string"
                 }
-              }
+              },
+              "description": "Request headers. Values resolve like apiKey."
             },
             "compat": {
               "$ref": "#/$defs/ProviderCompat",
               "description": "Provider and model compatibility overrides."
             },
             "authHeader": {
-              "type": "boolean"
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to send the resolved API key as Authorization: Bearer."
             },
             "models": {
               "type": "array",
@@ -64,25 +73,32 @@
                 "properties": {
                   "id": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "description": "Model ID sent to the API."
                   },
                   "name": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "description": "Display name, also matched by --model patterns."
                   },
                   "api": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "description": "Overrides the provider api."
                   },
                   "baseUrl": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "description": "Overrides the provider baseUrl."
                   },
                   "reasoning": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the model supports thinking."
                   },
                   "thinkingLevelMap": {
-                    "$ref": "#/$defs/ThinkingLevelMap"
+                    "$ref": "#/$defs/ThinkingLevelMap",
+                    "description": "Provider value sent for each thinking level. null marks a level unsupported. Levels the model does not map use the provider's default value through high; xhigh and max are unsupported."
                   },
                   "input": {
                     "type": "array",
@@ -91,7 +107,10 @@
                         "text",
                         "image"
                       ]
-                    }
+                    },
+                    "default": [
+                      "text"
+                    ]
                   },
                   "inputLimits": {
                     "$ref": "#/$defs/ModelInputLimits"
@@ -101,21 +120,26 @@
                   },
                   "promptCache": {
                     "$ref": "#/$defs/ModelPromptCache",
-                    "description": "Best-effort prompt cache lifetime in seconds for each retention tier. A missing tier means the lifetime is unknown, so Eaon Code does not warm it."
+                    "description": "Best-effort prompt cache lifetime in seconds for the short and long retention tiers. Eaon Code warms only tiers with a known lifetime."
                   },
                   "contextWindow": {
                     "type": "number",
-                    "exclusiveMinimum": 0
+                    "exclusiveMinimum": 0,
+                    "default": 128000,
+                    "description": "Context window in tokens."
                   },
                   "maxTokens": {
                     "type": "number",
-                    "exclusiveMinimum": 0
+                    "exclusiveMinimum": 0,
+                    "default": 16384,
+                    "description": "Maximum output tokens."
                   },
                   "samplingParams": {
                     "type": "object",
                     "patternProperties": {
                       "^.*$": {}
-                    }
+                    },
+                    "description": "Fields merged into every request body. Applies only to OpenAI-compatible APIs."
                   },
                   "samplingParamsByThinkingLevel": {
                     "type": "object",
@@ -162,7 +186,8 @@
                           "^.*$": {}
                         }
                       }
-                    }
+                    },
+                    "description": "samplingParams per thinking level, merged over samplingParams."
                   },
                   "headers": {
                     "type": "object",
@@ -170,7 +195,8 @@
                       "^.*$": {
                         "type": "string"
                       }
-                    }
+                    },
+                    "description": "Request headers. Values resolve like apiKey."
                   },
                   "compat": {
                     "$ref": "#/$defs/ProviderCompat",
@@ -187,13 +213,16 @@
                   "properties": {
                     "name": {
                       "type": "string",
-                      "minLength": 1
+                      "minLength": 1,
+                      "description": "Display name, also matched by --model patterns."
                     },
                     "reasoning": {
-                      "type": "boolean"
+                      "type": "boolean",
+                      "description": "Whether the model supports thinking."
                     },
                     "thinkingLevelMap": {
-                      "$ref": "#/$defs/ThinkingLevelMap"
+                      "$ref": "#/$defs/ThinkingLevelMap",
+                      "description": "Provider value sent for each thinking level. null marks a level unsupported. Levels the model does not map use the provider's default value through high; xhigh and max are unsupported."
                     },
                     "input": {
                       "type": "array",
@@ -266,21 +295,24 @@
                     },
                     "promptCache": {
                       "$ref": "#/$defs/ModelPromptCache",
-                      "description": "Best-effort prompt cache lifetime in seconds for each retention tier. A missing tier means the lifetime is unknown, so Eaon Code does not warm it."
+                      "description": "Best-effort prompt cache lifetime in seconds for the short and long retention tiers. Eaon Code warms only tiers with a known lifetime."
                     },
                     "contextWindow": {
                       "type": "number",
-                      "exclusiveMinimum": 0
+                      "exclusiveMinimum": 0,
+                      "description": "Context window in tokens."
                     },
                     "maxTokens": {
                       "type": "number",
-                      "exclusiveMinimum": 0
+                      "exclusiveMinimum": 0,
+                      "description": "Maximum output tokens."
                     },
                     "samplingParams": {
                       "type": "object",
                       "patternProperties": {
                         "^.*$": {}
-                      }
+                      },
+                      "description": "Fields merged into every request body. Applies only to OpenAI-compatible APIs."
                     },
                     "samplingParamsByThinkingLevel": {
                       "type": "object",
@@ -327,7 +359,8 @@
                             "^.*$": {}
                           }
                         }
-                      }
+                      },
+                      "description": "samplingParams per thinking level, merged over samplingParams."
                     },
                     "headers": {
                       "type": "object",
@@ -335,7 +368,8 @@
                         "^.*$": {
                           "type": "string"
                         }
-                      }
+                      },
+                      "description": "Request headers. Values resolve like apiKey."
                     },
                     "compat": {
                       "$ref": "#/$defs/ProviderCompat",
@@ -953,6 +987,11 @@
           "description": "Whether system messages can introduce additional tools mid-conversation. Requires supportsMidConvoSystemMessages. The generated catalog enables this for capable models.",
           "default": false
         },
+        "deferredToolsMode": {
+          "type": "string",
+          "const": "kimi",
+          "description": "Use Kimi Code's deferred tool handling for compatible Kimi models."
+        },
         "supportsStrictMode": {
           "type": "boolean",
           "description": "Whether the provider supports strict tool schemas. Defaults are API-specific."
@@ -1049,6 +1088,11 @@
         "supportsMidConvoToolChanges": {
           "type": "boolean",
           "description": "Whether the exact model accepts mid-conversation tool_addition and tool_removal blocks. Requires supportsMidConvoSystemMessages.",
+          "default": false
+        },
+        "supportsToolReferences": {
+          "type": "boolean",
+          "description": "Whether the model supports Anthropic tool references in the prompt.",
           "default": false
         },
         "allowedFallbackModels": {

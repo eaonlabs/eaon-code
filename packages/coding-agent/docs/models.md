@@ -2,6 +2,8 @@
 
 Add custom providers and models (Ollama, vLLM, LM Studio, proxies) via `~/.eaon/agent/models.json`.
 
+See [Models Configuration](models-configuration.md) for the full field reference.
+
 ## Table of Contents
 
 - [Minimal Example](#minimal-example)

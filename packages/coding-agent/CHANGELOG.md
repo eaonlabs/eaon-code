@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-10-18
+
+### Added
+
+- Added a generated Models Configuration reference for `models.json` fields and compatibility settings.
+
+### Changed
+
+- Made `compaction.reserveTokens` control only when compaction starts; summary requests now use the model's output limit.
+
+### Fixed
+
+- Avoided incomplete compaction summaries caused by deriving their output budget from the compaction trigger threshold.
+- Improved retries for transient gateway and Google Vertex request failures, and treated whitespace-only tool output as empty.
+
 ## [1.1.3] - 2026-10-16
 
 ### Added

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-10-18
+
+### Fixed
+
+- Treated whitespace-only tool output as empty for OpenAI and Google API providers.
+- Retried transient gateway stream failures and Google Vertex OAuth fetch errors.
+
 ## [1.1.3] - 2026-10-16
 
 ### Added
