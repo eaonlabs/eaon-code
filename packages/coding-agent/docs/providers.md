@@ -5,6 +5,7 @@ Eaon Code supports subscription-based providers via OAuth and API key providers 
 ## Table of Contents
 
 - [Subscriptions](#subscriptions)
+- [Eaon Free Gateway](#eaon-free-gateway)
 - [API Keys](#api-keys)
 - [Auth File](#auth-file)
 - [Cloud Providers](#cloud-providers)
@@ -60,6 +61,10 @@ Anthropic subscription auth is active for Claude Pro/Max accounts. Third-party h
 ### Radius
 
 Radius is a dynamic `pi-messages` gateway. `/login radius` stores OAuth tokens in `auth.json`; the gateway catalog is refreshed independently and cached in `models-store.json`. Custom Radius gateways can be declared in `models.json` with `"oauth": "radius"` and a gateway `baseUrl`.
+
+## Eaon Free Gateway
+
+Select **Eaon** in `/setup` or run `/login eaon`. This no-auth OpenAI-compatible gateway requires no account or API key. Eaon Code 1.1.5 includes the models currently listed by the gateway: GPT-6-Luna, MiMo v2.6 Flash, and Muse Spark 1.3 Contributor. The setup flow selects GPT-6-Luna by default; use `/model` to choose another model.
 
 ## API Keys
 

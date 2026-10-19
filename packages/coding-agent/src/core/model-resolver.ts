@@ -17,6 +17,7 @@ export const defaultModelPerProvider: Partial<Record<KnownProvider, string>> = {
 	"ant-ling": "Ring-2.6-1T",
 	anthropic: "claude-opus-4-8",
 	openai: "gpt-5.5",
+	eaon: "gpt-6-luna-free",
 	"azure-openai-responses": "gpt-5.4",
 	"openai-codex": "gpt-6.1-sol",
 	radius: "balanced",

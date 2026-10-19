@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-10-18
+
+### Added
+
+- Added the no-auth Eaon gateway with all three models listed by its live OpenAI-compatible model catalog.
+
 ## [1.1.4] - 2026-10-18
 
 ### Fixed

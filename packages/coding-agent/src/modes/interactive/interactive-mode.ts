@@ -5872,6 +5872,26 @@ export class InteractiveMode {
 
 	/** `onBack` reopens the selector the login was started from when the user cancels it. */
 	private async startProviderLogin(providerOption: AuthSelectorProvider, onBack?: () => void): Promise<void> {
+		if (providerOption.id === "eaon" && providerOption.authType === "api_key") {
+			const modelId = defaultModelPerProvider.eaon;
+			const model = modelId ? this.session.modelRuntime.getModel("eaon", modelId) : undefined;
+			if (!model) {
+				this.showError("No default model is available for Eaon.");
+				return;
+			}
+			try {
+				await this.session.setModel(model, { persist: true });
+				this.updateAvailableProviderCount();
+				this.footer.invalidate();
+				this.updateEditorBorderColor();
+				this.showStatus(`Eaon is ready. Selected ${model.id}. No sign-in required.`);
+			} catch (error: unknown) {
+				this.showError(
+					`Could not select the Eaon model: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+			return;
+		}
 		if (providerOption.authType === "oauth") {
 			await this.showLoginDialog(providerOption.id, providerOption.name, onBack);
 		} else if (providerOption.method?.login) {
@@ -7143,7 +7163,11 @@ export class InteractiveMode {
 						this.updateEditorBorderColor();
 					}
 					if (result.provider !== "skip") {
-						this.showStatus(`Setup done. Next: /login → ${result.provider}`);
+						this.showStatus(
+							result.provider === "eaon"
+								? "Setup done. Eaon is ready to use."
+								: `Setup done. Next: /login → ${result.provider}`,
+						);
 						void this.handleLoginCommand(result.provider);
 					} else {
 						this.showStatus(`Setup done. Theme: ${result.themeName}  ·  /login when ready`);

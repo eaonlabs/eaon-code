@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-10-18
+
+### Added
+
+- Added Eaon to setup and login, selecting its default free model without requiring sign-in.
+
 ## [1.1.4] - 2026-10-18
 
 ### Added
