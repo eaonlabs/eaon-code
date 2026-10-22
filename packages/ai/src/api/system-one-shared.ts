@@ -5,14 +5,24 @@ import type {
 	ClassifierModel,
 	ClassifierOptions,
 	ClassifierResult,
+	ImageContent,
 } from "../types.ts";
 import { formatProviderError, normalizeProviderError } from "../utils/error-body.ts";
 import { isRecord, parseClassifierUsage, postClassifierRequest, requiredNumber } from "./classifier-shared.ts";
 
 /** TypeSafe System One request body without the transport-specific envelope. */
 export interface SystemOneWireRequest {
-	state: ClassifierContext["state"];
+	state: unknown;
 	questions: Record<string, unknown>;
+	assets?: Record<string, { type: "image"; format: "png" | "jpeg"; data_base64: string }>;
+	images?: string[];
+}
+
+export type SystemOneImageInput = "assets" | "images" | "state-image-urls";
+
+export interface SystemOneCompat {
+	imageInput: SystemOneImageInput;
+	sendImageOptInHeader: boolean;
 }
 
 /** Differences between services that serve System One models. */
@@ -21,6 +31,8 @@ export interface SystemOneTransport {
 	api: ClassifierApi;
 	/** Service name used in error messages. */
 	label: string;
+	/** Image wire format and any required opt-in, derived from the provider and model. */
+	detectCompat(model: ClassifierModel<ClassifierApi>): SystemOneCompat;
 	/** Absolute request URL. */
 	url(model: ClassifierModel<ClassifierApi>): URL;
 	/** Wraps the System One request in the service's request envelope. */
@@ -95,6 +107,43 @@ function wireRequest(context: ClassifierContext): SystemOneWireRequest {
 	};
 }
 
+function addImages(
+	label: string,
+	model: ClassifierModel<ClassifierApi>,
+	input: SystemOneImageInput,
+	images: ImageContent[],
+	request: SystemOneWireRequest,
+): void {
+	if (input === "images") {
+		if (images.length > 4) throw new Error(`${label} accepts at most 4 images for ${model.id}, got ${images.length}`);
+		request.images = images.map((image) => {
+			if (!["image/png", "image/jpeg", "image/webp"].includes(image.mimeType)) {
+				throw new Error(`${label} accepts PNG, JPEG, and WebP images for ${model.id}, got ${image.mimeType}`);
+			}
+			return `data:${image.mimeType};base64,${image.data}`;
+		});
+		return;
+	}
+	if (input === "state-image-urls") {
+		request.state = [
+			...images.map((image) => ({
+				type: "image_url",
+				image_url: { url: `data:${image.mimeType};base64,${image.data}` },
+			})),
+			request.state,
+		];
+		return;
+	}
+	const assets: NonNullable<SystemOneWireRequest["assets"]> = {};
+	images.forEach((image, index) => {
+		const format = image.mimeType === "image/png" ? "png" : image.mimeType === "image/jpeg" ? "jpeg" : undefined;
+		if (!format) throw new Error(`${label} accepts PNG and JPEG images for ${model.id}, got ${image.mimeType}`);
+		assets[`<image-${index + 1}>`] = { type: "image", format, data_base64: image.data };
+	});
+	request.assets = assets;
+	request.state = [...Object.keys(assets), request.state];
+}
+
 /** Runs one System One classification over the given transport. */
 export async function classifySystemOne(
 	transport: SystemOneTransport,
@@ -113,13 +162,27 @@ export async function classifySystemOne(
 
 	try {
 		if (model.api !== transport.api) throw new Error(`Unsupported classifier API: ${model.api}`);
-		if (context.images?.length) throw new Error(`${transport.label} does not support image input`);
+		const request = wireRequest(context);
+		let requestOptions = options;
+		if (context.images?.length) {
+			if (!model.input.includes("image")) {
+				throw new Error(`${transport.label} does not support image input for ${model.id}`);
+			}
+			const compat = transport.detectCompat(model);
+			addImages(transport.label, model, compat.imageInput, context.images, request);
+			if (compat.sendImageOptInHeader) {
+				requestOptions = {
+					...options,
+					headers: { "TypeSafe-Danger-Zone-Images": "true", ...options?.headers },
+				};
+			}
+		}
 		const body = await postClassifierRequest(
 			transport.label,
 			transport.url(model),
 			model,
-			transport.payload(model, wireRequest(context)),
-			options,
+			transport.payload(model, request),
+			requestOptions,
 		);
 		const result = transport.output(body);
 		// Set before parsing answers: a request with malformed answers was still billed.

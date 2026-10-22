@@ -498,15 +498,15 @@ describe("deferred tools", () => {
 			makeCodexToken(),
 		);
 		const toolSearch = await capturePayload<OpenAIPayload>(
-			getModel("openai-codex", "gpt-5.5"),
+			getModel("openai-codex", "gpt-6.1-sol"),
 			context,
 			makeCodexToken(),
 		);
-		const topLevel = await capturePayload<OpenAIPayload>(
-			getModel("openai-codex", "gpt-5.3-codex-spark"),
-			context,
-			makeCodexToken(),
-		);
+		const noDeferredToolsModel = {
+			...getModel("openai-codex", "gpt-6.1-sol"),
+			compat: { supportsAdditionalTools: false, supportsToolSearch: false },
+		};
+		const topLevel = await capturePayload<OpenAIPayload>(noDeferredToolsModel, context, makeCodexToken());
 
 		expect(openAIToolNames(additionalTools)).toEqual(["base_tool"]);
 		expect(additionalTools.input?.some((item) => item.type === "additional_tools")).toBe(true);

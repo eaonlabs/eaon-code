@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-10-22
+
+### Fixed
+
+- Included the Cloudflare and QuickJS ambient declarations in source builds so installer updates can compile the codemode package.
+
 ## [1.1.3] - 2026-10-16
 
 ### Added

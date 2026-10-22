@@ -384,6 +384,16 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		);
 	}
 
+	protected override getExitRestorePrefix(): string {
+		const prefix = super.getExitRestorePrefix();
+		if (!this.altScreenActive) return prefix;
+		return `${END_SYNCHRONIZED_OUTPUT}${this.mouseEnabled ? DISABLE_MOUSE : ""}${ENABLE_AUTOWRAP}${prefix}`;
+	}
+
+	protected override getExitRestoreSuffix(): string {
+		return `${super.getExitRestoreSuffix()}${this.altScreenActive ? `${EXIT_ALT_SCREEN}\x1b[?25h` : ""}`;
+	}
+
 	protected override beforeTerminalStop(_options: TuiStopOptions): void {
 		this.closeSearch();
 		this.stopSelectionAutoScroll();

@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-10-22
+
+### Added
+
+- Added image input for supported TypeSafe System One classifiers on TypeSafe, Cloudflare Workers AI, and OpenRouter.
+- Queued codemode scripts when both workers are occupied, with a configurable worker limit.
+
+### Changed
+
+- Changed the GitHub Copilot default model to GPT-6.1 Sol.
+
+### Fixed
+
+- Recovered from Copilot HTTP 413 request-size errors, parsed MCP configuration files with a UTF-8 BOM, and isolated grep from ambient ripgrep configuration.
+- Omitted truncated tool results together with their tool calls during recovery and applied `/compact` instructions to split-turn summaries.
+- Fixed Windows shell detection for Store aliases and standard PowerShell install paths.
+
 ## [1.1.5] - 2026-10-18
 
 ### Added

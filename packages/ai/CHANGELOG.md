@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-10-22
+
+### Added
+
+- Added image inputs for TypeSafe System One classifier requests and refreshed Cloudflare classifier models.
+
+### Fixed
+
+- Classified HTTP 413 responses as request-size overflow so sessions can compact and retry.
+- Removed GPT-5.5 and GPT-5.3 Codex Spark from the ChatGPT account model catalog and included current MiniMax adaptive-thinking models.
+
 ## [1.1.5] - 2026-10-18
 
 ### Added

@@ -2401,12 +2401,14 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 			{ key: "minimax", provider: "minimax", baseUrl: "https://api.minimax.io/anthropic" },
 			{ key: "minimax-cn", provider: "minimax-cn", baseUrl: "https://api.minimaxi.com/anthropic" },
 		] as const;
+		const minimaxHiddenIds = new Set(["MiniMax-M2", "MiniMax-M2.1", "MiniMax-M2.5", "MiniMax-M2.5-highspeed"]);
 
 		for (const { key, provider, baseUrl } of minimaxVariants) {
 			if (data[key]?.models) {
 				for (const [modelId, model] of Object.entries(data[key].models)) {
 					const m = model as ModelsDevModel;
-					if (m.tool_call !== true) continue;
+					if (m.tool_call !== true || minimaxHiddenIds.has(modelId)) continue;
+					const thinkingLevelMap = getEffortThinkingLevelMap(m.reasoning_options ?? []);
 
 					models.push({
 						id: modelId,
@@ -2420,8 +2422,8 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 						cost: getModelsDevCost(m.cost),
 						contextWindow: m.limit?.context || 4096,
 						maxTokens: m.limit?.output || 4096,
+						...(thinkingLevelMap ? { thinkingLevelMap, compat: { forceAdaptiveThinking: true } } : {}),
 					});
-					recordModelsDevReasoningOptions(provider, modelId, m);
 				}
 			}
 		}
@@ -2649,7 +2651,8 @@ async function loadModelsDevClassifierModels(): Promise<ClassifierModel<"typesaf
 				api: "typesafe-system-one",
 				provider: "typesafe",
 				baseUrl: "https://api.typesafe.ai/v1/",
-				input: metadata.modalities?.input?.includes("image") ? ["text", "image"] : ["text"],
+				// TypeSafe's API accepts images through System One assets behind an opt-in header.
+				input: ["text", "image"],
 				// The canonical models.dev entry has no direct-provider pricing. System One reports token usage,
 				// so classify() results carry token counts but price them at zero.
 				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -2697,13 +2700,57 @@ const OPENCODE_CLASSIFIER_MODELS: ClassifierModel<"typesafe-system-one">[] = [
 const CLOUDFLARE_WORKERS_AI_CLASSIFIER_MODELS: ClassifierModel<"cloudflare-workers-ai-system-one">[] = [
 	{
 		type: "classifier",
+		id: "@cf/cloudflare/clef",
+		name: "Clef",
+		api: "cloudflare-workers-ai-system-one",
+		provider: "cloudflare-workers-ai",
+		baseUrl: CLOUDFLARE_WORKERS_AI_REST_BASE_URL,
+		input: ["text", "image"],
+		cost: { input: 0.24, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 65536,
+	},
+	{
+		type: "classifier",
+		id: "@cf/cloudflare/clef-flash",
+		name: "Clef Flash",
+		api: "cloudflare-workers-ai-system-one",
+		provider: "cloudflare-workers-ai",
+		baseUrl: CLOUDFLARE_WORKERS_AI_REST_BASE_URL,
+		input: ["text", "image"],
+		cost: { input: 0.038, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 24576,
+	},
+	{
+		type: "classifier",
+		id: "@cf/cloudflare/clef-omni",
+		name: "Clef Omni",
+		api: "cloudflare-workers-ai-system-one",
+		provider: "cloudflare-workers-ai",
+		baseUrl: CLOUDFLARE_WORKERS_AI_REST_BASE_URL,
+		input: ["text", "image"],
+		cost: { input: 0.15, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 64000,
+	},
+	{
+		type: "classifier",
 		id: "typesafe/jev",
 		name: "Jev",
 		api: "cloudflare-workers-ai-system-one",
 		provider: "cloudflare-workers-ai",
 		baseUrl: CLOUDFLARE_WORKERS_AI_REST_BASE_URL,
-		input: ["text"],
-		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		input: ["text", "image"],
+		cost: { input: 0.042, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 32000,
+	},
+	{
+		type: "classifier",
+		id: "typesafe/jev-1.14.0",
+		name: "Jev 1.14",
+		api: "cloudflare-workers-ai-system-one",
+		provider: "cloudflare-workers-ai",
+		baseUrl: CLOUDFLARE_WORKERS_AI_REST_BASE_URL,
+		input: ["text", "image"],
+		cost: { input: 0.042, output: 0, cacheRead: 0, cacheWrite: 0 },
 		contextWindow: 32000,
 	},
 ];
@@ -3116,27 +3163,15 @@ async function generateModels() {
 		}
 	}
 
-	const minimaxDirectSupportedIds = new Set(["MiniMax-M2.7", "MiniMax-M2.7-highspeed", "MiniMax-M3"]);
-
-	for (let i = allModels.length - 1; i >= 0; i--) {
-		const candidate = allModels[i];
-		if (
-			(candidate.provider === "minimax" || candidate.provider === "minimax-cn") &&
-			!minimaxDirectSupportedIds.has(candidate.id)
-		) {
-			allModels.splice(i, 1);
-		}
-	}
-
 	// OpenAI Codex (ChatGPT OAuth) models
 	// NOTE: These are not fetched from models.dev; we keep a small, explicit list to avoid aliases.
-	// Older model limits are based on observed server behavior; GPT-5.6 and GPT-6 use Codex's 272k default catalog limit.
+	// Only include models that ChatGPT accounts can use through the Codex backend.
+	// GPT-5.6 and GPT-6 use Codex's 272k default catalog limit.
 	// GPT-6.1 Sol uses the 500k default returned by /backend-api/codex/models.
 	const CODEX_BASE_URL = "https://chatgpt.com/backend-api";
 	const CODEX_CONTEXT = 272000;
 	const CODEX_GPT_61_SOL_CONTEXT = 500000;
 	const CODEX_GPT_56_CONTEXT = 272000;
-	const CODEX_SPARK_CONTEXT = 128000;
 	const CODEX_MAX_TOKENS = 128000;
 	const codexModels: Model<"openai-codex-responses">[] = [
 		{
@@ -3184,30 +3219,6 @@ async function generateModels() {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: withOpenAiLongContextPricing(OPENAI_STANDARD_COSTS["gpt-6-luna"]),
-			contextWindow: CODEX_CONTEXT,
-			maxTokens: CODEX_MAX_TOKENS,
-		},
-		{
-			id: "gpt-5.3-codex-spark",
-			name: "GPT-5.3 Codex Spark",
-			api: "openai-codex-responses",
-			provider: "openai-codex",
-			baseUrl: CODEX_BASE_URL,
-			reasoning: true,
-			input: ["text"],
-			cost: { input: 1.75, output: 14, cacheRead: 0.175, cacheWrite: 0 },
-			contextWindow: CODEX_SPARK_CONTEXT,
-			maxTokens: CODEX_MAX_TOKENS,
-		},
-		{
-			id: "gpt-5.5",
-			name: "GPT-5.5",
-			api: "openai-codex-responses",
-			provider: "openai-codex",
-			baseUrl: CODEX_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: withOpenAiLongContextPricing({ input: 5, output: 30, cacheRead: 0.5, cacheWrite: 0 }),
 			contextWindow: CODEX_CONTEXT,
 			maxTokens: CODEX_MAX_TOKENS,
 		},

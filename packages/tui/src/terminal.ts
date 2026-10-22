@@ -81,6 +81,8 @@ export interface Terminal {
 
 	// Stop the terminal and restore state
 	stop(): void;
+	/** Restore terminal modes synchronously if the process exits before stop(). */
+	restoreOnExit?(before: string, after: string): void;
 
 	/**
 	 * Drain stdin before exiting to prevent Kitty key release events from
@@ -515,6 +517,20 @@ export class ProcessTerminal implements Terminal {
 		// Restore raw mode state
 		if (process.stdin.setRawMode) {
 			process.stdin.setRawMode(this.wasRaw);
+		}
+	}
+
+	restoreOnExit(before: string, after: string): void {
+		let sequence = before;
+		if (this.progressInterval) sequence += TERMINAL_PROGRESS_CLEAR_SEQUENCE;
+		sequence += "\x1b[?2004l";
+		if (this.keyboardProtocolPushed || this._kittyProtocolActive) sequence += "\x1b[<u";
+		if (this._modifyOtherKeysActive) sequence += "\x1b[>4;0m";
+		sequence += after;
+		try {
+			fs.writeSync(process.stdout.fd, sequence);
+		} catch {
+			// The terminal may already be gone.
 		}
 	}
 

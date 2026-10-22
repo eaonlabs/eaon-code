@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-10-22
+
+### Added
+
+- Added Rex terminal support for truecolor, OSC 8 hyperlinks, and Kitty images.
+
+### Fixed
+
+- Restored terminal modes if the process exits before the normal TUI shutdown runs.
+
 ## [1.1.3] - 2026-10-16
 
 ### Added

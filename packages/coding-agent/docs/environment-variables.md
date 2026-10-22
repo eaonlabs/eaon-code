@@ -42,6 +42,7 @@ Custom tools created with `createBashTool()` or `createPowerShellTool()` expose 
 | `EAON_CODE_SHARE_VIEWER_URL` | Optional `/share` viewer base URL; legacy alias: `PI_SHARE_VIEWER_URL` |
 | `EAON_CODE_SERVER_DIR`, `EAON_CODE_SERVER_ID` | Configure the source-only [experimental remote harness](development.md#experimental-remote-harness); legacy aliases: `PI_SERVER_DIR`, `PI_SERVER_ID` |
 | `EAON_CODE_EXPERIMENTAL` | Enable source-only experimental CLI features; legacy alias: `PI_EXPERIMENTAL` |
+| `EAON_CODE_CODEMODE_MAX_WORKERS` | Maximum number of codemode workers active across sessions in one process (default `2`); legacy alias: `PI_CODEMODE_MAX_WORKERS` |
 | `PI_CACHE_RETENTION` | Legacy setting: use `long` for extended provider prompt caching where supported |
 | `PI_RADIUS_GATEWAY` | Legacy override for the Radius gateway; its default remains part of the Radius integration |
 

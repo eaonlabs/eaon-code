@@ -13,7 +13,7 @@ A script can start with an options line:
 ```
 
 - `max_output_tokens` defaults to 10000 and limits returned output. Longer output keeps its start and end; the full text is written to a temporary file whose path is included in the result.
-- `timeout_ms` sets a deadline for the script. Image generation can take minutes, so avoid a short deadline for scripts that generate images.
+- `timeout_ms` sets a deadline for the whole script, including any wait for a free worker. Image generation can take minutes, so avoid a short deadline for scripts that generate images.
 
 The result includes whether the script completed, its wall time, and its output. A failed script keeps partial output and includes the script error. Tool calls are real and are not undone when a script fails. Calls still running when the script ends are cancelled.
 
@@ -106,4 +106,4 @@ Do not print base64 image data as text. The `image()` helper accepts PNG, JPEG, 
 
 ## Limits
 
-Scripts run in a 256 MB sandbox. Filter or summarize large data instead of accumulating it. A script cannot start another `codemode` script, and it cannot use timers to wait for work that is not represented by a pending tool call.
+Scripts run in a 256 MB sandbox. At most two workers can run across all sessions in one process; `EAON_CODE_CODEMODE_MAX_WORKERS` can raise that limit (`PI_CODEMODE_MAX_WORKERS` remains an alias). At capacity, scripts wait in arrival order for up to 60 seconds, or until their `timeout_ms` expires. A cancelled worker keeps its slot until it exits. Filter or summarize large data instead of accumulating it. A script cannot start another `codemode` script, and it cannot use timers to wait for work that is not represented by a pending tool call.
