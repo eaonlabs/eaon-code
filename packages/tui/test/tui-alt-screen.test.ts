@@ -5,6 +5,7 @@ import {
 	AltScreenSearchIndex,
 	findAltScreenSearchMatches,
 } from "../src/alt-screen-search.ts";
+import { Box } from "../src/components/box.ts";
 import { HStack } from "../src/components/h-stack.ts";
 import { Image } from "../src/components/image.ts";
 import { MouseRegion } from "../src/components/mouse-region.ts";
@@ -1056,6 +1057,52 @@ describe("TuiAltScreen", () => {
 		assert.ok(
 			terminal.events.some(
 				(event) => event.type === "write" && event.data.includes("i=123") && event.data.includes("y=66,h=34,r=1"),
+			),
+		);
+
+		tui.stop();
+	});
+
+	it("crops a Kitty image in a padded, colored box whose first line is above the viewport", async () => {
+		const terminal = new RecordingTerminal(20, 3);
+		const tui = new TuiAltScreen(terminal);
+		const imageId = 11271;
+		const imageLine = encodeKitty("AAAA", { columns: 2, rows: 3, imageId, moveCursor: false });
+		registerKittyImageMetadata({ imageId, columns: 2, rows: 3, widthPx: 100, heightPx: 100 });
+		const box = new Box(1, 0, (text: string) => `\x1b[44m${text}\x1b[49m`);
+		box.addChild({ render: () => [imageLine, "", ""], invalidate: () => {} });
+		tui.addChild({ render: () => ["before"], invalidate: () => {} });
+		tui.addChild(box);
+		tui.addChild({ render: () => ["after", "end"], invalidate: () => {} });
+		tui.start();
+		await terminal.waitForRender();
+
+		assert.strictEqual(tui.viewportTop, 3);
+		assert.ok(
+			terminal.events.some(
+				(event) => event.type === "write" && event.data.includes("i=11271") && event.data.includes("y=66,h=34,r=1"),
+			),
+		);
+
+		tui.stop();
+	});
+
+	it("crops a Kitty image whose placeholder rows contain text when its first line is above the viewport", async () => {
+		// Regression test for #11271: borders or side-by-side text on placeholder rows stopped the search.
+		const terminal = new RecordingTerminal(20, 3);
+		const tui = new TuiAltScreen(terminal);
+		const imageId = 11272;
+		const imageLine = encodeKitty("AAAA", { columns: 2, rows: 3, imageId, moveCursor: false });
+		registerKittyImageMetadata({ imageId, columns: 2, rows: 3, widthPx: 100, heightPx: 100 });
+		tui.addChild({ render: () => ["before", imageLine, "   | side", "   | side"], invalidate: () => {} });
+		tui.addChild({ render: () => ["after", "end"], invalidate: () => {} });
+		tui.start();
+		await terminal.waitForRender();
+
+		assert.strictEqual(tui.viewportTop, 3);
+		assert.ok(
+			terminal.events.some(
+				(event) => event.type === "write" && event.data.includes("i=11272") && event.data.includes("y=66,h=34,r=1"),
 			),
 		);
 
