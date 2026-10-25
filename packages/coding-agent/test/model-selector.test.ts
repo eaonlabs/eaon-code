@@ -50,7 +50,10 @@ describe("model selector", () => {
 				?.trimEnd();
 
 		expect(getModelRow("current-model")).toBe(`→ ✓ current-model [${currentModel.provider}]`);
-		selector.handleInput("\x1b[B");
+		// Built-in models can sort between the test models, so step until browsed-model is highlighted.
+		for (let step = 0; step < 20 && !getModelRow("browsed-model")?.startsWith("→"); step++) {
+			selector.handleInput("\x1b[B");
+		}
 		expect(getModelRow("current-model")).toBe(`  ✓ current-model [${currentModel.provider}]`);
 		expect(getModelRow("browsed-model")).toBe(`→   browsed-model [${currentModel.provider}]`);
 		selector.dispose();

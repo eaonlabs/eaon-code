@@ -64,9 +64,12 @@ describe("model selector filter resets selection to top", () => {
 		// Current model (alpha-1) is sorted first, so selection starts on row 0.
 		expect(selectedModelId(stripAnsi(selector.render(120).join("\n")))).toBe("alpha-1");
 
-		// Move selection down two rows to alpha-3.
-		selector.handleInput("\x1b[B");
-		selector.handleInput("\x1b[B");
+		// Move selection down to alpha-3. Built-in models (for example Eaon's free models) can sort
+		// between the test models, so step until alpha-3 is highlighted rather than a fixed count.
+		for (let step = 0; step < 20; step++) {
+			if (selectedModelId(stripAnsi(selector.render(120).join("\n"))) === "alpha-3") break;
+			selector.handleInput("\x1b[B");
+		}
 		expect(selectedModelId(stripAnsi(selector.render(120).join("\n")))).toBe("alpha-3");
 
 		// Type a query that matches the three alpha models. The selection must
