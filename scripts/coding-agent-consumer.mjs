@@ -30,16 +30,17 @@ export function packReleasePackages(packages, tarballDirectory) {
 	for (const pkg of packages) {
 		const manifest = JSON.parse(readFileSync(join(pkg.directory, "package.json"), "utf8"));
 		if (manifest.name !== pkg.name) throw new Error(`Unexpected package name in ${pkg.directory}`);
-		const output = run("npm", ["pack", "--ignore-scripts", "--json", "--pack-destination", tarballDirectory], { cwd: pkg.directory });
-		// npm <11.6 returns an array; newer npm can return an object keyed by package name.
-		const parsed = JSON.parse(output);
-		const packed = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
-		tarballs.set(pkg.name, join(tarballDirectory, packed.filename));
+		run("bun", ["pm", "pack", "--ignore-scripts", "--destination", tarballDirectory], { cwd: pkg.directory });
+		// Same naming as npm pack: @scope/name@version becomes scope-name-version.tgz.
+		const filename = `${pkg.name.replace(/^@/, "").replace("/", "-")}-${manifest.version}.tgz`;
+		const path = join(tarballDirectory, filename);
+		if (!existsSync(path)) throw new Error(`bun pm pack did not write ${path}`);
+		tarballs.set(pkg.name, path);
 	}
 	return tarballs;
 }
 
-export function installCodingAgentConsumer(directory, tarballs, packageManager = "npm") {
+export function installCodingAgentConsumer(directory, tarballs, packageManager = "bun") {
 	mkdirSync(directory, { recursive: true });
 	const overrides = Object.fromEntries([...tarballs].map(([name, path]) => [
 		name, `file:./${relative(directory, path).replaceAll("\\", "/")}`,
