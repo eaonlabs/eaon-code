@@ -61,7 +61,9 @@ cleanup_build_generated_model_sources() {
 trap cleanup_build_generated_model_sources EXIT
 
 # Lifecycle scripts are intentionally skipped — see README supply-chain notes.
-npm install --ignore-scripts
+# npm ci installs from the lockfile without rewriting it. npm install rewrites
+# package-lock.json, and that tracked change would block every later update.
+npm ci --ignore-scripts
 
 echo "Building Eaon Code…"
 # Build only what the CLI needs: deps first, then the coding agent bundle.
