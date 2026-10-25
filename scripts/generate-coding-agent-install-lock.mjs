@@ -3,12 +3,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readNpmStyleLock } from "./lib/bun-lock.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
 const codingAgentDir = join(repoRoot, "packages/coding-agent");
 const outputDir = join(codingAgentDir, "install-lock");
-const rootLockfilePath = join(repoRoot, "package-lock.json");
+const rootLockfilePath = join(repoRoot, "bun.lock");
 const outputPackageJsonPath = join(outputDir, "package.json");
 const outputLockfilePath = join(outputDir, "package-lock.json");
 const internalPackagePrefix = "@eaonlabs/eaon-";
@@ -282,7 +283,7 @@ function validateGeneratedFiles(installerPackageJson, installLock, internalNames
 	const seenAllowedInstallScriptPackages = new Set();
 
 	if (installLock.lockfileVersion !== 3) {
-		errors.push("package-lock.json must use lockfileVersion 3");
+		errors.push("install-lock must use lockfileVersion 3");
 	}
 	if (installLock.name !== installerPackageJson.name) {
 		errors.push(`lockfile name ${installLock.name} does not match package.json name ${installerPackageJson.name}`);
@@ -376,12 +377,7 @@ function validateGeneratedFiles(installerPackageJson, installLock, internalNames
 }
 
 function generateInstallLock() {
-	const rootLock = readJson(rootLockfilePath);
-	if (rootLock.lockfileVersion !== 3 || !rootLock.packages) {
-		throw new Error("package-lock.json must be lockfileVersion 3 and contain a packages map");
-	}
-
-	const lockPackages = rootLock.packages;
+	const lockPackages = readNpmStyleLock(repoRoot).packages;
 	const codingAgentPackage = readJson(join(codingAgentDir, "package.json"));
 	const installerPackageJson = createInstallerPackageJson(codingAgentPackage);
 	const internalWorkspaces = getInternalWorkspaces(lockPackages);

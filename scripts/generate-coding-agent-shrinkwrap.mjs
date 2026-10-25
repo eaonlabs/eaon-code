@@ -3,11 +3,12 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readNpmStyleLock } from "./lib/bun-lock.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
 const codingAgentDir = join(repoRoot, "packages/coding-agent");
-const rootLockfilePath = join(repoRoot, "package-lock.json");
+const rootLockfilePath = join(repoRoot, "bun.lock");
 const shrinkwrapPath = join(codingAgentDir, "npm-shrinkwrap.json");
 const internalPackagePrefix = "@eaonlabs/eaon-";
 const internalPackageNames = new Set(["@eaonlabs/chord"]);
@@ -304,12 +305,7 @@ function validateShrinkwrap(shrinkwrap, internalNames) {
 }
 
 function generateShrinkwrap() {
-	const rootLock = readJson(rootLockfilePath);
-	if (rootLock.lockfileVersion !== 3 || !rootLock.packages) {
-		throw new Error("package-lock.json must be lockfileVersion 3 and contain a packages map");
-	}
-
-	const lockPackages = rootLock.packages;
+	const lockPackages = readNpmStyleLock(repoRoot).packages;
 	const codingAgentPackage = readJson(join(codingAgentDir, "package.json"));
 	const internalWorkspaces = getInternalWorkspaces(lockPackages);
 	const shrinkwrapPackages = {

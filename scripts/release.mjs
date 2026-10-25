@@ -70,33 +70,6 @@ function shellQuote(value) {
 	return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
-function removeStaleWorkspaceLockEntries() {
-	const workspaceVersions = new Map(
-		getPublicWorkspacePackages().map((pkg) => [pkg.name, pkg.version]),
-	);
-	const lockPath = "package-lock.json";
-	const lock = JSON.parse(readFileSync(lockPath, "utf8"));
-	let removed = 0;
-
-	for (const [path, pkg] of Object.entries(lock.packages)) {
-		if (!path.startsWith("packages/") || pkg.link === true) {
-			continue;
-		}
-		for (const [name, version] of workspaceVersions) {
-			if (path.endsWith(`/node_modules/${name}`) && pkg.version !== version) {
-				delete lock.packages[path];
-				removed++;
-				break;
-			}
-		}
-	}
-
-	if (removed > 0) {
-		writeFileSync(lockPath, `${JSON.stringify(lock, null, "\t")}\n`);
-		console.log(`Removed ${removed} stale workspace package lock ${removed === 1 ? "entry" : "entries"}.`);
-	}
-}
-
 function stageChangedFiles() {
 	const output = run("git ls-files -m -o -d --exclude-standard", { silent: true });
 	const paths = [...new Set((output || "").split("\n").map((line) => line.trim()).filter(Boolean))];
@@ -124,9 +97,8 @@ function bumpOrSetVersion(target) {
 	}
 
 	// The version bump can temporarily leave the previous workspace versions in the lockfile before
-	// sync-versions updates inter-package ranges. Remove those stale lock entries,
+	// sync-versions updates inter-package ranges.
 	// refresh the lockfile, then hydrate from the final dependency graph.
-	removeStaleWorkspaceLockEntries();
 	run("bun install --lockfile-only --ignore-scripts");
 	run("bun install --frozen-lockfile --ignore-scripts");
 	return getVersion();

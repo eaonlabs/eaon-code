@@ -115,7 +115,8 @@ tar -tzf "$temporary_archive" > "$manifest"
 
 required_paths=(
     "package.json"
-    "package-lock.json"
+    "bun.lock"
+    "bunfig.toml"
     "scripts/build-binaries.sh"
     "packages/ai/src/models.generated.ts"
     "packages/ai/src/image-models.generated.ts"
