@@ -26,10 +26,8 @@ describe("isSafeCommand", () => {
 			expect(isSafeCommand("git branch")).toBe(true);
 		});
 
-		it("allows npm/yarn read commands", () => {
-			expect(isSafeCommand("npm list")).toBe(true);
-			expect(isSafeCommand("npm outdated")).toBe(true);
-			expect(isSafeCommand("yarn info react")).toBe(true);
+		it("allows bun package listing", () => {
+			expect(isSafeCommand("bun pm ls")).toBe(true);
 		});
 
 		it("allows other safe commands", () => {
@@ -60,8 +58,7 @@ describe("isSafeCommand", () => {
 		});
 
 		it("blocks package manager installs", () => {
-			expect(isSafeCommand("npm install lodash")).toBe(false);
-			expect(isSafeCommand("yarn add react")).toBe(false);
+			expect(isSafeCommand("bun install lodash")).toBe(false);
 			expect(isSafeCommand("bun install")).toBe(false);
 			expect(isSafeCommand("bun add react")).toBe(false);
 			expect(isSafeCommand("pip install requests")).toBe(false);
@@ -107,7 +104,7 @@ describe("cleanStepText", () => {
 	});
 
 	it("removes markdown code", () => {
-		expect(cleanStepText("run `npm install`")).toBe("Npm install"); // "run" is stripped as action word
+		expect(cleanStepText("run `bun install`")).toBe("Bun install"); // "run" is stripped as action word
 		expect(cleanStepText("check the `config.json` file")).toBe("Config.json file");
 	});
 
@@ -187,7 +184,7 @@ Plan:
 
 	it("filters out code-like items", () => {
 		const message = `Plan:
-1. \`npm install\`
+1. \`bun install\`
 2. Run the build process`;
 
 		const items = extractTodoItems(message);

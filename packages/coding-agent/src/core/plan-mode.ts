@@ -39,9 +39,6 @@ export function isDestructiveBash(command: string): boolean {
 		/\bsudo\b/i,
 		/\btee\b/i,
 		/\bdd\b/i,
-		/\bnpm\s+(install|uninstall|update|ci|publish)/i,
-		/\byarn\s+(add|remove|install|publish)/i,
-		/\bpnpm\s+(add|remove|install|publish)/i,
 		/\bbun\s+(add|remove|install|link|unlink|update|publish)\b/i,
 		/\bpip\s+(install|uninstall)/i,
 		/\bgit\s+(add|commit|push|pull|merge|rebase|reset|checkout|stash|cherry-pick|revert|tag|init|clone)/i,
@@ -56,7 +53,7 @@ export function isReadOnlyBash(command: string): boolean {
 	const safe = [
 		/^\s*(cat|head|tail|less|more|grep|rg|find|fd|ls|pwd|echo|printf|wc|sort|uniq|diff|file|stat|du|df|tree|which|type|env|printenv|uname|whoami|id|date|uptime|ps)\b/,
 		/^\s*git\s+(status|log|diff|show|branch|remote|config\s+--get)/i,
-		/^\s*(npm|pnpm|yarn)\s+(ls|list|view|info|outdated)/i,
+		/^\s*bun\s+pm\s+(ls|bin)\b/i,
 	];
 	return safe.some((re) => re.test(command.trim()));
 }

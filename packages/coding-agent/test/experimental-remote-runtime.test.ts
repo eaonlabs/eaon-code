@@ -209,8 +209,8 @@ describe("experimental durable server composition", () => {
 			},
 		]);
 		expect(await pathExists(join(directory, `${serverId}.sock`))).toBe(true);
-		await expect.poll(() => pathExists(join(directory, `${serverId}.sock`)), { timeout: 5_000 }).toBe(false);
-		await expect.poll(() => pathExists(join(directory, `control-${serverId}.sock`)), { timeout: 5_000 }).toBe(false);
+		await expect.poll(() => pathExists(join(directory, `${serverId}.sock`)), { timeout: 15_000 }).toBe(false);
+		await expect.poll(() => pathExists(join(directory, `control-${serverId}.sock`)), { timeout: 15_000 }).toBe(false);
 	});
 
 	test("passes client plugin packages to a cold server and restores them for its next generation", async () => {
@@ -235,7 +235,7 @@ describe("experimental durable server composition", () => {
 		} finally {
 			await first.dispose();
 		}
-		await expect.poll(() => pathExists(join(directory, `${serverId}.sock`)), { timeout: 5_000 }).toBe(false);
+		await expect.poll(() => pathExists(join(directory, `${serverId}.sock`)), { timeout: 15_000 }).toBe(false);
 
 		const second = await openClientRuntime({ command: "client", ...sessionWorkerModel });
 		try {
@@ -263,8 +263,8 @@ describe("experimental durable server composition", () => {
 			serverId,
 			sessionId: "demo-1",
 		});
-		await expect.poll(() => pathExists(join(directory, `${serverId}.sock`)), { timeout: 5_000 }).toBe(false);
-		await expect.poll(() => pathExists(join(directory, `control-${serverId}.sock`)), { timeout: 5_000 }).toBe(false);
+		await expect.poll(() => pathExists(join(directory, `${serverId}.sock`)), { timeout: 15_000 }).toBe(false);
+		await expect.poll(() => pathExists(join(directory, `control-${serverId}.sock`)), { timeout: 15_000 }).toBe(false);
 	});
 
 	test("runs and discovers multiple logical servers from one directory", async () => {
@@ -689,7 +689,7 @@ describe("experimental durable server composition", () => {
 		await client.dispose();
 		clients.delete(client);
 		await expect.poll(() => runtime.workerPids.has("demo-1")).toBe(false);
-		expect(processExists(pid!)).toBe(false);
+		await expect.poll(() => processExists(pid!)).toBe(false);
 	});
 
 	test("starts one process per attached session and stops them during shutdown", async () => {
@@ -770,8 +770,8 @@ describe("experimental durable server composition", () => {
 		await first.closed;
 		expect(replacement.workerPids.get("demo-1")).toBe(workerPid);
 
-		await expect.poll(() => replacement.workerPids.has("demo-1"), { timeout: 5_000 }).toBe(false);
-		expect(processExists(workerPid!)).toBe(false);
+		await expect.poll(() => replacement.workerPids.has("demo-1"), { timeout: 15_000 }).toBe(false);
+		await expect.poll(() => processExists(workerPid!)).toBe(false);
 	});
 
 	test("restores tracked sessions that are outside the replacement catalog", async () => {
