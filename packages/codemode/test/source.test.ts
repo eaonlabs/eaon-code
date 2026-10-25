@@ -25,8 +25,9 @@ describe("parseCodemodeSource", () => {
 	});
 
 	it("only treats the first line as an options line", () => {
-		const input = 'text(1)\n// @options: {"timeout_ms": 1}';
-		expect(parseCodemodeSource(input)).toEqual({ code: input, options: {} });
+		expect(() => parseCodemodeSource('text(1)\n// @options: {"timeout_ms": 1}')).toThrow(
+			/must be the first line of the input; found one on line 2/,
+		);
 		expect(parseCodemodeSource("// @optionsx {}\ntext(1)").options).toEqual({});
 	});
 
