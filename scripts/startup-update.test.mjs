@@ -30,6 +30,7 @@ test("checks installer source updates and keeps installer output hidden", (t) =>
 	const remote = join(tempRoot, "remote.git");
 	const checkout = join(tempRoot, "checkout");
 	const installLog = join(tempRoot, "install.log");
+	const updateLog = join(tempRoot, "eaon-code-update.log");
 	const installFailureMarker = join(tempRoot, "install-failed-once");
 	mkdirSync(upstream, { recursive: true });
 	execFileSync("git", ["init", "--initial-branch=main", upstream], { stdio: "ignore" });
@@ -41,6 +42,7 @@ test("checks installer source updates and keeps installer output hidden", (t) =>
 		join(upstream, "install.sh"),
 		String.raw`if [ ! -f "$EAON_CODE_TEST_INSTALL_FAILURE" ]; then
   : > "$EAON_CODE_TEST_INSTALL_FAILURE"
+  printf "installer failed\\n" >&2
   exit 23
 fi
 git -C "$EAON_CODE_PREFIX" reset --hard FETCH_HEAD -q
@@ -106,6 +108,9 @@ printf "installer output must stay hidden\\n"`,
 	assert.equal(failedInstall.stdout, "start\n");
 	assert.equal(failedInstall.stderr, "");
 	assert.equal(existsSync(installLog), false);
+	// A failed background install is not shown in the terminal, but its output is kept in the log.
+	const failureLogged = waitFor(() => existsSync(updateLog) && readFileSync(updateLog, "utf8").includes("installer failed"));
+	assert.equal(failureLogged, true, "failed installer output was not written to the update log");
 
 	const updated = runHelper("start");
 	assert.equal(updated.status, 0);
@@ -115,6 +120,8 @@ printf "installer output must stay hidden\\n"`,
 	const installed = waitFor(() => existsSync(installLog));
 	assert.equal(installed, true, "background installer did not run");
 	assert.equal(readFileSync(installLog, "utf8"), "installed\n");
+	const successLogged = waitFor(() => readFileSync(updateLog, "utf8").includes("installer output must stay hidden"));
+	assert.equal(successLogged, true, "installer output was not written to the update log");
 
 	const currentAfterUpdate = runHelper("start");
 	assert.equal(currentAfterUpdate.status, 0);

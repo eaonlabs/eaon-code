@@ -1,10 +1,28 @@
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { closeSync, existsSync, openSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const INSTALL_MARKER_KIND = "eaon-code-source-install";
 const INSTALL_MARKER_PATH = join(".git", "eaon-code-install.json");
+const UPDATE_LOG_NAME = "eaon-code-update.log";
+
+// install.sh needs node and bun on PATH. A launcher started from a GUI or a minimal shell may not
+// have them, so the installer also gets the node running this script and the usual install paths.
+function installerPath() {
+	const extra = [dirname(process.execPath), "/opt/homebrew/bin", "/usr/local/bin", join(homedir(), ".bun", "bin")];
+	return [...extra, process.env.PATH ?? ""].filter(Boolean).join(delimiter);
+}
+
+// The log sits beside the checkout, not inside it, so it cannot make the checkout look dirty.
+function openUpdateLog(root) {
+	try {
+		return openSync(join(dirname(root), UPDATE_LOG_NAME), "a");
+	} catch {
+		return "ignore";
+	}
+}
 
 function readInstallConfig(root) {
 	if (!existsSync(join(root, "install.sh"))) return undefined;
@@ -59,12 +77,15 @@ function checkForSourceUpdate(root, config) {
 	if (!latestCommit || latestCommit === (config.installedCommit ?? currentCommit)) return;
 
 	// Run the update in the background. A blocking install would hold the CLI at startup for the
-	// whole build. The new build applies the next time the command starts.
+	// whole build. The new build applies the next time the command starts. Installer output goes to
+	// the update log, so a failed update leaves a trace without printing to the terminal.
+	const log = openUpdateLog(root);
 	const installer = spawn("bash", [join(root, "install.sh")], {
 		detached: true,
-		stdio: "ignore",
+		stdio: ["ignore", log, log],
 		env: {
 			...process.env,
+			PATH: installerPath(),
 			EAON_CODE_PREFIX: root,
 			EAON_CODE_REPO: config.repo,
 			EAON_CODE_REF: config.ref,
@@ -72,6 +93,7 @@ function checkForSourceUpdate(root, config) {
 		},
 	});
 	installer.unref();
+	if (typeof log === "number") closeSync(log);
 }
 
 function shouldCheck(args) {
