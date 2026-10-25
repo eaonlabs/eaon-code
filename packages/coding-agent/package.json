@@ -35,8 +35,7 @@
 		"schemas",
 		"examples",
 		"containerization.md",
-		"CHANGELOG.md",
-		"npm-shrinkwrap.json"
+		"CHANGELOG.md"
 	],
 	"scripts": {
 		"clean": "shx rm -rf dist",
@@ -48,8 +47,7 @@
 		"test": "vitest --run",
 		"generate:schemas": "node --import ./src/experimental/source-resolver.ts scripts/generate-schemas.ts",
 		"generate:references": "node --import ./src/experimental/source-resolver.ts scripts/generate-references.ts",
-		"shrinkwrap": "node ../../scripts/generate-coding-agent-shrinkwrap.mjs",
-		"prepublishOnly": "bun run clean && bun run build && bun run shrinkwrap"
+		"prepublishOnly": "bun run clean && bun run build"
 	},
 	"dependencies": {
 		"@eaonlabs/chord": "^1.1.7",

@@ -9,15 +9,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { findPackageDirectories } from "./package-workspaces.mjs";
 
-const GENERATED_PACKAGE_SUFFIXES = [join("coding-agent", "install-lock")];
-
 const packageRoot = process.argv[2] ?? "packages";
-const workspacePackages = findPackageDirectories(packageRoot)
-	.filter((directory) => !GENERATED_PACKAGE_SUFFIXES.some((suffix) => directory.endsWith(suffix)))
-	.map((directory) => {
-		const path = join(directory, "package.json");
-		return { data: JSON.parse(readFileSync(path, "utf8")), path };
-	});
+const workspacePackages = findPackageDirectories(packageRoot).map((directory) => {
+	const path = join(directory, "package.json");
+	return { data: JSON.parse(readFileSync(path, "utf8")), path };
+});
 const publishedPackages = workspacePackages.filter((pkg) => pkg.data.private !== true);
 const versionMap = new Map(workspacePackages.map((pkg) => [pkg.data.name, pkg.data.version]));
 

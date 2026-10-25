@@ -189,8 +189,6 @@ console.log();
 console.log("Regenerating release artifacts...");
 run("bun run generate:models");
 run("bun run check:model-data");
-run("bun run shrinkwrap:coding-agent");
-run("bun run install-lock:coding-agent");
 console.log();
 
 // 5. Run checks and tests

@@ -8,8 +8,6 @@ import { pathToFileURL } from "node:url";
 import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 const RELEASES_PREFIX = "releases/v1";
-const INSTALLER_PREFIX = "installer/v1";
-const INSTALLER_PACKAGE_NAME = "@eaonlabs/eaon-code-install";
 const REGISTRY_URL = "https://registry.npmjs.org";
 const RETRY_DELAY_MS = 5000;
 const RETRY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -20,8 +18,6 @@ function parseArgs(args) {
 	const options = {
 		bucket: undefined,
 		endpoint: undefined,
-		installerPackageJson: undefined,
-		installerPackageLock: undefined,
 		sourceCommit: undefined,
 		version: undefined,
 	};
@@ -31,8 +27,6 @@ function parseArgs(args) {
 		if (
 			arg !== "--bucket" &&
 			arg !== "--endpoint" &&
-			arg !== "--installer-package-json" &&
-			arg !== "--installer-package-lock" &&
 			arg !== "--source-commit" &&
 			arg !== "--version"
 		) {
@@ -44,8 +38,6 @@ function parseArgs(args) {
 			{
 				"--bucket": "bucket",
 				"--endpoint": "endpoint",
-				"--installer-package-json": "installerPackageJson",
-				"--installer-package-lock": "installerPackageLock",
 				"--source-commit": "sourceCommit",
 				"--version": "version",
 			}[arg]
@@ -56,9 +48,6 @@ function parseArgs(args) {
 	if (!options.endpoint) throw new Error("--endpoint is required");
 	if (!options.version || !STABLE_SEMVER_RE.test(options.version)) {
 		throw new Error("--version must be a stable semver version");
-	}
-	if (!options.installerPackageJson || !options.installerPackageLock) {
-		throw new Error("--installer-package-json and --installer-package-lock are required");
 	}
 	return options;
 }
@@ -221,24 +210,6 @@ function putJson(bucket, endpoint, path, key, cacheControl, condition) {
 	return putObject(bucket, endpoint, path, key, cacheControl, condition);
 }
 
-function validateInstallerArtifacts(packageJsonPath, packageLockPath, version) {
-	const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-	const packageLock = JSON.parse(readFileSync(packageLockPath, "utf8"));
-	const root = packageLock.packages?.[""];
-
-	if (packageJson.name !== INSTALLER_PACKAGE_NAME || packageJson.version !== version) {
-		throw new Error(`Installer package.json must describe ${INSTALLER_PACKAGE_NAME}@${version}`);
-	}
-	if (
-		packageLock.lockfileVersion !== 3 ||
-		packageLock.version !== version ||
-		root?.version !== version ||
-		root.dependencies?.["@eaonlabs/eaon-code"] !== version
-	) {
-		throw new Error(`Installer package-lock.json must describe Pi ${version}`);
-	}
-}
-
 export function compareReleaseVersions(left, right) {
 	const leftMatch = STABLE_SEMVER_RE.exec(left);
 	const rightMatch = STABLE_SEMVER_RE.exec(right);
@@ -302,57 +273,6 @@ async function main() {
 		}
 
 		writeFileSync(latestPath, `${JSON.stringify(release, null, "\t")}\n`);
-		validateInstallerArtifacts(options.installerPackageJson, options.installerPackageLock, options.version);
-		const installerReleasePrefix = `${INSTALLER_PREFIX}/releases/${options.version}`;
-		putObject(
-			options.bucket,
-			options.endpoint,
-			options.installerPackageJson,
-			`${installerReleasePrefix}/package.json`,
-			"public, max-age=31536000, immutable",
-			{ missing: true },
-		);
-		putObject(
-			options.bucket,
-			options.endpoint,
-			options.installerPackageLock,
-			`${installerReleasePrefix}/package-lock.json`,
-			"public, max-age=31536000, immutable",
-			{ missing: true },
-		);
-		putJson(
-			options.bucket,
-			options.endpoint,
-			releasePath,
-			`${installerReleasePrefix}/metadata.json`,
-			"public, max-age=31536000, immutable",
-			{ missing: true },
-		);
-		const installerLatest = await advanceLatestRelease(
-			options.version,
-			() =>
-				readLatestRelease(
-					options.bucket,
-					options.endpoint,
-					`${INSTALLER_PREFIX}/latest.json`,
-					join(temporaryDirectory, "installer-latest-current.json"),
-				),
-			(condition) =>
-				putJson(
-					options.bucket,
-					options.endpoint,
-					latestPath,
-					`${INSTALLER_PREFIX}/latest.json`,
-					"no-store",
-					condition,
-				),
-		);
-		console.log(
-			installerLatest.advanced
-				? `Published installer artifacts for Pi ${options.version} through s3://${options.bucket}/${INSTALLER_PREFIX}/latest.json`
-				: `Pi ${installerLatest.version} is already the latest installer release.`,
-		);
-
 		const result = await advanceLatestRelease(
 			options.version,
 			() =>

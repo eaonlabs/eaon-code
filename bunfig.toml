@@ -1,3 +1,7 @@
 [install]
 # Hoist like npm did, so packages resolve their transitive dependencies from the root.
 linker = "hoisted"
+# Pin added dependencies to exact versions.
+exact = true
+# Refuse versions published in the last two days (172800 seconds), the install security gate.
+minimumReleaseAge = 172800
