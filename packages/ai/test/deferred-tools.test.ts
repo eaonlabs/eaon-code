@@ -497,11 +497,12 @@ describe("deferred tools", () => {
 			context,
 			makeCodexToken(),
 		);
-		const toolSearch = await capturePayload<OpenAIPayload>(
-			getModel("openai-codex", "gpt-6.1-sol"),
-			context,
-			makeCodexToken(),
-		);
+		// Every Codex model in the catalog uses additional tools, so force tool search on one.
+		const toolSearchModel = {
+			...getModel("openai-codex", "gpt-6.1-sol"),
+			compat: { supportsAdditionalTools: false, supportsToolSearch: true },
+		};
+		const toolSearch = await capturePayload<OpenAIPayload>(toolSearchModel, context, makeCodexToken());
 		const noDeferredToolsModel = {
 			...getModel("openai-codex", "gpt-6.1-sol"),
 			compat: { supportsAdditionalTools: false, supportsToolSearch: false },
