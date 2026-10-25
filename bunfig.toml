@@ -1,0 +1,3 @@
+[install]
+# Hoist like npm did, so packages resolve their transitive dependencies from the root.
+linker = "hoisted"

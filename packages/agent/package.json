@@ -52,7 +52,7 @@
 		"test:harness": "vitest --run --config vitest.harness.config.ts",
 		"test:session:conformance": "vitest --run --config vitest.harness.config.ts test/harness/memory-conformance.test.ts",
 		"coverage:harness": "vitest --run --config vitest.harness.config.ts --coverage",
-		"prepublishOnly": "npm run build"
+		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {
 		"@eaonlabs/chord": "^1.1.7",

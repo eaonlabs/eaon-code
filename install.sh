@@ -18,7 +18,7 @@ die() {
 }
 
 command -v node >/dev/null 2>&1 || die "Node.js is required — install Node 22+ (e.g. brew install node), then re-run."
-command -v npm >/dev/null 2>&1 || die "npm is required — install Node 22+, then re-run."
+command -v bun >/dev/null 2>&1 || die "Bun is required — install Bun 1.3+ (https://bun.sh), then re-run."
 
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 if [ "$NODE_MAJOR" -lt 22 ]; then
@@ -61,24 +61,24 @@ cleanup_build_generated_model_sources() {
 trap cleanup_build_generated_model_sources EXIT
 
 # Lifecycle scripts are intentionally skipped — see README supply-chain notes.
-# npm ci installs from the lockfile without rewriting it. npm install rewrites
-# package-lock.json, and that tracked change would block every later update.
-npm ci --ignore-scripts
+# bun install --frozen-lockfile installs exactly what bun.lock records and never rewrites it.
+# A rewritten lockfile is a tracked change, and it would block every later update.
+bun install --frozen-lockfile --ignore-scripts
 
 echo "Building Eaon Code…"
 # Build only what the CLI needs: deps first, then the coding agent bundle.
-npm --prefix packages/chord run build
-npm --prefix packages/tui run build
-npm --prefix packages/telemetry run build
-npm --prefix packages/ai run build:offline 2>/dev/null || npm --prefix packages/ai run build
-npm --prefix packages/agent run build
-npm --prefix packages/session-backends/sqlite-node run build
-npm --prefix packages/protocol run build
-npm --prefix packages/client run build
-npm --prefix packages/server run build
-npm --prefix packages/mcp run build
-npm --prefix packages/codemode run build
-npm --prefix packages/coding-agent run build
+bun --cwd packages/chord run build
+bun --cwd packages/tui run build
+bun --cwd packages/telemetry run build
+bun --cwd packages/ai run build:offline 2>/dev/null || bun --cwd packages/ai run build
+bun --cwd packages/agent run build
+bun --cwd packages/session-backends/sqlite-node run build
+bun --cwd packages/protocol run build
+bun --cwd packages/client run build
+bun --cwd packages/server run build
+bun --cwd packages/mcp run build
+bun --cwd packages/codemode run build
+bun --cwd packages/coding-agent run build
 
 CLI="$AGENT_DIR/dist/bundle/cli.js"
 [ -f "$CLI" ] || die "build finished but $CLI is missing"

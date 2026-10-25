@@ -27,7 +27,7 @@
 		"build": "tsgo -p tsconfig.build.json",
 		"test": "vitest --run",
 		"typecheck": "tsgo -p tsconfig.test.json",
-		"prepublishOnly": "npm run clean && npm run build"
+		"prepublishOnly": "bun run clean && bun run build"
 	},
 	"keywords": [
 		"pi",
