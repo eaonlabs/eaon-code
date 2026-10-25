@@ -74,7 +74,7 @@
 		"proper-lockfile": "4.1.2",
 		"semver": "7.8.5",
 		"typebox": "1.3.27",
-		"undici": "8.10.2",
+		"undici": "8.12.3",
 		"yaml": "2.9.0",
 		"@eaonlabs/eaon-codemode": "^1.1.6",
 		"@eaonlabs/eaon-mcp": "^1.1.6",
@@ -95,7 +95,7 @@
 		"marked": "18.0.11",
 		"shx": "0.4.0",
 		"typescript": "5.9.3",
-		"vitest": "4.1.9"
+		"vitest": "4.1.12"
 	},
 	"keywords": [
 		"coding-agent",

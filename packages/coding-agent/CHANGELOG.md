@@ -7,6 +7,9 @@
 - Model selectors show model names when they add information beyond the id.
 - Markdown transformer context includes `messageId` and `timestamp`.
 
+### Changed
+- Updated `undici` to 8.12.3 for upstream security fixes.
+
 ### Fixed
 - HTML export renders system messages and sessions deeper than the call stack.
 - `pi.exec` keeps spawn errors and decodes output across UTF-8 chunk boundaries.

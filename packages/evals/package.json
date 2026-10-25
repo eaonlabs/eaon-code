@@ -15,6 +15,6 @@
 		"shx": "0.4.0",
 		"typescript": "5.9.3",
 		"vitest-evals": "0.15.0",
-		"vitest": "4.1.9"
+		"vitest": "4.1.12"
 	}
 }

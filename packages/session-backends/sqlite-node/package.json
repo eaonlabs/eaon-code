@@ -39,7 +39,7 @@
 		"@eaonlabs/eaon-agent-core": "^1.1.6"
 	},
 	"devDependencies": {
-		"@vitest/coverage-v8": "4.1.9",
-		"vitest": "4.1.9"
+		"@vitest/coverage-v8": "4.1.12",
+		"vitest": "4.1.12"
 	}
 }
