@@ -13,6 +13,7 @@ import type {
 	AnthropicAllowedFallbackModel,
 	ChatTemplateKwargValue,
 	SessionAffinityFormat,
+	SystemOneCompat,
 	ThinkingTokenBudgetField,
 } from "./providers/compat-schema.ts";
 import type {
@@ -30,6 +31,7 @@ export type {
 	AnthropicAllowedFallbackModel,
 	ChatTemplateKwargValue,
 	SessionAffinityFormat,
+	SystemOneCompat,
 	ThinkingTokenBudgetField,
 } from "./providers/compat-schema.ts";
 export type {
@@ -1189,6 +1191,8 @@ export interface ImageModel<TApi extends ImageApi> extends BaseModel<TApi> {
 export interface ClassifierModel<TApi extends ClassifierApi> extends BaseModel<TApi> {
 	type: "classifier";
 	contextWindow: number;
+	/** Compatibility overrides for System One APIs. If not set, auto-detected from provider, baseUrl, and id. */
+	compat?: TApi extends "typesafe-system-one" | "cloudflare-workers-ai-system-one" ? SystemOneCompat : never;
 }
 
 /** Model shape for each model type. */

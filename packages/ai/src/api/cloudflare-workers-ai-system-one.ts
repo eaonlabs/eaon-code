@@ -20,6 +20,13 @@ function cloudflareErrorMessage(errors: unknown): string {
  * wraps the model output in Cloudflare's API envelope and a run record:
  * `{ success, result: { state: "Completed", result: { answers, usage } } }`.
  * https://developers.cloudflare.com/ai/models/typesafe/jev/
+ * Cloudflare-hosted models such as `@cf/cloudflare/clef` return the output directly:
+ * `{ success, result: { model, answers, usage } }`.
+ * https://developers.cloudflare.com/workers-ai/models/clef/
+ *
+ * Clef models take images as an `images` list of data URLs. TypeSafe's models take them as
+ * System One `assets`, without TypeSafe's opt-in header. The catalog sets `compat.imageInput`;
+ * the model ID check only covers models without it.
  */
 const transport: SystemOneTransport = {
 	api: "cloudflare-workers-ai-system-one",
@@ -33,13 +40,14 @@ const transport: SystemOneTransport = {
 	output: (body) => {
 		if (!isRecord(body)) throw new Error(`${LABEL} returned an unexpected response`);
 		if (body.success === false) throw new Error(cloudflareErrorMessage(body.errors));
-		const run = body.result;
-		if (!isRecord(run)) throw new Error(`${LABEL} returned an unexpected response`);
-		if (run.state !== "Completed") {
-			throw new Error(`${LABEL} run did not complete (state: ${String(run.state)})`);
+		const result = body.result;
+		if (!isRecord(result)) throw new Error(`${LABEL} returned an unexpected response`);
+		if ("answers" in result) return result;
+		if (result.state !== "Completed") {
+			throw new Error(`${LABEL} run did not complete (state: ${String(result.state)})`);
 		}
-		if (!isRecord(run.result)) throw new Error(`${LABEL} returned an unexpected response`);
-		return run.result;
+		if (!isRecord(result.result)) throw new Error(`${LABEL} returned an unexpected response`);
+		return result.result;
 	},
 };
 
