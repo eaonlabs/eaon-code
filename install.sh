@@ -67,18 +67,18 @@ bun install --frozen-lockfile --ignore-scripts
 
 echo "Building Eaon Code…"
 # Build only what the CLI needs: deps first, then the coding agent bundle.
-bun --cwd packages/chord run build
-bun --cwd packages/tui run build
-bun --cwd packages/telemetry run build
-bun --cwd packages/ai run build:offline 2>/dev/null || bun --cwd packages/ai run build
-bun --cwd packages/agent run build
-bun --cwd packages/session-backends/sqlite-node run build
-bun --cwd packages/protocol run build
-bun --cwd packages/client run build
-bun --cwd packages/server run build
-bun --cwd packages/mcp run build
-bun --cwd packages/codemode run build
-bun --cwd packages/coding-agent run build
+bun run --cwd packages/chord build
+bun run --cwd packages/tui build
+bun run --cwd packages/telemetry build
+bun run --cwd packages/ai build:offline 2>/dev/null || bun run --cwd packages/ai build
+bun run --cwd packages/agent build
+bun run --cwd packages/session-backends/sqlite-node build
+bun run --cwd packages/protocol build
+bun run --cwd packages/client build
+bun run --cwd packages/server build
+bun run --cwd packages/mcp build
+bun run --cwd packages/codemode build
+bun run --cwd packages/coding-agent build
 
 CLI="$AGENT_DIR/dist/bundle/cli.js"
 [ -f "$CLI" ] || die "build finished but $CLI is missing"
