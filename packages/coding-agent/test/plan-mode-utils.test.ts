@@ -62,6 +62,8 @@ describe("isSafeCommand", () => {
 		it("blocks package manager installs", () => {
 			expect(isSafeCommand("npm install lodash")).toBe(false);
 			expect(isSafeCommand("yarn add react")).toBe(false);
+			expect(isSafeCommand("bun install")).toBe(false);
+			expect(isSafeCommand("bun add react")).toBe(false);
 			expect(isSafeCommand("pip install requests")).toBe(false);
 			expect(isSafeCommand("brew install node")).toBe(false);
 		});

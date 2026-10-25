@@ -42,6 +42,7 @@ export function isDestructiveBash(command: string): boolean {
 		/\bnpm\s+(install|uninstall|update|ci|publish)/i,
 		/\byarn\s+(add|remove|install|publish)/i,
 		/\bpnpm\s+(add|remove|install|publish)/i,
+		/\bbun\s+(add|remove|install|link|unlink|update|publish)\b/i,
 		/\bpip\s+(install|uninstall)/i,
 		/\bgit\s+(add|commit|push|pull|merge|rebase|reset|checkout|stash|cherry-pick|revert|tag|init|clone)/i,
 		/\bkill\b/i,
