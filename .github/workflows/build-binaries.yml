@@ -299,7 +299,6 @@ jobs:
     environment: npm-publish
     permissions:
       contents: read
-      id-token: write
     env:
       RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
       SOURCE_REF: ${{ github.event.inputs.source_ref || github.event.inputs.tag || github.ref_name }}
@@ -339,15 +338,14 @@ jobs:
       - name: Test
         run: bun run test
 
-      - name: Smoke-test packed npm consumer
+      - name: Smoke-test packed coding-agent
         run: bun run check:package-install
 
-      - name: Upgrade npm for trusted publishing
-        run: |
-          npm install -g npm@11.16.0 --ignore-scripts
-          npm --version
-
       - name: Publish npm packages
+        # Publishes with bun publish using the NPM_TOKEN secret in this environment. setup-node
+        # writes the registry .npmrc that reads NODE_AUTH_TOKEN.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/publish.mjs
 
   announce-pi-dev-release:

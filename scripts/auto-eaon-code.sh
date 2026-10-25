@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Developer wrapper that runs eaon-code from this checkout's latest `npm run build`.
+# Developer wrapper that runs eaon-code from this checkout's latest `bun run build`.
 # Development invocations use EAON_CODE_EXPERIMENTAL=1 by default. Pass --stable to use
 # the next eaon-code executable on PATH; `eaon-code update` also uses stable so self-update
 # works.

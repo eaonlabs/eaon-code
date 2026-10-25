@@ -7,7 +7,7 @@
 #   ./scripts/build-binaries.sh [--skip-install] [--skip-build] [--offline-model-data] [--platform <platform>] [--out <dir>]
 #
 # Options:
-#   --skip-install       Skip npm ci
+#   --skip-install       Skip the dependency install
 #   --skip-build         Skip the package build
 #   --offline-model-data Build with bundled model data instead of refreshing it
 #   --platform <name>    Build only for specified platform (darwin-arm64, darwin-x64, linux-x64, linux-arm64, windows-x64, windows-arm64)
@@ -84,18 +84,18 @@ fi
 
 if [[ "$SKIP_INSTALL" == "false" ]]; then
     echo "==> Installing dependencies..."
-    npm ci --ignore-scripts
+    bun install --frozen-lockfile --ignore-scripts
 else
-    echo "==> Skipping npm ci (--skip-install)"
+    echo "==> Skipping dependency install (--skip-install)"
 fi
 
 if [[ "$SKIP_BUILD" == "false" ]]; then
     if [[ "$OFFLINE_MODEL_DATA" == "true" ]]; then
         echo "==> Building all packages with bundled model data..."
-        npm run build:offline
+        bun run build:offline
     else
         echo "==> Building all packages..."
-        npm run build
+        bun run build
     fi
 else
     echo "==> Skipping package build (--skip-build)"

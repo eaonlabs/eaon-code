@@ -104,7 +104,6 @@ for (const pkg of packageStates) {
 		continue;
 	}
 
-	// Publishing stays on npm: its trusted-publishing (OIDC) flow is npm-only.
-	run("npm", ["publish", "--access", "public", "--ignore-scripts"], { cwd: pkg.directory });
+	run("bun", ["publish", "--access", "public", "--ignore-scripts"], { cwd: pkg.directory });
 	console.log();
 }

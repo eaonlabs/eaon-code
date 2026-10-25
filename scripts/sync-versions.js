@@ -30,9 +30,9 @@ const versions = new Set(publishedPackages.map((pkg) => pkg.data.version));
 if (versions.size > 1) {
 	console.error("\nERROR: Not all non-private packages have the same version.");
 	console.error("Expected lockstep versioning. Run one of:");
-	console.error("  npm run version:patch");
-	console.error("  npm run version:minor");
-	console.error("  npm run version:major");
+	console.error("  bun run version:patch");
+	console.error("  bun run version:minor");
+	console.error("  bun run version:major");
 	process.exit(1);
 }
 

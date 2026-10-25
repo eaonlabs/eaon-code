@@ -2,7 +2,7 @@
 # Create the deterministic source archive uploaded with GitHub releases.
 #
 # Usage:
-#   npm run hydrate:model-data
+#   bun run hydrate:model-data
 #   ./scripts/create-source-archive.sh --version <version> --ref <git-ref> --out <archive.tar.gz>
 
 set -euo pipefail
@@ -81,7 +81,7 @@ output="$(cd "$(dirname "$output")" && pwd)/$(basename "$output")"
 
 model_data_dir="packages/ai/src/providers/data"
 if [[ ! -f "${model_data_dir}/.manifest.json" ]]; then
-    echo "Generated model data is missing. Run npm run hydrate:model-data first." >&2
+    echo "Generated model data is missing. Run bun run hydrate:model-data first." >&2
     exit 1
 fi
 
