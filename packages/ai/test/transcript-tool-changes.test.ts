@@ -102,7 +102,10 @@ describe("transcript system messages", () => {
 			content: [
 				{ type: "text" },
 				{ type: "tool_removal", tool: { name: "base_tool" } },
-				{ type: "tool_addition", tool: { name: "late_tool" } },
+				{
+					type: "tool_addition",
+					tool: { type: "tool_definition", definition: { name: "late_tool", description: "late_tool tool" } },
+				},
 			],
 		});
 		expect(update?.content[0]?.text).toContain("updated guidance");
