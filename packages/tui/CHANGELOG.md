@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Contiguous fuzzy matches rank above scattered matches.
+- Nested blockquotes no longer grow exponentially when rendered.
+- Boxed images scrolled above the fullscreen viewport are cropped; image search is bounded by the tallest registered image.
+- Fullscreen double-click word selection uses iTerm2's word characters.
+
 ## [1.1.6] - 2026-10-22
 
 ### Added

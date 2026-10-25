@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- OAuth endpoints accept only `http` and `https` URLs.
+
 ## [1.1.3] - 2026-10-16
 
 ### Changed

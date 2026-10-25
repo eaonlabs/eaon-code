@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+- Device-code login opens the browser and copies the code on Enter.
+- Model selectors show model names when they add information beyond the id.
+- Markdown transformer context includes `messageId` and `timestamp`.
+
+### Fixed
+- HTML export renders system messages and sessions deeper than the call stack.
+- `pi.exec` keeps spawn errors and decodes output across UTF-8 chunk boundaries.
+- macOS shell process groups are stopped before killing.
+- Forked sessions are written through one file descriptor.
+- Startup continues when a configured package fails to install.
+- fd/rg downloads are skipped on unsupported architectures.
+
 ## [1.1.6] - 2026-10-22
 
 ### Added

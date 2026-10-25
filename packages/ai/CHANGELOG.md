@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+- Usage cost carries `totalFromProvider` so provider-reported totals are kept.
+- Terminal `pi-messages` events carry `responseModel`.
+
+### Fixed
+- OpenRouter-reported cost is used when present.
+- Anthropic system updates are held past assistant messages that convert to no blocks (#11091).
+- Anthropic per-message effort sends a fixed low top-level effort.
+- Faux provider no longer counts cache writes as input tokens.
+- Gemini tool schemas send `const` as `enum` and keep literal data.
+
 ## [1.1.6] - 2026-10-22
 
 ### Added
