@@ -17,6 +17,10 @@
 - Forked sessions are written through one file descriptor.
 - Startup continues when a configured package fails to install.
 - fd/rg downloads are skipped on unsupported architectures.
+- `--tools` naming no MCP tool keeps MCP tools registered for codemode and `tool_search`, and MCP tools restored from a transcript are declared only when named or loaded.
+- MCP tools loaded by `tool_search` are restored on resume and `/reload` once their server connects.
+- Codemode `only` mode leaves hidden tools' guidelines out of the prompt rules and shows them with the codemode declaration.
+- Codemode `read` calls resolve to text for text files and to image blocks for images that `image()` shows.
 
 ## [1.1.6] - 2026-10-22
 

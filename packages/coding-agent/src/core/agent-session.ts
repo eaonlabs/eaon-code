@@ -1567,6 +1567,17 @@ export class AgentSession {
 		return (explicitlyAllowed || keptForMcpDiscovery) && !this._excludedToolNames?.(name);
 	}
 
+	/**
+	 * Whether the tool may be active, which declares it to the model. MCP tools the allowlist keeps
+	 * without matching them are only for codemode and tool_search: they may be declared only when
+	 * tool_search can load them (non-`direct` exposure and tool_search registered). This also applies
+	 * to tools restored from the transcript or set by extensions.
+	 */
+	private _isActivatable(name: string): boolean {
+		if (!this._allowedToolNames || this._allowedToolNames(name) || !isMcpToolName(name)) return true;
+		return this._getToolExposure(name) !== "direct" && this._toolRegistry.has("tool_search");
+	}
+
 	private _getToolExposure(name: string): ToolExposure {
 		return this._toolDefinitions.get(name)?.definition.exposure ?? "direct";
 	}
@@ -1591,7 +1602,7 @@ export class AgentSession {
 	private _applyToolLoadout(toolNames: string[]): AgentTool[] {
 		const tools = [...new Set(toolNames)].flatMap((name) => {
 			const tool = this._toolRegistry.get(name);
-			return tool && this._getToolExposure(name) !== "hidden" ? [tool] : [];
+			return tool && this._getToolExposure(name) !== "hidden" && this._isActivatable(name) ? [tool] : [];
 		});
 		const hooks = tools.flatMap((tool) => {
 			const entry = this._toolDefinitions.get(tool.name);
@@ -1606,6 +1617,7 @@ export class AgentSession {
 				registered: [...this._toolRegistry.values()],
 				getExposure: (name) => this._getToolExposure(name),
 				getNamespace: (name) => this._toolDefinitions.get(name)?.definition.namespace,
+				getPromptGuidelines: (name) => this._toolPromptGuidelines.get(name) ?? [],
 			};
 			const descriptions = new Map<string, string>();
 			for (const { definition, sourceInfo } of hooks) {
@@ -1717,8 +1729,8 @@ export class AgentSession {
 		const toolSnippets: Record<string, string> = {};
 		for (const name of this._toolRegistry.keys()) {
 			const snippet = this._toolPromptSnippets.get(name);
-			// Tools without a snippet are not listed. Hidden tools are only callable through another tool.
-			if (snippet && !this._hiddenDeclarations.has(name)) toolSnippets[name] = snippet;
+			// Tools without a snippet are not listed.
+			if (snippet) toolSnippets[name] = snippet;
 		}
 
 		const loaderSystemPrompt = this._resourceLoader.getSystemPrompt();
@@ -1734,6 +1746,7 @@ export class AgentSession {
 			customPrompt: loaderSystemPrompt,
 			appendSystemPrompt: [appendSystemPrompt, this._modeSystemPromptAppendix].filter(Boolean).join("\n\n"),
 			selectedTools: validToolNames,
+			hiddenTools: [...this._hiddenDeclarations],
 			toolSnippets,
 			toolGuidelines: Object.fromEntries(this._toolPromptGuidelines),
 		});
@@ -1754,10 +1767,8 @@ export class AgentSession {
 		messages: AgentMessage[] = this.agent.state.messages,
 	): SystemMessage | undefined {
 		options.selectedTools = this._applyToolLoadout(options.selectedTools).map((tool) => tool.name);
-		// The tool list must match the declarations the request carries, so hidden tools are not listed.
-		options.toolSnippets = Object.fromEntries(
-			Object.entries(options.toolSnippets).filter(([name]) => !this._hiddenDeclarations.has(name)),
-		);
+		// The tool list and rules must match the declarations the request carries.
+		options.hiddenTools = [...this._hiddenDeclarations];
 		const sections = diffSystemPromptSections(
 			getCurrentSystemMessage(messages)?.sections ?? {},
 			buildSystemPromptSections(options),
