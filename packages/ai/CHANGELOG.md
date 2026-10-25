@@ -7,6 +7,7 @@
 - Terminal `pi-messages` events carry `responseModel`.
 
 ### Fixed
+- Kimi K3.1 Pro and K3.1 Pro Highspeed use Kimi K3 settings and implied subscription costs.
 - OpenRouter-reported cost is used when present.
 - Anthropic system updates are held past assistant messages that convert to no blocks (#11091).
 - Anthropic per-message effort sends a fixed low top-level effort.
