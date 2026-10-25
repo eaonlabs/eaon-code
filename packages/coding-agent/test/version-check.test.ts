@@ -26,17 +26,17 @@ describe("version checks", () => {
 		expect(isNewerPackageVersion("0.70.6", "0.70.5")).toBe(true);
 	});
 
-	it("checks the Eaon Code package registry with an Eaon Code user agent", async () => {
-		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
+	it("checks the latest GitHub release with an Eaon Code user agent", async () => {
+		const fetchMock = vi.fn(async () => Response.json({ tag_name: "v1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 
 		await expect(getLatestVersion("1.2.3")).resolves.toBe("1.2.4");
 		expect(fetchMock).toHaveBeenCalledWith(
-			"https://registry.npmjs.org/%40eaonlabs%2Feaon-code/latest",
+			"https://api.github.com/repos/eaonlabs/eaon-code/releases/latest",
 			expect.objectContaining({
 				headers: expect.objectContaining({
 					"User-Agent": "eaon-code/1.2.3",
-					accept: "application/json",
+					accept: "application/vnd.github+json",
 				}),
 			}),
 		);
@@ -47,7 +47,7 @@ describe("version checks", () => {
 			.fn()
 			.mockRejectedValueOnce(new Error("fetch failed"))
 			.mockRejectedValueOnce(new Error("fetch failed"))
-			.mockResolvedValueOnce(Response.json({ version: "1.2.4" }));
+			.mockResolvedValueOnce(Response.json({ tag_name: "v1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 
 		await expect(getLatestRelease("1.2.3", { retry: true })).resolves.toEqual({ version: "1.2.4" });
@@ -65,22 +65,10 @@ describe("version checks", () => {
 		expect(formatVersionCheckError(error)).toBe("fetch failed (ETIMEDOUT, ENETUNREACH)");
 	});
 
-	it("ignores foreign package names in version metadata", async () => {
-		const fetchMock = vi.fn(async () =>
-			Response.json({
-				packageName: "@earendil-works/pi-coding-agent",
-				version: "1.2.4",
-			}),
-		);
+	it("returns undefined when the release has no tag", async () => {
+		const fetchMock = vi.fn(async () => Response.json({ name: "no tag" }));
 		vi.stubGlobal("fetch", fetchMock);
 
-		await expect(getLatestRelease("1.2.3")).resolves.toEqual({ version: "1.2.4" });
-	});
-
-	it("returns update notes from the version check api", async () => {
-		const fetchMock = vi.fn(async () => Response.json({ note: " **Read this** ", version: "1.2.4" }));
-		vi.stubGlobal("fetch", fetchMock);
-
-		await expect(getLatestRelease("1.2.3")).resolves.toEqual({ note: "**Read this**", version: "1.2.4" });
+		await expect(getLatestRelease("1.2.3")).resolves.toBeUndefined();
 	});
 });

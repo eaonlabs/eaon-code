@@ -243,7 +243,7 @@ if (!options.skipInstall) {
 
 	console.log("\nIsolated install:");
 	console.log(`  ${nodeInstallDirectory}`);
-	console.log("\nRun the locally packed npm CLI from outside the repository:");
+	console.log("\nRun the locally packed CLI from outside the repository:");
 	console.log(`  ${join(nodeInstallDirectory, process.platform === "win32" ? "eaon-code.cmd" : "eaon-code")} --help`);
 
 	if (!options.skipBunInstall) {

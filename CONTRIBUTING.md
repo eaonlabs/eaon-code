@@ -60,7 +60,7 @@ Anyone may open a PR. PRs must still meet the quality bar above.
 Before submitting a PR:
 
 ```bash
-npm run check
+bun run check
 ./test.sh
 ```
 
@@ -75,9 +75,9 @@ If you are adding a new provider to `packages/ai`, see `AGENTS.md` for required 
 After changes are committed and the working tree is clean, run one of:
 
 ```bash
-npm run release:patch
-npm run release:minor
-npm run release:major
+bun run release:patch
+bun run release:minor
+bun run release:major
 ```
 
 The release script updates every public workspace package to one shared version, refreshes release metadata, runs the repository checks/build/tests and consumer-install smoke test, then pushes the release commits and an `eaon-vX.Y.Z` tag to `main`. That tag runs `.github/workflows/eaon-release.yml`, which validates the package versions and creates the matching GitHub Release. Installer-managed source installs follow `main` and rebuild when a new commit is available. Do not use a `vX.Y.Z` tag; that prefix is reserved for the inherited Pi release workflow.

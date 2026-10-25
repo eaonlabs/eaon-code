@@ -15,7 +15,7 @@ body:
     id: package-name
     attributes:
       label: Package name
-      description: The npm package name used with Eaon Code.
+      description: The package source (git URL or local path) used with Eaon Code.
       placeholder: "@scope/package"
     validations:
       required: true

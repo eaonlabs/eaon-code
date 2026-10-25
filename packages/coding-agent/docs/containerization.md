@@ -27,7 +27,7 @@ Setup:
 ```bash
 cp -R packages/coding-agent/examples/extensions/gondolin ~/.eaon/agent/extensions/gondolin
 cd ~/.eaon/agent/extensions/gondolin
-npm install --ignore-scripts
+bun install --frozen-lockfile --ignore-scripts
 ```
 
 Run from the project you want mounted:
@@ -55,7 +55,7 @@ FROM node:24-bookworm-slim
 RUN apt-get update \
   && apt-get install -y --no-install-recommends bash ca-certificates git ripgrep \
   && rm -rf /var/lib/apt/lists/*
-RUN npm install -g --ignore-scripts @eaonlabs/eaon-code
+RUN curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 
 WORKDIR /workspace
 ENTRYPOINT ["eaon-code"]

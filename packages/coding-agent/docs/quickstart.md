@@ -4,40 +4,22 @@ This page gets you from install to a useful first Eaon Code session.
 
 ## Install
 
-Eaon Code is distributed as an npm package:
+Eaon Code is installed with the installer:
 
 ```bash
-npm install -g --ignore-scripts @eaonlabs/eaon-code
+curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 ```
 
-`--ignore-scripts` disables dependency lifecycle scripts during install. Eaon Code does not require install scripts for normal npm installs.
+Linux and macOS are supported. The installer needs Git and Bun on `PATH`.
 
 ### Uninstall
 
-Use the package manager that installed Eaon Code. The curl installer uses npm globally, so curl and npm installs are removed with npm:
+Remove the installer checkout and its launcher:
 
 ```bash
-# curl installer or npm install -g
-npm uninstall -g @eaonlabs/eaon-code
-
-# pnpm
-pnpm remove -g @eaonlabs/eaon-code
-
-# Yarn
-yarn global remove @eaonlabs/eaon-code
-
-# Bun
-bun uninstall -g @eaonlabs/eaon-code
+rm -rf ~/.local/share/eaon-code ~/.local/bin/eaon-code
 ```
 
-Uninstalling Eaon Code leaves settings, credentials, sessions, and installed Eaon Code packages in `~/.eaon/agent/`.
-
-Then start Eaon Code in the project directory you want it to work on:
-
-```bash
-cd /path/to/project
-eaon-code
-```
 
 ## Authenticate
 
@@ -90,7 +72,7 @@ Eaon Code loads context files at startup. Add an `AGENTS.md` file to tell it how
 ```markdown
 # Project Instructions
 
-- Run `npm run check` after code changes.
+- Run `bun run check` after code changes.
 - Do not run production migrations locally.
 - Keep responses concise.
 ```
@@ -122,7 +104,7 @@ Images or text can be pasted with Ctrl+V (Alt+V on Windows); images can also be 
 In interactive mode:
 
 ```text
-!npm run lint
+!bun run lint
 ```
 
 The command output is sent to the model. Use `!!command` to run a command without adding its output to the model context.

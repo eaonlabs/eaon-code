@@ -124,7 +124,7 @@ Additional paths via `settings.json`:
 ```json
 {
   "packages": [
-    "npm:@foo/bar@1.0.0",
+    "git:github.com/foo/bar@v1.0.0",
     "git:github.com/user/repo@v1"
   ],
   "extensions": [
@@ -134,7 +134,7 @@ Additional paths via `settings.json`:
 }
 ```
 
-To share extensions via npm or git as Eaon Code packages, see [packages.md](packages.md).
+To share extensions via git or a local path as Eaon Code packages, see [packages.md](packages.md).
 
 ## Available Imports
 
@@ -145,9 +145,9 @@ To share extensions via npm or git as Eaon Code packages, see [packages.md](pack
 | `@eaonlabs/eaon-ai` | AI utilities (`StringEnum` for Google-compatible enums) |
 | `@eaonlabs/eaon-tui` | TUI components for custom rendering |
 
-npm dependencies work too. Add a `package.json` next to your extension (or in a parent directory), run `npm install`, and imports from `node_modules/` are resolved automatically.
+Package dependencies work too. Add a `package.json` next to your extension (or in a parent directory), run `bun install`, and imports from `node_modules/` are resolved automatically.
 
-For distributed Eaon Code packages installed with `eaon-code install` (npm or git), runtime deps must be in `dependencies`. Package installation uses production installs (`npm install --omit=dev`) by default, so `devDependencies` are not available at runtime; when `npmCommand` is configured, git packages use plain `install` for compatibility with wrappers.
+For distributed Eaon Code packages installed with `eaon-code install` (git), runtime deps must be in `dependencies`. Package installation uses production installs (`bun install --omit=dev --omit=peer`) by default, so `devDependencies` are not available at runtime.
 
 Node.js built-ins (`node:fs`, `node:path`, etc.) are also available.
 
@@ -242,14 +242,14 @@ Defer background resource startup until `session_start` or the command/tool/even
     └── utils.ts        # Helper module
 ```
 
-**Package with dependencies** - for extensions that need npm packages:
+**Package with dependencies** - for extensions that need registry packages:
 
 ```
 ~/.eaon/agent/extensions/
 └── my-extension/
     ├── package.json    # Declares dependencies and entry points
-    ├── package-lock.json
-    ├── node_modules/   # After npm install
+    ├── bun.lock
+    ├── node_modules/   # After bun install
     └── src/
         └── index.ts
 ```
@@ -268,7 +268,7 @@ Defer background resource startup until `session_start` or the command/tool/even
 }
 ```
 
-Run `npm install` in the extension directory, then imports from `node_modules/` work automatically.
+Run `bun install` in the extension directory, then imports from `node_modules/` work automatically.
 
 ## Events
 
@@ -3036,4 +3036,4 @@ All examples in [examples/extensions/](../examples/extensions/).
 | **Misc** |||
 | `inline-bash.ts` | Inline bash in tool calls | `on("tool_call")` |
 | `bash-spawn-hook.ts` | Adjust bash command, cwd, and env before execution | `createBashTool`, `spawnHook` |
-| `with-deps/` | Extension with npm dependencies | Package structure with `package.json` |
+| `with-deps/` | Extension with package dependencies | Package structure with `package.json` |

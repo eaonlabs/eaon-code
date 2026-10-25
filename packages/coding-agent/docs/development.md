@@ -7,8 +7,8 @@ See [AGENTS.md](https://github.com/eaonlabs/eaon-code/blob/main/AGENTS.md) for a
 ```bash
 git clone https://github.com/eaonlabs/eaon-code
 cd eaon-code
-npm install
-npm run build
+bun install --frozen-lockfile --ignore-scripts
+bun run build
 ```
 
 Run from source:
@@ -32,7 +32,7 @@ EAON_CODE_EXPERIMENTAL=1 ./eaon-code-test.sh client
 
 `EAON_CODE_SERVER_DIR` overrides the server profile and socket directory (default: `~/.eaon/server`). `EAON_CODE_SERVER_ID` selects the logical server ID when `--server-id` is omitted.
 
-The `client` and `experimental/plugin` package subpaths resolve only under the `source` condition in a checkout. Their implementations and the server/client commands are excluded from npm packages and standalone binaries. The client, protocol, and server workspaces are development dependencies of the coding-agent package, not runtime dependencies. The local SDK and stdio RPC API are unchanged.
+The `client` and `experimental/plugin` package subpaths resolve only under the `source` condition in a checkout. Their implementations and the server/client commands are excluded from published packages and standalone binaries. The client, protocol, and server workspaces are development dependencies of the coding-agent package, not runtime dependencies. The local SDK and stdio RPC API are unchanged.
 
 ## Forking / Rebranding
 
@@ -51,7 +51,7 @@ Change `name`, `configDir`, and `bin` field for your fork. Affects CLI banner, c
 
 ## Path Resolution
 
-Three execution modes: npm install, standalone binary, tsx from source.
+Three execution modes: installer checkout, standalone binary, tsx from source.
 
 **Always use `src/config.ts`** for package assets:
 
@@ -71,15 +71,15 @@ Never use `__dirname` directly for package assets.
 
 ```bash
 ./test.sh                         # Run non-LLM tests (no API keys needed)
-npm test                          # Run all tests
-npm test -- test/specific.test.ts # Run specific test
+bun run test                       # Run all tests
+bun run test -- test/specific.test.ts # Run specific test
 ```
 
 ### Published package smoke test
 
-After building, run `npm run check:package-install`. It packs the public packages and installs only coding-agent as a direct dependency in a temporary directory outside the repository. Local tarball overrides select declared transitive dependencies without installing development-only packages. The check verifies SDK imports and CLI startup without credentials or model requests.
+After building, run `bun run check:package-install`. It packs the public packages and installs only coding-agent as a direct dependency in a temporary directory outside the repository. Local tarball overrides select declared transitive dependencies without installing development-only packages. The check verifies SDK imports and CLI startup without credentials or model requests.
 
-`npm run check` also checks runtime dependency declarations and rejects excluded development sources pulled into a package's build through imports.
+`bun run check` also checks runtime dependency declarations and rejects excluded development sources pulled into a package's build through imports.
 
 ## Project Structure
 

@@ -220,7 +220,7 @@ Use `*` as a wildcard in tool patterns. An allowlist keeps MCP tools available f
 
 | Option | Description |
 |--------|-------------|
-| `-e`, `--extension <source>` | Load an extension from path, npm, or git; repeatable |
+| `-e`, `--extension <source>` | Load an extension from path or git; repeatable |
 | `--no-extensions` | Disable extension discovery |
 | `--skill <path>` | Load a skill; repeatable |
 | `--no-skills` | Disable skill discovery |

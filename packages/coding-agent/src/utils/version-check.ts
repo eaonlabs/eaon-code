@@ -1,13 +1,12 @@
 import { compare, valid } from "semver";
-import { APP_NAME, EAON_CODE_PACKAGE_NAME } from "../config.ts";
+import { APP_NAME } from "../config.ts";
 import { fetchWithRetry } from "./management-http.ts";
 
-const LATEST_VERSION_URL = `https://registry.npmjs.org/${encodeURIComponent(EAON_CODE_PACKAGE_NAME)}/latest`;
+const LATEST_RELEASE_URL = "https://api.github.com/repos/eaonlabs/eaon-code/releases/latest";
 const DEFAULT_VERSION_CHECK_TIMEOUT_MS = 10000;
 
 export interface LatestRelease {
 	version: string;
-	note?: string;
 }
 
 /** Include useful errno details hidden behind Node's generic "fetch failed" error. */
@@ -54,11 +53,11 @@ export async function getLatestRelease(
 	if (process.env.EAON_CODE_OFFLINE || process.env.PI_OFFLINE) return undefined;
 
 	const response = await fetchWithRetry(
-		LATEST_VERSION_URL,
+		LATEST_RELEASE_URL,
 		{
 			headers: {
 				"User-Agent": `${APP_NAME}/${currentVersion}`,
-				accept: "application/json",
+				accept: "application/vnd.github+json",
 			},
 		},
 		{
@@ -68,18 +67,11 @@ export async function getLatestRelease(
 	);
 	if (!response.ok) return undefined;
 
-	const data = (await response.json()) as {
-		version?: unknown;
-		note?: unknown;
-	};
-	if (typeof data.version !== "string" || !data.version.trim()) {
+	const data = (await response.json()) as { tag_name?: unknown };
+	if (typeof data.tag_name !== "string" || !data.tag_name.trim()) {
 		return undefined;
 	}
-	const note = typeof data.note === "string" && data.note.trim() ? data.note.trim() : undefined;
-	return {
-		version: data.version.trim(),
-		...(note ? { note } : {}),
-	};
+	return { version: data.tag_name.trim().replace(/^v/, "") };
 }
 
 export async function getLatestVersion(

@@ -16,8 +16,8 @@ pkg update && pkg upgrade
 # Install dependencies
 pkg install nodejs termux-api git
 
-# Install Eaon Code
-npm install -g --ignore-scripts @eaonlabs/eaon-code
+# Install Eaon Code with the installer (needs git and bun)
+curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 
 # Create config directory
 mkdir -p ~/.eaon/agent
@@ -120,7 +120,7 @@ termux-setup-storage
 
 ### Node.js installation issues
 
-If npm fails, try clearing the cache:
+If the installer fails, try clearing the Bun cache:
 ```bash
-npm cache clean --force
+bun pm cache rm
 ```

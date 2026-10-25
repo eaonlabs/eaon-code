@@ -9,15 +9,9 @@ import {
 	APP_NAME,
 	CONFIG_DIR_NAME,
 	detectInstallMethod,
-	EAON_CODE_PACKAGE_NAME,
 	getAgentDir,
 	getPackageDir,
-	getSelfUpdateCommand,
 	getSelfUpdateUnavailableInstruction,
-	PACKAGE_NAME,
-	type SelfUpdateCommand,
-	type SelfUpdatePackageTarget,
-	VERSION,
 } from "./config.ts";
 import type { InlineExtension } from "./core/extensions/types.ts";
 import { ModelRuntime } from "./core/model-runtime.ts";
@@ -28,11 +22,6 @@ import { SettingsManager } from "./core/settings-manager.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "./core/trust-manager.ts";
 import { spawnProcess, spawnProcessSync, waitForChildProcess } from "./utils/child-process.ts";
 import { canonicalizePath } from "./utils/paths.ts";
-import { formatVersionCheckError, getLatestRelease, isNewerPackageVersion } from "./utils/version-check.ts";
-import {
-	cleanupWindowsSelfUpdateQuarantine,
-	quarantineWindowsNativeDependencies,
-} from "./utils/windows-self-update.ts";
 
 export type PackageCommand = "install" | "remove" | "update" | "list";
 
@@ -186,7 +175,7 @@ Options:
   -na, --no-approve Ignore project-local files for this command
 
 Examples:
-  ${APP_NAME} install npm:@foo/bar
+  ${APP_NAME} install git:github.com/user/repo
   ${APP_NAME} install git:github.com/user/repo
   ${APP_NAME} install git:git@github.com:user/repo
   ${APP_NAME} install https://github.com/user/repo
@@ -208,8 +197,8 @@ Options:
   -na, --no-approve Ignore project-local files for this command
 
 Examples:
-  ${APP_NAME} remove npm:@foo/bar
-  ${APP_NAME} uninstall npm:@foo/bar
+  ${APP_NAME} remove git:github.com/user/repo
+  ${APP_NAME} uninstall ./local/path
 `);
 			return;
 
@@ -487,12 +476,9 @@ async function refreshModelCatalogs(agentDir: string): Promise<void> {
 	console.log(chalk.green("Model catalogs refreshed"));
 }
 
-function printSelfUpdateUnavailable(
-	npmCommand?: string[],
-	updatePackageTarget: SelfUpdatePackageTarget = PACKAGE_NAME,
-): void {
+function printSelfUpdateUnavailable(): void {
 	console.error(`error: ${APP_NAME} cannot self-update this installation.`);
-	console.error(getSelfUpdateUnavailableInstruction(PACKAGE_NAME, npmCommand, updatePackageTarget));
+	console.error(getSelfUpdateUnavailableInstruction());
 
 	const entrypoint = process.argv[1];
 	if (entrypoint) {
@@ -501,16 +487,7 @@ function printSelfUpdateUnavailable(
 	}
 }
 
-function printSelfUpdateFallback(command: SelfUpdateCommand): void {
-	console.error(chalk.dim(`If this keeps failing, run this command yourself: ${command.display}`));
-}
-
-function printPnpmSelfUpdateMetadataHint(): void {
-	console.error(chalk.yellow("If pnpm reports missing package versions, its cached registry metadata may be stale."));
-	console.error(chalk.yellow(`Run \`pnpm store prune\` and retry \`${APP_NAME} update --self\`.`));
-}
-
-function printSelfUpdateNote(note: string): void {
+function _printSelfUpdateNote(note: string): void {
 	const trimmedNote = note.trim();
 	if (!trimmedNote) {
 		return;
@@ -530,43 +507,6 @@ function printSelfUpdateNote(note: string): void {
 	console.log();
 }
 
-interface SelfUpdatePlan {
-	packageName: string;
-	installSpec: string;
-	version: string;
-	shouldRun: boolean;
-	note?: string;
-}
-
-async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
-	let latestRelease: Awaited<ReturnType<typeof getLatestRelease>>;
-	try {
-		latestRelease = await getLatestRelease(VERSION, { retry: true });
-	} catch (error: unknown) {
-		throw new Error(`Could not determine latest ${APP_NAME} version: ${formatVersionCheckError(error)}`, {
-			cause: error,
-		});
-	}
-	if (!latestRelease) {
-		throw new Error(`Could not determine latest ${APP_NAME} version.`);
-	}
-
-	const packageName = EAON_CODE_PACKAGE_NAME;
-	const installSpec = `${packageName}@${latestRelease.version}`;
-	if (force || packageName !== PACKAGE_NAME || isNewerPackageVersion(latestRelease.version, VERSION)) {
-		return {
-			packageName,
-			installSpec,
-			version: latestRelease.version,
-			...(latestRelease.note ? { note: latestRelease.note } : {}),
-			shouldRun: true,
-		};
-	}
-
-	console.log(chalk.green(`${APP_NAME} is already up to date (v${VERSION})`));
-	return { packageName, installSpec, version: latestRelease.version, shouldRun: false };
-}
-
 async function runSourceInstallUpdate(config: SourceInstallConfig): Promise<void> {
 	console.log(chalk.dim(`Updating ${APP_NAME} from its installer-managed checkout...`));
 	const child = spawnProcess("bash", [join(config.root, "install.sh")], {
@@ -583,39 +523,6 @@ async function runSourceInstallUpdate(config: SourceInstallConfig): Promise<void
 	if (code !== 0) {
 		throw new Error(`Installer exited with code ${code ?? "unknown"}`);
 	}
-}
-
-async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
-	console.log(chalk.dim(`Updating ${APP_NAME} with ${command.display}...`));
-	for (const step of command.steps ?? [command]) {
-		await new Promise<void>((resolve, reject) => {
-			const child = spawnProcess(step.command, step.args, {
-				stdio: "inherit",
-			});
-			child.on("error", (error) => {
-				reject(error);
-			});
-			child.on("close", (code, signal) => {
-				if (code === 0) {
-					resolve();
-				} else if (signal) {
-					reject(new Error(`${step.display} terminated by signal ${signal}`));
-				} else {
-					reject(new Error(`${step.display} exited with code ${code ?? "unknown"}`));
-				}
-			});
-		});
-	}
-}
-
-function prepareWindowsNpmSelfUpdate(): void {
-	if (process.platform !== "win32") {
-		return;
-	}
-
-	const packageDir = getPackageDir();
-	cleanupWindowsSelfUpdateQuarantine(packageDir);
-	quarantineWindowsNativeDependencies(packageDir);
 }
 
 export interface PackageCommandRuntimeOptions {
@@ -848,7 +755,6 @@ export async function handlePackageCommand(
 		return true;
 	}
 	reportSettingsErrors(settingsManager, "package command");
-	const selfUpdateNpmCommand = settingsManager.getGlobalSettings().npmCommand;
 
 	const packageManager = new DefaultPackageManager({ cwd, agentDir, settingsManager });
 
@@ -950,56 +856,9 @@ export async function handlePackageCommand(
 						}
 						return true;
 					}
-					if (detectInstallMethod() === "unknown") {
-						printSelfUpdateUnavailable(selfUpdateNpmCommand, {
-							packageName: EAON_CODE_PACKAGE_NAME,
-							installSpec: EAON_CODE_PACKAGE_NAME,
-						});
-						process.exitCode = 1;
-						return true;
-					}
-					const selfUpdatePlan = await getSelfUpdatePlan(options.force);
-					if (!selfUpdatePlan.shouldRun) {
-						return true;
-					}
-					const installMethod = detectInstallMethod();
-					if (process.platform === "win32" && installMethod !== "npm" && installMethod !== "pnpm") {
-						console.error(
-							chalk.red(`${APP_NAME} self-update on Windows is only supported for npm and pnpm installs.`),
-						);
-						console.error(chalk.dim(`Detected install method: ${installMethod}. Update ${APP_NAME} manually.`));
-						process.exitCode = 1;
-						return true;
-					}
-					const selfUpdateTarget = {
-						packageName: selfUpdatePlan.packageName,
-						installSpec: selfUpdatePlan.installSpec,
-					};
-					const selfUpdateCommand = getSelfUpdateCommand(PACKAGE_NAME, selfUpdateNpmCommand, selfUpdateTarget);
-					if (!selfUpdateCommand) {
-						printSelfUpdateUnavailable(selfUpdateNpmCommand, selfUpdateTarget);
-						process.exitCode = 1;
-						return true;
-					}
-					if (selfUpdatePlan.note) {
-						printSelfUpdateNote(selfUpdatePlan.note);
-					}
-					try {
-						if (installMethod === "npm") {
-							prepareWindowsNpmSelfUpdate();
-						}
-						await runSelfUpdate(selfUpdateCommand);
-					} catch (error: unknown) {
-						const message = error instanceof Error ? error.message : "Unknown package command error";
-						console.error(chalk.red(`Error: ${message}`));
-						if (installMethod === "pnpm") {
-							printPnpmSelfUpdateMetadataHint();
-						}
-						printSelfUpdateFallback(selfUpdateCommand);
-						process.exitCode = 1;
-						return true;
-					}
-					console.log(chalk.green(`Updated ${APP_NAME} from ${VERSION} to ${selfUpdatePlan.version}`));
+					printSelfUpdateUnavailable();
+					process.exitCode = 1;
+					return true;
 				}
 				return true;
 			}

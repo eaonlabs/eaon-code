@@ -29,8 +29,7 @@
 		"dev": "tsgo -p tsconfig.build.json --watch --preserveWatchOutput",
 		"build": "tsgo -p tsconfig.build.json",
 		"test": "vitest --run",
-		"typecheck": "tsgo -p tsconfig.test.json",
-		"prepublishOnly": "bun run clean && bun run build"
+		"typecheck": "tsgo -p tsconfig.test.json"
 	},
 	"keywords": [
 		"pi",

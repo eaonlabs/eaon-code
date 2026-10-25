@@ -82,15 +82,13 @@ describe("DefaultResourceLoader", () => {
 		});
 
 		// #11088
-		it("should warn and keep loading when a configured package cannot be installed", async () => {
+		it("should warn and keep loading when a configured npm package is no longer supported", async () => {
 			vi.stubEnv("PI_OFFLINE", "");
 			const loader = new DefaultResourceLoader({
 				cwd,
 				agentDir,
 				settingsManager: SettingsManager.inMemory({
 					packages: ["npm:broken-package"],
-					// Any non-zero exit stands in for an npm install that cannot reach the registry.
-					npmCommand: [process.execPath, "-e", "process.exit(1)"],
 				}),
 			});
 
@@ -99,7 +97,9 @@ describe("DefaultResourceLoader", () => {
 			const warnings = loader.getExtensions().warnings ?? [];
 			expect(warnings).toHaveLength(1);
 			expect(warnings[0].path).toBe("npm:broken-package");
-			expect(warnings[0].warning).toMatch(/^failed to install \(.*failed with code 1\)\./);
+			expect(warnings[0].warning).toMatch(
+				/^failed to install \(npm package sources are no longer supported: npm:broken-package\./,
+			);
 			expect(warnings[0].warning).toContain(
 				'Run "eaon-code remove npm:broken-package" to remove it from settings.json.',
 			);
@@ -112,9 +112,7 @@ describe("DefaultResourceLoader", () => {
 				cwd,
 				agentDir,
 				additionalExtensionPaths: ["npm:broken-package"],
-				settingsManager: SettingsManager.inMemory({
-					npmCommand: [process.execPath, "-e", "process.exit(1)"],
-				}),
+				settingsManager: SettingsManager.inMemory({}),
 			});
 
 			await loader.reload();
@@ -129,10 +127,7 @@ describe("DefaultResourceLoader", () => {
 		// #11088
 		it("should point project extension packages at eaon-code remove --local", async () => {
 			vi.stubEnv("PI_OFFLINE", "");
-			writeFileSync(
-				join(agentDir, "settings.json"),
-				JSON.stringify({ npmCommand: [process.execPath, "-e", "process.exit(1)"] }),
-			);
+			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({}));
 			mkdirSync(join(cwd, ".pi"), { recursive: true });
 			writeFileSync(join(cwd, ".pi", "settings.json"), JSON.stringify({ packages: ["npm:broken-package"] }));
 			const loader = new DefaultResourceLoader({
@@ -156,7 +151,6 @@ describe("DefaultResourceLoader", () => {
 				agentDir,
 				settingsManager: SettingsManager.inMemory({
 					packages: ["npm:broken-package"],
-					npmCommand: [process.execPath, "-e", "process.exit(1)"],
 				}),
 			});
 
@@ -826,7 +820,7 @@ Extra content`,
 		// Regression: extension discovery used to drop package scope/source, collapsing every
 		// autocomplete source tag to [t]. See issue #6968.
 		it("should keep package metadata for skills, prompts, and themes", async () => {
-			const packageRoot = join(agentDir, "npm", "node_modules", "metadata-pkg");
+			const packageRoot = join(agentDir, "metadata-pkg");
 			const packageSkillDir = join(packageRoot, "skills", "package-skill");
 			const packagePromptsDir = join(packageRoot, "prompts");
 			const packageThemesDir = join(packageRoot, "themes");
@@ -887,7 +881,7 @@ Extension prompt content`,
 			const loader = new DefaultResourceLoader({
 				cwd,
 				agentDir,
-				settingsManager: SettingsManager.inMemory({ packages: ["npm:metadata-pkg"] }),
+				settingsManager: SettingsManager.inMemory({ packages: [packageRoot] }),
 			});
 			await loader.reload();
 
@@ -902,7 +896,7 @@ Extension prompt content`,
 				themePaths: [{ path: extensionThemesDir, metadata: extensionMetadata }],
 			});
 
-			const packageSourceInfo = { source: "npm:metadata-pkg", scope: "user", origin: "package" };
+			const packageSourceInfo = { source: packageRoot, scope: "user", origin: "package" };
 			expect(loader.getSkills().skills.find((skill) => skill.name === "package-skill")?.sourceInfo).toMatchObject(
 				packageSourceInfo,
 			);

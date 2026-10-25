@@ -8,7 +8,6 @@
 </p>
 <p align="center">
   <a href="https://github.com/eaonlabs/eaon-code"><img alt="GitHub" src="https://img.shields.io/badge/github-eaonlabs%2Feaon--code-181717?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/@eaonlabs/eaon-code"><img alt="npm" src="https://img.shields.io/npm/v/@eaonlabs/eaon-code?style=flat-square" /></a>
 </p>
 
 > New issues from new contributors are auto-closed by default. Pull requests are open to everyone. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
@@ -62,14 +61,6 @@ One line (recommended):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 ```
-
-Or with npm:
-
-```bash
-npm install -g --ignore-scripts @eaonlabs/eaon-code
-```
-
-`--ignore-scripts` disables dependency lifecycle scripts during install. Eaon Code does not require install scripts for normal npm installs.
 
 Authenticate with an API key:
 
@@ -306,7 +297,7 @@ Use `/trust` in interactive mode to save a project trust decision for future ses
 
 ### Telemetry and update checks
 
-The optional version check reads package metadata from the npm registry for `@eaonlabs/eaon-code`; the `eaon-code update` command uses the same release source. Disable the check with `EAON_CODE_SKIP_VERSION_CHECK=1`. Eaon Code does not send install or update pings. Provider-attribution headers are off by default and can be controlled with `enableInstallTelemetry` or `EAON_CODE_TELEMETRY`. Use `--offline` or `EAON_CODE_OFFLINE=1` to disable startup network operations, including version and package update checks.
+The optional version check reads the latest GitHub release of `eaonlabs/eaon-code`; the `eaon-code update` command uses the same release source. Disable the check with `EAON_CODE_SKIP_VERSION_CHECK=1`. Eaon Code does not send install or update pings. Provider-attribution headers are off by default and can be controlled with `enableInstallTelemetry` or `EAON_CODE_TELEMETRY`. Use `--offline` or `EAON_CODE_OFFLINE=1` to disable startup network operations, including version and package update checks.
 
 ---
 
@@ -399,13 +390,11 @@ Place in `~/.eaon/agent/themes/`, `.eaon/themes/`, or an [Eaon package](#eaon-pa
 
 ### Eaon Packages
 
-Bundle and share extensions, skills, prompts, and themes via npm or git.
+Bundle and share extensions, skills, prompts, and themes via git or a local path.
 
 > **Security:** Packages run with the current user's permissions. Extensions execute code, and skills can instruct the model to perform actions including running executables. Review third-party packages before installing them.
 
 ```bash
-eaon-code install npm:@foo/eaon-tools
-eaon-code install npm:@foo/eaon-tools@1.2.3      # pinned version
 eaon-code install git:github.com/user/repo
 eaon-code install git:github.com/user/repo@v1  # tag or commit
 eaon-code install git:git@github.com:user/repo
@@ -414,8 +403,8 @@ eaon-code install https://github.com/user/repo
 eaon-code install https://github.com/user/repo@v1      # tag or commit
 eaon-code install ssh://git@github.com/user/repo
 eaon-code install ssh://git@github.com/user/repo@v1    # tag or commit
-eaon-code remove npm:@foo/eaon-tools
-eaon-code uninstall npm:@foo/eaon-tools          # alias for remove
+eaon-code remove git:github.com/user/repo
+eaon-code uninstall git:github.com/user/repo  # alias for remove
 eaon-code list
 eaon-code update                               # update Eaon Code
 eaon-code update --all                         # update Eaon Code and packages
@@ -423,11 +412,11 @@ eaon-code update --extensions                  # update packages only
 eaon-code update --models                      # refresh model catalogs only
 eaon-code update --self                        # update Eaon Code
 eaon-code update --self --force                # reinstall Eaon Code even if current
-eaon-code update npm:@foo/eaon-tools           # update one package
+eaon-code update git:github.com/user/repo     # update one package
 eaon-code config                               # enable/disable extensions, skills, prompts, themes
 ```
 
-Packages install to `~/.eaon/agent/git/` (git) or `~/.eaon/agent/npm/` (npm). Use `-l` for project-local installs (`.eaon/git/`, `.eaon/npm/`). Git `@ref` values are pinned tags or commits; pinned packages are skipped by `eaon-code update --extensions` and `eaon-code update --all`, so use `eaon-code install git:host/user/repo@new-ref` to move an existing package to a new ref. Git packages install dependencies with `npm install --omit=dev` by default, so runtime dependencies must be listed under `dependencies`; when `npmCommand` is configured, git packages use plain `install` for compatibility with wrappers. If you use a Node version manager and want package installs to reuse a stable npm context, set `npmCommand` in `settings.json`, for example `["mise", "exec", "node@20", "--", "npm"]`.
+Packages install to `~/.eaon/agent/git/`. Use `-l` for project-local installs (`.eaon/git/`). Git `@ref` values are pinned tags or commits; pinned packages are skipped by `eaon-code update --extensions` and `eaon-code update --all`, so use `eaon-code install git:host/user/repo@new-ref` to move an existing package to a new ref. Git packages install dependencies with `bun install --omit=dev --omit=peer` by default, so runtime dependencies must be listed under `dependencies`.
 
 Create a package by adding an `eaon` key to `package.json`:
 
@@ -568,7 +557,7 @@ Available built-in tools: `read`, `bash`, `powershell` (Windows), `edit`, `write
 
 | Option | Description |
 |--------|-------------|
-| `-e`, `--extension <source>` | Load extension from path, npm, or git (repeatable) |
+| `-e`, `--extension <source>` | Load extension from path or git (repeatable) |
 | `--no-extensions` | Disable extension discovery |
 | `--skill <path>` | Load skill (repeatable) |
 | `--no-skills` | Disable skill discovery |
@@ -655,7 +644,7 @@ eaon-code --thinking high "Solve this complex problem"
 | `EAON_CODE_CODING_AGENT_SESSION_DIR` | Override session storage (overridden by `--session-dir`; legacy: `PI_CODING_AGENT_SESSION_DIR`) |
 | `EAON_CODE_PACKAGE_DIR` | Override the package directory for Nix/Guix or other managed installs (legacy: `PI_PACKAGE_DIR`) |
 | `EAON_CODE_OFFLINE` | Disable startup network operations, including version and package update checks (legacy: `PI_OFFLINE`) |
-| `EAON_CODE_SKIP_VERSION_CHECK` | Skip the npm-registry version check at startup (legacy: `PI_SKIP_VERSION_CHECK`) |
+| `EAON_CODE_SKIP_VERSION_CHECK` | Skip the GitHub release version check at startup (legacy: `PI_SKIP_VERSION_CHECK`) |
 | `EAON_CODE_TELEMETRY` | Control optional provider-attribution headers with `1`/`true`/`yes` or `0`/`false`/`no` (legacy: `PI_TELEMETRY`) |
 | `EAON_CODE_SHARE_VIEWER_URL` | Optional base URL for `/share`; by default it opens the GitHub Gist directly (legacy: `PI_SHARE_VIEWER_URL`) |
 | `PI_CACHE_RETENTION` | Legacy setting: set to `long` for extended prompt cache (Anthropic: 1h, OpenAI: 24h) |
@@ -685,6 +674,6 @@ MIT
 
 ## See Also
 
-- [@eaonlabs/eaon-ai](https://www.npmjs.com/package/@eaonlabs/eaon-ai): Core LLM toolkit
-- [@eaonlabs/eaon-agent-core](https://www.npmjs.com/package/@eaonlabs/eaon-agent-core): Agent framework
-- [@eaonlabs/eaon-tui](https://www.npmjs.com/package/@eaonlabs/eaon-tui): Terminal UI components
+- [@eaonlabs/eaon-ai](https://github.com/eaonlabs/eaon-code/tree/main/packages/ai): Core LLM toolkit
+- [@eaonlabs/eaon-agent-core](https://github.com/eaonlabs/eaon-code/tree/main/packages/agent): Agent framework
+- [@eaonlabs/eaon-tui](https://github.com/eaonlabs/eaon-code/tree/main/packages/tui): Terminal UI components

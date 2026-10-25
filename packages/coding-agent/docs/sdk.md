@@ -35,9 +35,7 @@ await session.prompt("What files are in the current directory?");
 
 ## Installation
 
-```bash
-npm install @eaonlabs/eaon-code
-```
+The SDK ships in the source checkout. Import it from `packages/coding-agent` in your workspace; it is not published to a package registry.
 
 The SDK is included in the main package. No separate installation needed.
 

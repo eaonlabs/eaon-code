@@ -4,27 +4,19 @@ Eaon Code is a full-screen terminal coding agent with Plan and Swarm modes, mult
 
 ## Quick start
 
-Install Eaon Code with npm:
-
-```bash
-npm install -g --ignore-scripts @eaonlabs/eaon-code
-```
-
-`--ignore-scripts` disables dependency lifecycle scripts during install. Eaon Code does not require install scripts for normal npm installs.
-
-On Linux or macOS, you can also use the installer:
+Install Eaon Code with the installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 ```
 
-To uninstall Eaon Code itself, use npm for curl and npm installs:
+Linux and macOS are supported. The installer needs Git and Bun on `PATH`.
+
+To uninstall Eaon Code, remove the installer checkout and its launcher:
 
 ```bash
-npm uninstall -g @eaonlabs/eaon-code
+rm -rf ~/.local/share/eaon-code ~/.local/bin/eaon-code
 ```
-
-For pnpm, Yarn, or Bun installs, use the matching global remove command: `pnpm remove -g @eaonlabs/eaon-code`, `yarn global remove @eaonlabs/eaon-code`, or `bun uninstall -g @eaonlabs/eaon-code`.
 
 Then run Eaon Code in a project directory:
 

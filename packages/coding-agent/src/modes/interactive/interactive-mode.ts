@@ -655,10 +655,6 @@ export class InteractiveMode {
 			return scopePrefix;
 		}
 
-		if (source.startsWith("npm:")) {
-			return `${scopePrefix}:${source}`;
-		}
-
 		const gitSource = parseGitUrl(source);
 		if (gitSource) {
 			const ref = gitSource.ref ? `@${gitSource.ref}` : "";
@@ -1392,11 +1388,6 @@ export class InteractiveMode {
 		}
 
 		const source = sourceInfo?.source ?? "";
-		const npmMatch = normalizedFullPath.match(/node_modules\/(@?[^/]+(?:\/[^/]+)?)\/(.*)/);
-		if (npmMatch && source.startsWith("npm:")) {
-			return npmMatch[2];
-		}
-
 		const gitMatch = normalizedFullPath.match(/git\/[^/]+\/[^/]+\/(.*)/);
 		if (gitMatch && source.startsWith("git:")) {
 			return gitMatch[1];
@@ -1417,10 +1408,6 @@ export class InteractiveMode {
 
 	private getCompactPackageSourceLabel(sourceInfo?: SourceInfo): string {
 		const source = sourceInfo?.source ?? "";
-		if (source.startsWith("npm:")) {
-			return source.slice("npm:".length) || source;
-		}
-
 		const gitSource = parseGitUrl(source);
 		if (gitSource) {
 			return gitSource.path || source;
@@ -1557,7 +1544,7 @@ export class InteractiveMode {
 
 	private isPackageSource(sourceInfo?: SourceInfo): boolean {
 		const source = sourceInfo?.source ?? "";
-		return source.startsWith("npm:") || source.startsWith("git:");
+		return source.startsWith("git:");
 	}
 
 	private buildScopeGroups(items: Array<{ path: string; sourceInfo?: SourceInfo }>): Array<{

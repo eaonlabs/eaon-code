@@ -2,7 +2,7 @@
 
 # Eaon Code Packages
 
-Eaon Code packages bundle extensions, skills, prompt templates, and themes so you can share them through npm or git. A package can declare resources in `package.json` under the `eaon` key, or use conventional directories.
+Eaon Code packages bundle extensions, skills, prompt templates, and themes so you can share them through git or a local path. A package can declare resources in `package.json` under the `eaon` key, or use conventional directories.
 
 ## Table of Contents
 
@@ -20,13 +20,13 @@ Eaon Code packages bundle extensions, skills, prompt templates, and themes so yo
 > **Security:** Eaon Code packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
 
 ```bash
-eaon-code install npm:@foo/bar@1.0.0
+eaon-code install git:github.com/foo/bar@v1.0.0
 eaon-code install git:github.com/user/repo@v1
 eaon-code install https://github.com/user/repo  # raw URLs work too
 eaon-code install /absolute/path/to/package
 eaon-code install ./relative/path/to/package
 
-eaon-code remove npm:@foo/bar
+eaon-code remove git:github.com/foo/bar
 eaon-code list                     # show installed packages from settings
 eaon-code update                   # update Eaon Code only
 eaon-code update --all             # update Eaon Code, packages, and pinned git refs
@@ -34,8 +34,8 @@ eaon-code update --extensions      # update packages and reconcile pinned git re
 eaon-code update --models          # refresh model catalogs only
 eaon-code update --self            # update Eaon Code only
 eaon-code update --self --force    # reinstall Eaon Code even if current
-eaon-code update npm:@foo/bar      # update one package
-eaon-code update --extension npm:@foo/bar
+eaon-code update git:github.com/foo/bar  # update one package
+eaon-code update --extension git:github.com/foo/bar
 ```
 
 These commands manage Eaon Code packages. Installer-created source checkouts check for upstream changes at startup and quietly rerun the installer when an update is available. The terminal only shows `Checking for updates...`; installer build output stays hidden. The check is skipped in offline mode and does not overwrite a checkout with local changes. `eaon-code update --self` remains available for a manual update. To uninstall Eaon Code itself, see [Quickstart](quickstart.md#uninstall).
@@ -45,33 +45,13 @@ By default, `install` and `remove` write to user settings (`~/.eaon/agent/settin
 To try a package without installing it, use `--extension` or `-e`. This installs to a temporary directory for the current run only:
 
 ```bash
-eaon-code -e npm:@foo/bar
+eaon-code -e git:github.com/foo/bar
 eaon-code -e git:github.com/user/repo
 ```
 
 ## Package Sources
 
-Eaon Code accepts three source types in settings and `eaon-code install`.
-
-### npm
-
-```
-npm:@scope/pkg@1.2.3
-npm:pkg
-```
-
-- Versioned specs are pinned and skipped by package updates (`eaon-code update --extensions`, `eaon-code update --all`).
-- User installs go under `~/.eaon/agent/npm/`.
-- Project installs go under `.eaon/npm/`.
-- Set `npmCommand` in `settings.json` to pin npm package lookup and install operations to a specific wrapper command such as `mise` or `asdf`.
-
-Example:
-
-```json
-{
-  "npmCommand": ["mise", "exec", "node@20", "--", "npm"]
-}
-```
+Eaon Code accepts two source types in settings and `eaon-code install`: git and local paths. npm package sources are no longer supported; Eaon Code reports them as install failures.
 
 ### git
 
@@ -90,7 +70,7 @@ ssh://git@github.com/user/repo@v1
 - Refs are pinned tags or commits. `eaon-code update --extensions` and `eaon-code update --all` do not move them to newer refs, but they do reconcile an existing clone to the configured ref.
 - Use `eaon-code install git:host/user/repo@new-ref` to update settings and move an existing package to a new pinned ref.
 - Cloned to `~/.eaon/agent/git/<host>/<path>` (global) or `.eaon/git/<host>/<path>` (project).
-- When reconciliation changes the checkout, Eaon Code resets and cleans the clone, then runs `npm install` if `package.json` exists.
+- When reconciliation changes the checkout, Eaon Code resets and cleans the clone, then runs `bun install --omit=dev --omit=peer` if `package.json` exists.
 
 **SSH examples:**
 ```bash
@@ -115,7 +95,7 @@ Local paths point to files or directories on disk and are added to settings with
 
 ## Creating a Package
 
-Add an `eaon` manifest to `package.json` or use conventional directories. Optionally add the `eaon-code` npm keyword for discoverability.
+Add an `eaon` manifest to `package.json` or use conventional directories.
 
 ```json
 {
@@ -146,7 +126,7 @@ If no `eaon` manifest is present, Eaon Code auto-discovers resources from these 
 
 ## Dependencies
 
-Third party runtime dependencies belong in `dependencies` in `package.json`. Dependencies that do not register extensions, skills, prompt templates, or themes also belong in `dependencies`. When Eaon Code installs a package from npm or git, it runs `npm install`, so those dependencies are installed automatically.
+Third party runtime dependencies belong in `dependencies` in `package.json`. Dependencies that do not register extensions, skills, prompt templates, or themes also belong in `dependencies`. When Eaon Code installs a git package, it runs `bun install --omit=dev --omit=peer`, so those dependencies are installed automatically.
 
 Eaon Code bundles core packages for extensions and skills. If you import any of these, list them in `peerDependencies` with a `"*"` range and do not bundle them: `@eaonlabs/eaon-ai`, `@eaonlabs/eaon-agent-core`, `@eaonlabs/eaon-code`, `@eaonlabs/eaon-tui`, `typebox`.
 
@@ -174,9 +154,9 @@ Filter what a package loads using the object form in settings:
 ```json
 {
   "packages": [
-    "npm:simple-pkg",
+    "git:github.com/user/simple-pkg",
     {
-      "source": "npm:my-package",
+      "source": "git:github.com/user/my-package",
       "extensions": ["extensions/*.ts", "!extensions/legacy.ts"],
       "skills": [],
       "prompts": ["prompts/review.md"],
@@ -203,6 +183,5 @@ Use `eaon-code config` to enable or disable extensions, skills, prompt templates
 
 Packages can appear in both global and project settings. If the same package appears in both, the project entry wins unless the project entry has `autoload: false`, in which case it is applied as a delta over the global entry. Identity is determined by:
 
-- npm: package name
 - git: repository URL without ref
 - local: resolved absolute path

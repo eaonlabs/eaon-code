@@ -21,8 +21,7 @@
 		"build": "tsgo -p tsconfig.build.json && node scripts/copy-migrations.mjs",
 		"bench:session:timing": "vitest bench --config vitest.benchmark.config.ts",
 		"test": "vitest --run",
-		"coverage": "vitest --run --coverage",
-		"prepublishOnly": "bun run clean && bun run build"
+		"coverage": "vitest --run --coverage"
 	},
 	"author": "Earendil Works",
 	"license": "MIT",

@@ -8,9 +8,6 @@ import { pathToFileURL } from "node:url";
 import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 const RELEASES_PREFIX = "releases/v1";
-const REGISTRY_URL = "https://registry.npmjs.org";
-const RETRY_DELAY_MS = 5000;
-const RETRY_TIMEOUT_MS = 10 * 60 * 1000;
 const MAX_POINTER_UPDATE_ATTEMPTS = 5;
 const STABLE_SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -50,69 +47,6 @@ function parseArgs(args) {
 		throw new Error("--version must be a stable semver version");
 	}
 	return options;
-}
-
-function sleep(milliseconds) {
-	return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-async function resolvePackageFromNpm(pkg) {
-	const packageUrl = `${REGISTRY_URL}/${encodeURIComponent(pkg.name)}/${pkg.version}`;
-	const response = await fetch(packageUrl, { headers: { accept: "application/json" } });
-	if (!response.ok) {
-		throw new Error(`${pkg.name}@${pkg.version}: npm registry returned ${response.status}`);
-	}
-
-	const data = await response.json();
-	if (
-		typeof data !== "object" ||
-		data === null ||
-		Array.isArray(data) ||
-		data.version !== pkg.version ||
-		typeof data.dist !== "object" ||
-		data.dist === null ||
-		Array.isArray(data.dist) ||
-		typeof data.dist.tarball !== "string" ||
-		typeof data.dist.integrity !== "string"
-	) {
-		throw new Error(`${pkg.name}@${pkg.version}: npm registry returned invalid metadata`);
-	}
-
-	const tarball = await fetch(data.dist.tarball, { method: "HEAD" });
-	if (!tarball.ok) {
-		throw new Error(`${pkg.name}@${pkg.version}: tarball returned ${tarball.status}`);
-	}
-
-	return {
-		name: pkg.name,
-		version: pkg.version,
-		tarball: data.dist.tarball,
-		integrity: data.dist.integrity,
-	};
-}
-
-async function verifyPackagesAreAvailable(packages) {
-	const deadline = Date.now() + RETRY_TIMEOUT_MS;
-	let attempt = 0;
-	let failures = [];
-
-	do {
-		attempt++;
-		const results = await Promise.allSettled(packages.map(resolvePackageFromNpm));
-		failures = results.flatMap((result, index) =>
-			result.status === "rejected" ? [`${packages[index].name}: ${result.reason}`] : [],
-		);
-		if (failures.length === 0) {
-			console.log(`All ${packages.length} Pi packages are available from npm (attempt ${attempt}).`);
-			return results.map((result) => result.value);
-		}
-
-		console.log(`Waiting for ${failures.length} Pi package${failures.length === 1 ? "" : "s"} on npm (attempt ${attempt}):`);
-		for (const failure of failures) console.log(`  ${failure}`);
-		if (Date.now() < deadline) await sleep(RETRY_DELAY_MS);
-	} while (Date.now() < deadline);
-
-	throw new Error(`Timed out waiting for Pi packages to become available from npm:\n${failures.map((failure) => `  ${failure}`).join("\n")}`);
 }
 
 function gitSourceCommit() {
@@ -246,7 +180,7 @@ async function main() {
 		}
 	}
 
-	const publishedPackages = await verifyPackagesAreAvailable(packages);
+	const publishedPackages = packages.map(({ name, version }) => ({ name, version }));
 	const release = {
 		schemaVersion: 1,
 		version: options.version,

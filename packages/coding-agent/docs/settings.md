@@ -231,7 +231,6 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 |---------|------|---------|-------------|
 | `shellPath` | string | - | Custom shell path (e.g., for Cygwin on Windows); supports a leading `~` for the home directory |
 | `shellCommandPrefix` | string | - | Prefix for every bash command (e.g., `"shopt -s expand_aliases"`) |
-| `npmCommand` | string[] | - | Command argv used for npm package lookup/install operations (e.g., `["mise", "exec", "node@20", "--", "npm"]`) |
 
 Windows paths in JSON must use forward slashes or escaped backslashes:
 
@@ -246,14 +245,6 @@ Windows paths in JSON must use forward slashes or escaped backslashes:
   "shellPath": "C:\\Program Files\\Git\\bin\\bash.exe"
 }
 ```
-
-```json
-{
-  "npmCommand": ["mise", "exec", "node@20", "--", "npm"]
-}
-```
-
-`npmCommand` is used for all npm package-manager operations, including installs, uninstalls, and dependency installs inside git packages. User-scoped npm packages install under `~/.eaon/agent/npm/`; project-scoped npm packages install under `.eaon/npm/`. Use argv-style entries exactly as the process should be launched. When `npmCommand` is configured, git package dependency installs use plain `install` to avoid npm-specific flags in wrappers or alternate package managers.
 
 ### Tools
 
@@ -322,7 +313,7 @@ Paths in `~/.eaon/agent/settings.json` resolve relative to `~/.eaon/agent`. Path
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `packages` | array | `[]` | npm/git packages to load resources from |
+| `packages` | array | `[]` | git packages and local paths to load resources from |
 | `extensions` | string[] | `[]` | Local extension file paths or directories |
 | `skills` | string[] | `[]` | Local skill file paths or directories |
 | `prompts` | string[] | `[]` | Local prompt template paths or directories |

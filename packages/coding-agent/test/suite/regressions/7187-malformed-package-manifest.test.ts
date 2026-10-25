@@ -12,7 +12,7 @@ describe("issue #7187 malformed package manifest", () => {
 		const tempDir = mkdtempSync(join(tmpdir(), "pi-7187-"));
 		const agentDir = join(tempDir, "agent");
 		try {
-			const packageDir = join(agentDir, "npm", "node_modules", "bad-package");
+			const packageDir = join(agentDir, "bad-package");
 			const skillPath = join(packageDir, "skills", "bad", "SKILL.md");
 			const promptPath = join(packageDir, "prompts", "valid.md");
 			mkdirSync(join(packageDir, "skills", "bad"), { recursive: true });
@@ -33,7 +33,7 @@ describe("issue #7187 malformed package manifest", () => {
 			const packageManager = new DefaultPackageManager({
 				cwd: tempDir,
 				agentDir,
-				settingsManager: SettingsManager.inMemory({ packages: ["npm:bad-package"] }),
+				settingsManager: SettingsManager.inMemory({ packages: [packageDir] }),
 			});
 
 			const resources = await packageManager.resolve();

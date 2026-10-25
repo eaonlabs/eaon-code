@@ -184,7 +184,7 @@ const PackageSourceSchema = Type.Union(
 	],
 	{
 		description:
-			"Package source for npm or git packages. Use the string form to load all resources or the object form to filter resources.",
+			"Package source for git packages or local paths. Use the string form to load all resources or the object form to filter resources.",
 	},
 );
 
@@ -272,12 +272,6 @@ export const SettingsSchema = Type.Object(
 		shellCommandPrefix: Type.Optional(
 			Type.String({ description: "Prefix prepended to every bash command, for example to enable shell aliases." }),
 		),
-		npmCommand: Type.Optional(
-			Type.Array(Type.String(), {
-				description:
-					'Command used for npm package lookup and installation, in argv form such as ["mise", "exec", "node@20", "--", "npm"].',
-			}),
-		),
 		collapseChangelog: Type.Optional(
 			Type.Boolean({
 				description: "Show the condensed changelog after update; use /changelog for the full changelog.",
@@ -301,7 +295,7 @@ export const SettingsSchema = Type.Object(
 		),
 		packages: Type.Optional(
 			Type.Array(PackageSourceSchema, {
-				description: "npm or git package sources, as strings or objects with resource filtering.",
+				description: "git package sources or local paths, as strings or objects with resource filtering.",
 			}),
 		),
 		extensions: Type.Optional(

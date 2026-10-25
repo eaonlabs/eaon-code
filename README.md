@@ -60,13 +60,7 @@ One line:
 curl -fsSL https://raw.githubusercontent.com/eaonlabs/eaon-code/main/install.sh | bash
 ```
 
-Or with npm:
-
-```bash
-npm install -g --ignore-scripts @eaonlabs/eaon-code
-```
-
-Requires Node.js ≥ 22.19.
+The installer clones the repository into `~/.local/share/eaon-code` and builds it with Bun. It needs Git and Bun on `PATH`.
 
 The CLI command is `eaon-code`:
 
@@ -87,8 +81,8 @@ eaon-code
 ```bash
 git clone https://github.com/eaonlabs/eaon-code.git
 cd eaon-code
-npm install --ignore-scripts
-npm run try:local -- --help  # Build the checkout and run its CLI without installing it
+bun install --frozen-lockfile --ignore-scripts
+bun run try:local -- --help  # Build the checkout and run its CLI without installing it
 ```
 
 ## Packages
@@ -117,11 +111,11 @@ If you need stronger boundaries, containerize or sandbox it. See [packages/codin
 ## Development
 
 ```bash
-npm install --ignore-scripts  # Install all dependencies without running lifecycle scripts
-npm run build                 # Refresh model data, then build all packages
-npm run try:local -- --help   # Build and run this checkout without installing it
-npm run build:offline         # Rebuild using existing model data without network access
-npm run check                 # Lint, format, and type check
+bun install --frozen-lockfile --ignore-scripts  # Install all dependencies without running lifecycle scripts
+bun run build                 # Refresh model data, then build all packages
+bun run try:local -- --help   # Build and run this checkout without installing it
+bun run build:offline         # Rebuild using existing model data without network access
+bun run check                 # Lint, format, and type check
 ./test.sh                     # Run tests (skips LLM-dependent tests without API keys)
 ```
 

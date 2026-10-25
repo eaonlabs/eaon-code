@@ -689,21 +689,24 @@ describe("InteractiveMode.showLoadedResources", () => {
 				}),
 			},
 			{
-				path: "/tmp/project/.pi/npm/node_modules/pi-markdown-preview/extensions/index.ts",
-				sourceInfo: createSourceInfo("/tmp/project/.pi/npm/node_modules/pi-markdown-preview/extensions/index.ts", {
-					source: "npm:pi-markdown-preview",
-					scope: "project",
-					origin: "package",
-					baseDir: "/tmp/project/.pi/npm/node_modules/pi-markdown-preview",
-				}),
+				path: "/tmp/project/.pi/git/github.com/acme/pi-markdown-preview/extensions/index.ts",
+				sourceInfo: createSourceInfo(
+					"/tmp/project/.pi/git/github.com/acme/pi-markdown-preview/extensions/index.ts",
+					{
+						source: "git:github.com/acme/pi-markdown-preview",
+						scope: "project",
+						origin: "package",
+						baseDir: "/tmp/project/.pi/git/github.com/acme/pi-markdown-preview",
+					},
+				),
 			},
 			{
-				path: "/tmp/project/.pi/npm/node_modules/@scope/pi-scoped/extensions/index.ts",
-				sourceInfo: createSourceInfo("/tmp/project/.pi/npm/node_modules/@scope/pi-scoped/extensions/index.ts", {
-					source: "npm:@scope/pi-scoped",
+				path: "/tmp/project/.pi/git/github.com/acme/pi-scoped/extensions/index.ts",
+				sourceInfo: createSourceInfo("/tmp/project/.pi/git/github.com/acme/pi-scoped/extensions/index.ts", {
+					source: "git:github.com/acme/pi-scoped",
 					scope: "project",
 					origin: "package",
-					baseDir: "/tmp/project/.pi/npm/node_modules/@scope/pi-scoped",
+					baseDir: "/tmp/project/.pi/git/github.com/acme/pi-scoped",
 				}),
 			},
 			{
@@ -821,8 +824,9 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  @scope/pi-scoped, answer.ts, cli-extension.ts, HazAT/pi-interactive-subagents, HazAT/pi-interactive-subagents:subagents, local-index, pi-markdown-preview, user-index"`);
+			"[Extensions]
+			  acme/pi-markdown-preview, acme/pi-scoped, answer.ts, cli-extension.ts, HazAT/pi-interactive-subagents, HazAT/pi-interactive-subagents:subagents, local-index, user-index"
+		`);
 	});
 
 	test("adds more parent folders until local extension labels are unique", () => {
@@ -1096,13 +1100,16 @@ describe("InteractiveMode.showLoadedResources", () => {
 	test("package extensions still strip index.ts correctly (regression guard)", () => {
 		const extensions: ExtensionFixture[] = [
 			{
-				path: "/tmp/project/.pi/npm/node_modules/pi-markdown-preview/extensions/index.ts",
-				sourceInfo: createSourceInfo("/tmp/project/.pi/npm/node_modules/pi-markdown-preview/extensions/index.ts", {
-					source: "npm:pi-markdown-preview",
-					scope: "project",
-					origin: "package",
-					baseDir: "/tmp/project/.pi/npm/node_modules/pi-markdown-preview",
-				}),
+				path: "/tmp/project/.pi/git/github.com/acme/pi-markdown-preview/extensions/index.ts",
+				sourceInfo: createSourceInfo(
+					"/tmp/project/.pi/git/github.com/acme/pi-markdown-preview/extensions/index.ts",
+					{
+						source: "git:github.com/acme/pi-markdown-preview",
+						scope: "project",
+						origin: "package",
+						baseDir: "/tmp/project/.pi/git/github.com/acme/pi-markdown-preview",
+					},
+				),
 			},
 		];
 
@@ -1117,85 +1124,9 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  pi-markdown-preview"`);
-	});
-
-	test("labels npm sibling extensions relative to the declaring package", () => {
-		const extensions: ExtensionFixture[] = [
-			{
-				path: "/tmp/project/.pi/npm/node_modules/primary-package/index.ts",
-				sourceInfo: createSourceInfo("/tmp/project/.pi/npm/node_modules/primary-package/index.ts", {
-					source: "npm:primary-package",
-					scope: "project",
-					origin: "package",
-					baseDir: "/tmp/project/.pi/npm/node_modules/primary-package",
-				}),
-			},
-			{
-				path: "/tmp/project/.pi/npm/node_modules/sibling-package/index.ts",
-				sourceInfo: createSourceInfo("/tmp/project/.pi/npm/node_modules/sibling-package/index.ts", {
-					source: "npm:primary-package",
-					scope: "project",
-					origin: "package",
-					baseDir: "/tmp/project/.pi/npm/node_modules/primary-package",
-				}),
-			},
-		];
-
-		const fakeThis = createShowLoadedResourcesThis({
-			quietStartup: false,
-			extensions,
-			useRealScopeGroups: true,
-		});
-
-		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
-			force: false,
-		});
-
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  primary-package, primary-package:../sibling-package"`);
-	});
-
-	test("labels Windows npm sibling extensions relative to the declaring package", () => {
-		const primaryPath = "C:\\Users\\me\\.pi\\agent\\npm\\node_modules\\primary-package\\index.ts";
-		const siblingPath = "C:\\Users\\me\\.pi\\agent\\npm\\node_modules\\sibling-package\\index.ts";
-		const baseDir = "C:\\Users\\me\\.pi\\agent\\npm\\node_modules\\primary-package";
-		const extensions: ExtensionFixture[] = [
-			{
-				path: primaryPath,
-				sourceInfo: createSourceInfo(primaryPath, {
-					source: "npm:primary-package",
-					scope: "user",
-					origin: "package",
-					baseDir,
-				}),
-			},
-			{
-				path: siblingPath,
-				sourceInfo: createSourceInfo(siblingPath, {
-					source: "npm:primary-package",
-					scope: "user",
-					origin: "package",
-					baseDir,
-				}),
-			},
-		];
-
-		const fakeThis = createShowLoadedResourcesThis({
-			quietStartup: false,
-			extensions,
-			useRealScopeGroups: true,
-		});
-
-		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
-			force: false,
-		});
-
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  primary-package, primary-package:../sibling-package"`);
+			"[Extensions]
+			  acme/pi-markdown-preview"
+		`);
 	});
 
 	test("captures mixed extension layouts in expanded output", () => {
@@ -1211,21 +1142,22 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  project
-    /tmp/project/.pi/extensions/answer.ts
-    /tmp/project/.pi/extensions/local-index
-    git:github.com/HazAT/pi-interactive-subagents
-      extensions
-      extensions/subagents
-    npm:@scope/pi-scoped
-      extensions
-    npm:pi-markdown-preview
-      extensions
-  user
-    /tmp/agent/extensions/user-index
-  path
-    /tmp/temp/cli-extension.ts"`);
+			"[Extensions]
+			  project
+			    /tmp/project/.pi/extensions/answer.ts
+			    /tmp/project/.pi/extensions/local-index
+			    git:github.com/acme/pi-markdown-preview
+			      extensions
+			    git:github.com/acme/pi-scoped
+			      extensions
+			    git:github.com/HazAT/pi-interactive-subagents
+			      extensions
+			      extensions/subagents
+			  user
+			    /tmp/agent/extensions/user-index
+			  path
+			    /tmp/temp/cli-extension.ts"
+		`);
 	});
 
 	test("shows context paths relative to cwd while preserving full external paths", () => {

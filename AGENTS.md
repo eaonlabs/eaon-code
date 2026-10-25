@@ -28,8 +28,8 @@
 
 ## Commands
 
-- After code changes (not docs): `npm run check` (full output, no tail). Fix all errors, warnings, and infos before committing. Does not run tests.
-- Never run `npm run build` or `npm test` unless requested by the user.
+- After code changes (not docs): `bun run check` (full output, no tail). Fix all errors, warnings, and infos before committing. Does not run tests.
+- Never run `bun run build` or `bun run test` unless requested by the user.
 - Never run the full vitest suite directly: it includes e2e tests that activate when endpoint/auth env vars are present. For all non-e2e tests, run `./test.sh` from the repo root. Otherwise run specific tests from the package root:
   - Vitest: `node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run test/specific.test.ts`
   - `packages/tui` (`node:test`): `node --test test/specific.test.ts`
@@ -41,7 +41,7 @@
 
 ## Dependency and Install Security
 
-- Treat npm dep and lockfile changes as reviewed code. Direct external deps stay pinned to exact versions.
+- Treat dep and lockfile changes as reviewed code. Direct external deps stay pinned to exact versions.
 - When updating `undici`, you MUST read its changelog/release notes for the target version and evaluate whether any changes may affect functionality before applying the update.
 - Hydrate locally with `bun install --frozen-lockfile --ignore-scripts`. Don't run lifecycle scripts unless the user asks.
 - If dep metadata changes, refresh `bun.lock` with `bun install --lockfile-only --ignore-scripts`.
