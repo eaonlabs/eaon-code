@@ -100,7 +100,9 @@ describe("DefaultResourceLoader", () => {
 			expect(warnings).toHaveLength(1);
 			expect(warnings[0].path).toBe("npm:broken-package");
 			expect(warnings[0].warning).toMatch(/^failed to install \(.*failed with code 1\)\./);
-			expect(warnings[0].warning).toContain('Run "pi remove npm:broken-package" to remove it from settings.json.');
+			expect(warnings[0].warning).toContain(
+				'Run "eaon-code remove npm:broken-package" to remove it from settings.json.',
+			);
 		});
 
 		// #11088
@@ -125,7 +127,7 @@ describe("DefaultResourceLoader", () => {
 		});
 
 		// #11088
-		it("should point project extension packages at pi remove --local", async () => {
+		it("should point project extension packages at eaon-code remove --local", async () => {
 			vi.stubEnv("PI_OFFLINE", "");
 			writeFileSync(
 				join(agentDir, "settings.json"),
@@ -143,7 +145,7 @@ describe("DefaultResourceLoader", () => {
 
 			const warnings = loader.getExtensions().warnings ?? [];
 			expect(warnings).toHaveLength(1);
-			expect(warnings[0].warning).toContain('Run "pi remove npm:broken-package --local"');
+			expect(warnings[0].warning).toContain('Run "eaon-code remove npm:broken-package --local"');
 		});
 
 		// #11088

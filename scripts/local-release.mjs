@@ -18,7 +18,7 @@ isolated directory outside the repository for local release testing.
 Options:
   --out <dir>          Output directory. Defaults to a new directory under ${tmpdir()}
   --force              Remove --out first if it already exists
-  --skip-check         Do not run npm run check before building
+  --skip-check         Do not run bun run check before building
   --skip-test          Do not run ./test.sh before building
   --skip-install       Only create tarballs; do not create isolated installs
   --skip-bun-install   Do not create the isolated Bun install
@@ -192,15 +192,15 @@ mkdirSync(tarballDirectory, { recursive: true });
 
 // Release artifacts always use a freshly generated, strictly validated catalog,
 // including when checks or tests are explicitly skipped.
-run("npm", ["run", "generate:models"], { cwd: repoRoot });
+run("bun", ["run", "generate:models"], { cwd: repoRoot });
 
 if (!options.skipCheck) {
-	run("npm", ["run", "check"], { cwd: repoRoot });
+	run("bun", ["run", "check"], { cwd: repoRoot });
 }
 
 for (const pkg of packages) {
-	run("npm", ["run", "clean"], { cwd: pkg.directory });
-	run("npm", ["run", pkg.directory === "packages/ai" ? "build:offline" : "build"], { cwd: pkg.directory });
+	run("bun", ["run", "clean"], { cwd: pkg.directory });
+	run("bun", ["run", pkg.directory === "packages/ai" ? "build:offline" : "build"], { cwd: pkg.directory });
 }
 
 if (!options.skipTest) {
@@ -241,7 +241,7 @@ if (!options.skipInstall) {
 	console.log("\nRun the local Bun binary release from outside the repository:");
 	console.log(`  ${join(binaryDirectory, String(binaryPlatform).startsWith("windows-") ? "eaon-code.exe" : "eaon-code")} --help`);
 
-	console.log("\nIsolated npm install:");
+	console.log("\nIsolated install:");
 	console.log(`  ${nodeInstallDirectory}`);
 	console.log("\nRun the locally packed npm CLI from outside the repository:");
 	console.log(`  ${join(nodeInstallDirectory, process.platform === "win32" ? "eaon-code.cmd" : "eaon-code")} --help`);

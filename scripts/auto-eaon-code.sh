@@ -67,7 +67,7 @@ fi
 
 dev_eaon_code="$repo_dir/packages/coding-agent/dist/bundle/cli.js"
 if [[ ! -x "$dev_eaon_code" ]]; then
-	echo "error: development eaon-code build not found; run \`npm run build\` in $repo_dir" >&2
+	echo "error: development eaon-code build not found; run \`bun run build\` in $repo_dir" >&2
 	exit 1
 fi
 

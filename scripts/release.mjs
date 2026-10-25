@@ -8,7 +8,7 @@
  *
  * Steps:
  * 1. Check for uncommitted changes
- * 2. Bump version via npm run version:xxx or set an explicit version
+ * 2. Bump version via bun run version:xxx or set an explicit version
  * 3. Update CHANGELOG.md files: [Unreleased] -> [version] - date
  * 4. Regenerate release artifacts
  * 5. Run checks and tests
@@ -112,7 +112,7 @@ function bumpOrSetVersion(target) {
 
 	if (BUMP_TYPES.has(target)) {
 		console.log(`Bumping version (${target})...`);
-		run(`npm run version:${target}`);
+		run(`bun run version:${target}`);
 	} else {
 		if (compareVersions(target, currentVersion) <= 0) {
 			console.error(`Error: explicit version ${target} must be greater than current version ${currentVersion}.`);
@@ -120,15 +120,15 @@ function bumpOrSetVersion(target) {
 		}
 
 		console.log(`Setting explicit version (${target})...`);
-		run(`npm version ${target} --workspaces --no-git-tag-version --no-workspaces-update && node scripts/sync-versions.js && npm install --package-lock-only --ignore-scripts`);
+		run(`node scripts/bump-version.mjs ${target} && node scripts/sync-versions.js && bun install --lockfile-only --ignore-scripts`);
 	}
 
-	// npm version can temporarily install the previous workspace versions before
+	// The version bump can temporarily leave the previous workspace versions in the lockfile before
 	// sync-versions updates inter-package ranges. Remove those stale lock entries,
 	// refresh the lockfile, then hydrate from the final dependency graph.
 	removeStaleWorkspaceLockEntries();
-	run("npm install --package-lock-only --ignore-scripts");
-	run("npm ci --ignore-scripts");
+	run("bun install --lockfile-only --ignore-scripts");
+	run("bun install --frozen-lockfile --ignore-scripts");
 	return getVersion();
 }
 
@@ -215,19 +215,19 @@ console.log();
 
 // 4. Regenerate release artifacts
 console.log("Regenerating release artifacts...");
-run("npm run generate:models");
-run("npm run check:model-data");
-run("npm run shrinkwrap:coding-agent");
-run("npm run install-lock:coding-agent");
+run("bun run generate:models");
+run("bun run check:model-data");
+run("bun run shrinkwrap:coding-agent");
+run("bun run install-lock:coding-agent");
 console.log();
 
 // 5. Run checks and tests
 console.log("Running checks...");
-run("npm run check");
+run("bun run check");
 console.log();
 
 console.log("Building packages for tests...");
-run("npm run build:offline");
+run("bun run build:offline");
 console.log();
 
 console.log("Running tests...");
@@ -235,7 +235,7 @@ run("./test.sh");
 console.log();
 
 console.log("Checking the packed coding-agent consumer install...");
-run("npm run check:package-install");
+run("bun run check:package-install");
 console.log();
 
 // 6. Commit and tag

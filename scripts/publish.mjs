@@ -37,23 +37,22 @@ function run(command, args, options = {}) {
 
 function assertBuildOutputExists(directory) {
 	if (!existsSync(join(directory, "dist"))) {
-		throw new Error(`${directory}/dist does not exist. Run npm run build before publishing.`);
+		throw new Error(`${directory}/dist does not exist. Run bun run build before publishing.`);
 	}
 }
 
 function validatePack(directory) {
-	const result = run("npm", ["pack", "--dry-run", "--ignore-scripts", "--json"], { capture: true, cwd: directory });
-	const packed = JSON.parse(result.stdout)[0];
-	console.log(`  ${packed.filename}: ${packed.files.length} files, ${packed.size} bytes packed, ${packed.unpackedSize} bytes unpacked`);
+	const result = run("bun", ["pm", "pack", "--dry-run"], { capture: true, cwd: directory });
+	console.log(`  ${result.stdout.trim().split("\n").pop()}`);
 }
 
 function isPublished(name, version) {
-	const result = spawnSync(commandForPlatform("npm"), ["view", `${name}@${version}`, "version", "--json"], {
+	const result = spawnSync("curl", ["-fsS", "-o", "/dev/null", `https://registry.npmjs.org/${name}/${version}`], {
 		encoding: "utf8",
 		stdio: ["inherit", "pipe", "pipe"],
 	});
 
-	if (result.status === 0 && result.stdout.trim()) {
+	if (result.status === 0) {
 		return true;
 	}
 
@@ -105,6 +104,7 @@ for (const pkg of packageStates) {
 		continue;
 	}
 
+	// Publishing stays on npm: its trusted-publishing (OIDC) flow is npm-only.
 	run("npm", ["publish", "--access", "public", "--ignore-scripts"], { cwd: pkg.directory });
 	console.log();
 }

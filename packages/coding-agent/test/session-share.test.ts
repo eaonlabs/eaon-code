@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { readFileSync, writeFileSync } from "node:fs";
 import { PassThrough } from "node:stream";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const childProcessMocks = vi.hoisted(() => ({
 	spawn: vi.fn(),
@@ -23,6 +23,7 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
 
 describe("shareSession", () => {
 	beforeAll(() => initTheme("dark"));
+	beforeEach(() => vi.clearAllMocks());
 
 	it("keeps concurrent session exports isolated", async () => {
 		const uploads: string[] = [];
@@ -53,6 +54,7 @@ describe("shareSession", () => {
 					getBranch: () => [],
 				},
 				state: { systemPrompt: name, tools: [] },
+				settingsManager: { getSessionShareDestination: () => "auto" },
 				modelRuntime: { getProvider: () => undefined },
 				exportToHtml: async (filePath: string) => {
 					writeFileSync(filePath, name);
@@ -84,5 +86,28 @@ describe("shareSession", () => {
 
 		expect(uploads).toEqual(["A", "B"]);
 		expect(errors).toEqual([]);
+	});
+
+	// #10870: users need persistent gist shares even when Radius authentication is configured.
+	it("reports missing Radius authentication when Radius is forced", async () => {
+		const errors: string[] = [];
+
+		await shareSession({
+			session: {
+				sessionManager: { getSessionId: () => "radius", getCwd: () => "/tmp", getBranch: () => [] },
+				state: { systemPrompt: "", tools: [] },
+				settingsManager: { getSessionShareDestination: () => "radius" },
+				modelRuntime: { getProvider: () => undefined },
+			},
+			ui: { setFocus() {}, requestRender() {} },
+			editorContainer: { clear() {}, addChild() {} },
+			editor: {},
+			showStatus: vi.fn(),
+			showError: (message: string) => errors.push(message),
+		} as never);
+
+		expect(errors).toEqual(["Radius authentication is not configured. Run '/login radius' first."]);
+		expect(childProcessMocks.spawnSync).not.toHaveBeenCalled();
+		expect(childProcessMocks.spawn).not.toHaveBeenCalled();
 	});
 });

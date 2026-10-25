@@ -434,14 +434,14 @@ try {
 	if (checkOnly) {
 		if (!existsSync(outputPackageJsonPath) || !existsSync(outputLockfilePath)) {
 			console.error("packages/coding-agent/install-lock is missing generated files.");
-			console.error("Run: npm run install-lock:coding-agent");
+			console.error("Run: bun run install-lock:coding-agent");
 			process.exit(1);
 		}
 		const currentPackageJson = readFileSync(outputPackageJsonPath, "utf8");
 		const currentLockfile = readFileSync(outputLockfilePath, "utf8");
 		if (currentPackageJson !== packageJsonContent || currentLockfile !== lockfileContent) {
 			console.error("packages/coding-agent/install-lock is out of date.");
-			console.error("Run: npm run install-lock:coding-agent");
+			console.error("Run: bun run install-lock:coding-agent");
 			process.exit(1);
 		}
 		console.log("packages/coding-agent/install-lock is up to date.");
