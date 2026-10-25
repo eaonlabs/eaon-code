@@ -12,6 +12,16 @@ function git(root, ...args) {
 	execFileSync("git", ["-C", root, ...args], { stdio: "ignore" });
 }
 
+function waitFor(predicate, timeoutMs = 20_000) {
+	const sleepBuffer = new Int32Array(new SharedArrayBuffer(4));
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		if (predicate()) return true;
+		Atomics.wait(sleepBuffer, 0, 0, 50);
+	}
+	return predicate();
+}
+
 test("checks installer source updates and keeps installer output hidden", (t) => {
 	const tempRoot = mkdtempSync(join(tmpdir(), "eaon-code-startup-update-"));
 	t.after(() => rmSync(tempRoot, { recursive: true, force: true }));
@@ -101,6 +111,9 @@ printf "installer output must stay hidden\\n"`,
 	assert.equal(updated.status, 0);
 	assert.equal(updated.stdout, "start\n");
 	assert.equal(updated.stderr, "");
+	// The installer runs in the background, so wait for it to write the log.
+	const installed = waitFor(() => existsSync(installLog));
+	assert.equal(installed, true, "background installer did not run");
 	assert.equal(readFileSync(installLog, "utf8"), "installed\n");
 
 	const currentAfterUpdate = runHelper("start");

@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,7 +58,10 @@ function checkForSourceUpdate(root, config) {
 	const latestCommit = runGit(root, ["rev-parse", "FETCH_HEAD"]);
 	if (!latestCommit || latestCommit === (config.installedCommit ?? currentCommit)) return;
 
-	spawnSync("bash", [join(root, "install.sh")], {
+	// Run the update in the background. A blocking install would hold the CLI at startup for the
+	// whole build. The new build applies the next time the command starts.
+	const installer = spawn("bash", [join(root, "install.sh")], {
+		detached: true,
 		stdio: "ignore",
 		env: {
 			...process.env,
@@ -68,6 +71,7 @@ function checkForSourceUpdate(root, config) {
 			EAON_CODE_BIN_DIR: config.binDir,
 		},
 	});
+	installer.unref();
 }
 
 function shouldCheck(args) {
