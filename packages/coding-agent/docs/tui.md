@@ -121,6 +121,12 @@ async execute(toolCallId, params, signal, onUpdate, ctx) {
 }
 ```
 
+**Waiting for user input.** An inline component does not report pi as blocked on input by default, because the same API hosts loaders. Pass `blocked` so the terminal shows pi as waiting for an answer while the component is visible. Overlays ignore this option.
+
+```typescript
+ctx.ui.custom(factory, { blocked: { kind: "question", message: "Pick a color" } });
+```
+
 ## Overlays
 
 Overlays render components on top of existing content without clearing the screen. Pass `{ overlay: true }` to `ctx.ui.custom()`:

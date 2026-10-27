@@ -2828,6 +2828,7 @@ export class InteractiveMode {
 			overlay?: boolean;
 			overlayOptions?: OverlayOptions | (() => OverlayOptions);
 			onHandle?: (handle: OverlayHandle) => void;
+			blocked?: BlockedStatus;
 		},
 	): Promise<T> {
 		const savedText = this.editor.getText();
@@ -2851,7 +2852,10 @@ export class InteractiveMode {
 				closed = true;
 				// Remove this overlay, not the topmost one: another overlay may have opened above it.
 				if (isOverlay) overlayHandle?.hide();
-				else restoreEditor();
+				else {
+					this.programStatus.setBlocked("extension-custom", undefined);
+					restoreEditor();
+				}
 				// Note: both branches above already call requestRender
 				resolve(result);
 				try {
@@ -2887,6 +2891,7 @@ export class InteractiveMode {
 						this.editorContainer.clear();
 						this.editorContainer.addChild(component);
 						this.ui.setFocus(component);
+						this.programStatus.setBlocked("extension-custom", options?.blocked);
 						this.ui.requestRender();
 					}
 				})
