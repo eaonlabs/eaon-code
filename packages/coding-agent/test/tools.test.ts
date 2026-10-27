@@ -900,6 +900,23 @@ describe("Coding Agent Tools", () => {
 			expect(output).not.toContain("match two");
 		});
 
+		// https://github.com/earendil-works/pi/issues/11398
+		it("should keep context line numbers aligned with ripgrep when a file contains a lone CR", async () => {
+			const testFile = join(testDir, "lone-cr.txt");
+			writeFileSync(testFile, "before\rprogress\nneedle\nafter");
+
+			const result = await grepTool.execute("test-call-lone-cr", {
+				pattern: "needle",
+				path: testFile,
+				context: 1,
+			});
+
+			const output = getTextOutput(result);
+			expect(output).toContain("lone-cr.txt-1- beforeprogress");
+			expect(output).toContain("lone-cr.txt:2: needle");
+			expect(output).toContain("lone-cr.txt-3- after");
+		});
+
 		it("should treat flag-like patterns as search text", async () => {
 			const marker = join(testDir, "grep-injection-marker");
 			const payload = join(testDir, "payload.sh");
