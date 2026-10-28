@@ -5,6 +5,7 @@
 ### Added
 - Usage cost carries `totalFromProvider` so provider-reported totals are kept.
 - Terminal `pi-messages` events carry `responseModel`.
+- Added Claude Haiku 5.5 to the Eaon free gateway models.
 
 ### Fixed
 - Kimi K3.1 Pro and K3.1 Pro Highspeed use Kimi K3 settings and implied subscription costs.
@@ -13,6 +14,7 @@
 - Anthropic per-message effort sends a fixed low top-level effort.
 - Faux provider no longer counts cache writes as input tokens.
 - Gemini tool schemas send `const` as `enum` and keep literal data.
+- Eaon gateway requests are signed with `EAON_GATEWAY_APP_ID` and `EAON_GATEWAY_APP_SECRET`; unsigned requests fail with `eaon_apps_only`.
 
 ## [1.1.6] - 2026-10-22
 
