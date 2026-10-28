@@ -1673,14 +1673,16 @@ if (eaon.getFlag("plan")) {
 
 ### eaon.exec(command, args, options?)
 
-Execute a shell command.
+Execute a command without a shell.
 
 ```typescript
 const result = await eaon.exec("git", ["status"], { signal, timeout: 5000 });
-// result.stdout, result.stderr, result.code, result.killed
+// result.stdout, result.stderr, result.code, result.killed, result.truncated
 ```
 
-### eaon.getActiveTools() / pi.getAllTools() / pi.setActiveTools(names)
+Options: `signal` and `timeout` terminate the command, `cwd` sets the working directory, and `maxBuffer` limits stdout and stderr combined (default 256 MiB). When output exceeds `maxBuffer`, eaon terminates the command and returns the output up to the limit with `truncated: true`, `killed: true`, and a nonzero `code`. `killed` is true whenever pi terminated the command: timeout, abort, or `maxBuffer`. A command that ignores SIGTERM gets SIGKILL after 5 seconds.
+
+### eaon.getActiveTools() / eaon.getAllTools() / eaon.setActiveTools(names)
 
 Manage active tools. This works for both built-in tools and dynamically registered tools. `eaon.getActiveTools()` returns the active tool names as `string[]`; `eaon.getAllTools()` returns metadata for all configured tools.
 
