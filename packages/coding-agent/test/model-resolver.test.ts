@@ -202,6 +202,39 @@ describe("parseModelPattern", () => {
 		});
 	});
 
+	describe("provider ids containing a slash", () => {
+		// URL-derived provider id, e.g. llama-server=http://host:10800 (#11394)
+		const urlProviderModel: Model<"anthropic-messages">[] = [
+			{
+				id: "unsloth/qwen-gguf:BF16",
+				name: "Qwen GGUF",
+				api: "anthropic-messages",
+				provider: "llama=http://host:10800",
+				baseUrl: "http://host:10800",
+				reasoning: true,
+				input: ["text"],
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow: 32000,
+				maxTokens: 4096,
+			},
+		];
+		const modelsWithUrlProvider = [...allModels, ...urlProviderModel];
+
+		test("resolves a provider/id reference whose provider id contains a slash", () => {
+			const result = parseModelPattern("llama=http://host:10800/unsloth/qwen-gguf:BF16", modelsWithUrlProvider);
+			expect(result.model?.provider).toBe("llama=http://host:10800");
+			expect(result.model?.id).toBe("unsloth/qwen-gguf:BF16");
+			expect(result.thinkingLevel).toBeUndefined();
+		});
+
+		test("applies a thinking suffix after such a reference", () => {
+			const result = parseModelPattern("llama=http://host:10800/unsloth/qwen-gguf:BF16:high", modelsWithUrlProvider);
+			expect(result.model?.provider).toBe("llama=http://host:10800");
+			expect(result.model?.id).toBe("unsloth/qwen-gguf:BF16");
+			expect(result.thinkingLevel).toBe("high");
+		});
+	});
+
 	describe("edge cases", () => {
 		test("empty pattern matches via partial matching", () => {
 			// Empty string is included in all model IDs, so partial matching finds a match

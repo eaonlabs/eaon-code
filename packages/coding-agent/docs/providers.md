@@ -64,7 +64,17 @@ Radius is a dynamic `pi-messages` gateway. `/login radius` stores OAuth tokens i
 
 ## Eaon Free Gateway
 
-Select **Eaon** in `/setup` or run `/login eaon`. This no-auth OpenAI-compatible gateway requires no account or API key. Eaon Code 1.1.5 includes the models currently listed by the gateway: GPT-6-Luna, MiMo v2.6 Flash, and Muse Spark 1.3 Contributor. The setup flow selects GPT-6-Luna by default; use `/model` to choose another model.
+Select **Eaon** in `/setup` or run `/login eaon`. This OpenAI-compatible gateway requires no account or API key from the user. Eaon Code includes the models currently listed by the gateway: Claude Haiku 5.5, GPT-6-Luna, MiMo v2.6 Flash, and Muse Spark 1.3 Contributor. The setup flow selects GPT-6-Luna by default; use `/model` to choose another model.
+
+The gateway accepts requests only from Eaon apps. Eaon Code signs each request with an app ID and secret read from the provider environment:
+
+```bash
+export EAON_GATEWAY_APP_ID=eaon_app_...
+export EAON_GATEWAY_APP_SECRET=eaon_as_...
+eaon-code
+```
+
+Without both variables, requests are sent unsigned and the gateway returns `401 eaon_apps_only`.
 
 ## API Keys
 

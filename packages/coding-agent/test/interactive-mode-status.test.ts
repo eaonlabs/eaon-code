@@ -287,6 +287,7 @@ describe("InteractiveMode.showExtensionCustom", () => {
 			keybindings: {},
 			ui,
 			disposeActiveSelector: vi.fn(),
+			programStatus: { setBlocked: vi.fn() },
 		};
 		const showExtensionCustom = <T>(
 			factory: (tui: TUI, theme: unknown, keybindings: unknown, done: (result: T) => void) => Component,
@@ -326,6 +327,71 @@ describe("InteractiveMode.showExtensionCustom", () => {
 			expect(overlay.inputs).toEqual(["x"]);
 			expect(editor.inputs).toEqual([]);
 			expect(overlay.focused).toBe(true);
+
+			closeOverlay("closed");
+			await overlayPromise;
+		} finally {
+			ui.stop();
+		}
+	});
+
+	test("inline custom UI reports blocked status while visible; overlays do not", async () => {
+		const terminal = new VirtualTerminal(80, 24);
+		const ui: TUI = new TuiMainScreen(terminal);
+		const editorContainer = new Container();
+		const editor = new TestFocusableComponent("EDITOR");
+		const prompt = new TestFocusableComponent("PROMPT");
+		const overlay = new TestFocusableComponent("OVERLAY");
+		const setBlocked = vi.fn();
+		let closePrompt: (value: string) => void = () => {
+			throw new Error("closePrompt was not initialized");
+		};
+		let closeOverlay: (value: string) => void = () => {
+			throw new Error("closeOverlay was not initialized");
+		};
+		const fakeThis = {
+			editor,
+			editorContainer,
+			keybindings: {},
+			ui,
+			disposeActiveSelector: vi.fn(),
+			programStatus: { setBlocked },
+		};
+		const showExtensionCustom = <T>(
+			factory: (tui: TUI, theme: unknown, keybindings: unknown, done: (result: T) => void) => Component,
+			options?: { overlay?: boolean; blocked?: { kind: "question"; message: string } },
+		): Promise<T> =>
+			(InteractiveMode as any).prototype.showExtensionCustom.call(fakeThis, factory, options) as Promise<T>;
+
+		editorContainer.addChild(editor);
+		ui.addChild(editorContainer);
+		ui.start();
+		try {
+			const blocked = { kind: "question" as const, message: "Pick a color" };
+			const promptPromise = showExtensionCustom<string>(
+				(_tui, _theme, _keybindings, done) => {
+					closePrompt = done;
+					return prompt;
+				},
+				{ blocked },
+			);
+			await flushTui(ui, terminal);
+			expect(setBlocked).toHaveBeenLastCalledWith("extension-custom", blocked);
+
+			closePrompt("done");
+			await promptPromise;
+			expect(setBlocked).toHaveBeenLastCalledWith("extension-custom", undefined);
+
+			setBlocked.mockClear();
+			const overlayPromise = showExtensionCustom<string>(
+				(_tui, _theme, _keybindings, done) => {
+					closeOverlay = done;
+					return overlay;
+				},
+				{ overlay: true, blocked },
+			);
+			await flushTui(ui, terminal);
+			expect(setBlocked).not.toHaveBeenCalled();
 
 			closeOverlay("closed");
 			await overlayPromise;

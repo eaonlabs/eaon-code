@@ -912,19 +912,11 @@ export class InteractiveMode {
 		// Load changelog (only show new entries, skip for resumed sessions)
 		this.changelogMarkdown = this.getChangelogForDisplay();
 
-		if (this.session.scopedModels.length > 0 && this.shouldShowStartupDetails()) {
-			const modelList = this.session.scopedModels
-				.map((sm) => {
-					const thinkingStr = sm.thinkingLevel ? `:${sm.thinkingLevel}` : "";
-					return `${sm.model.id}${thinkingStr}`;
-				})
-				.join(", ");
-			const cycleKeys = this.keybindings.getKeys("app.model.cycleForward");
-			const cycleHint =
-				cycleKeys.length > 0
-					? theme.fg("muted", ` (${formatKeyText(cycleKeys.join("/"), { capitalize: true })} to cycle)`)
-					: "";
-			console.log(theme.fg("dim", `Model scope: ${modelList}${cycleHint}`));
+		// Fullscreen renders on the alternate screen, so text printed to stdout here would stay in the shell
+		// after exit. Fullscreen shows the notice in the header instead (#11508).
+		if (this.renderer.mode !== "fullscreen") {
+			const modelScopeNotice = this.getModelScopeNotice();
+			if (modelScopeNotice) console.log(modelScopeNotice);
 		}
 
 		// Keep one component tree and remount it when changing renderers.
@@ -1049,6 +1041,7 @@ export class InteractiveMode {
 			this.builtInHeader = new Text("", 0, 0);
 			this.headerContainer.addChild(this.builtInHeader);
 		}
+		if (this.renderer.mode === "fullscreen") this.showFullscreenModelScopeNotice();
 		this.ui.requestRender();
 
 		// Ensure fd and rg are available after mounting the TUI (downloads if missing, adds to PATH via getBinDir)
@@ -1357,6 +1350,28 @@ export class InteractiveMode {
 	}
 
 	/** Startup details (model scope, loaded resources). Hidden by quietStartup: true or "header". */
+	private getModelScopeNotice(): string | undefined {
+		if (this.session.scopedModels.length === 0 || !this.shouldShowStartupDetails()) return undefined;
+		const modelList = this.session.scopedModels
+			.map((sm) => {
+				const thinkingStr = sm.thinkingLevel ? `:${sm.thinkingLevel}` : "";
+				return `${sm.model.id}${thinkingStr}`;
+			})
+			.join(", ");
+		const cycleKeys = this.keybindings.getKeys("app.model.cycleForward");
+		const cycleHint =
+			cycleKeys.length > 0
+				? theme.fg("muted", ` (${formatKeyText(cycleKeys.join("/"), { capitalize: true })} to cycle)`)
+				: "";
+		return theme.fg("dim", `Model scope: ${modelList}${cycleHint}`);
+	}
+
+	private showFullscreenModelScopeNotice(): void {
+		if (!this.getModelScopeNotice()) return;
+		this.headerContainer.addChild(new ThemedText(() => this.getModelScopeNotice() ?? "", 1, 0));
+		this.headerContainer.addChild(new Spacer(1));
+	}
+
 	private shouldShowStartupDetails(): boolean {
 		return this.options.verbose === true || this.settingsManager.getQuietStartup() === false;
 	}
@@ -2813,6 +2828,7 @@ export class InteractiveMode {
 			overlay?: boolean;
 			overlayOptions?: OverlayOptions | (() => OverlayOptions);
 			onHandle?: (handle: OverlayHandle) => void;
+			blocked?: BlockedStatus;
 		},
 	): Promise<T> {
 		const savedText = this.editor.getText();
@@ -2836,7 +2852,10 @@ export class InteractiveMode {
 				closed = true;
 				// Remove this overlay, not the topmost one: another overlay may have opened above it.
 				if (isOverlay) overlayHandle?.hide();
-				else restoreEditor();
+				else {
+					this.programStatus.setBlocked("extension-custom", undefined);
+					restoreEditor();
+				}
 				// Note: both branches above already call requestRender
 				resolve(result);
 				try {
@@ -2872,6 +2891,7 @@ export class InteractiveMode {
 						this.editorContainer.clear();
 						this.editorContainer.addChild(component);
 						this.ui.setFocus(component);
+						this.programStatus.setBlocked("extension-custom", options?.blocked);
 						this.ui.requestRender();
 					}
 				})
