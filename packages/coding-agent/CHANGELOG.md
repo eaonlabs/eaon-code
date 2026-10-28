@@ -2,17 +2,22 @@
 
 ## [Unreleased]
 
+### Breaking Changes
+- `ExecResult` has a required `truncated` field. Code that builds an `ExecResult`, such as typed mocks or wrappers, must set it.
+
 ### Added
 - Device-code login opens the browser and copies the code on Enter.
 - Model selectors show model names when they add information beyond the id.
 - Markdown transformer context includes `messageId` and `timestamp`.
+- `ctx.ui.custom()` accepts `blocked: { kind, message }`, so an inline dialog that waits for input reports blocked program status ([#11428](https://github.com/earendil-works/pi/issues/11428)).
+- `eaon.exec` caps stdout and stderr at 256 MiB by default. `maxBuffer` changes the limit; a command over the limit is terminated and returns `truncated: true` ([#11360](https://github.com/earendil-works/pi/issues/11360)).
 
 ### Changed
 - Updated `undici` to 8.12.3 for upstream security fixes.
 
 ### Fixed
 - HTML export renders system messages and sessions deeper than the call stack.
-- `pi.exec` keeps spawn errors and decodes output across UTF-8 chunk boundaries.
+- `eaon.exec` keeps spawn errors and decodes output across UTF-8 chunk boundaries.
 - macOS shell process groups are stopped before killing.
 - Forked sessions are written through one file descriptor.
 - Startup continues when a configured package fails to install.
@@ -21,6 +26,20 @@
 - MCP tools loaded by `tool_search` are restored on resume and `/reload` once their server connects.
 - Codemode `only` mode leaves hidden tools' guidelines out of the prompt rules and shows them with the codemode declaration.
 - Codemode `read` calls resolve to text for text files and to image blocks for images that `image()` shows.
+- Failed session writes are removed from memory, so later entries chain to the last entry on disk and resumed sessions keep their history ([#11460](https://github.com/earendil-works/pi/issues/11460)).
+- Tool search ranks a tool first when the query is its full name or the part after `__` ([#11331](https://github.com/earendil-works/pi/issues/11331)).
+- The model scope notice shows in the fullscreen header instead of the shell after exit ([#11508](https://github.com/earendil-works/pi/issues/11508)).
+- Codemode summarizes union and multi-line output types in tool descriptions instead of inlining the full type ([#11501](https://github.com/earendil-works/pi/issues/11501)).
+- Hidden thinking with an empty label renders no blank rows ([#11402](https://github.com/earendil-works/pi/issues/11402)).
+- Grep context lines stay aligned with ripgrep when a file has a lone CR ([#11398](https://github.com/earendil-works/pi/issues/11398)).
+- Branch summaries use the session thinking level ([#11482](https://github.com/earendil-works/pi/pull/11482)).
+- Starting from a deleted working directory prints an error and exits with code 1 instead of crashing ([#11509](https://github.com/earendil-works/pi/issues/11509)).
+- Setting the same active tools in another order keeps the system prompt unchanged ([#11495](https://github.com/earendil-works/pi/issues/11495)).
+- `--model` resolves provider ids that contain `/`, such as `llama=http://host:10800` ([#11394](https://github.com/earendil-works/pi/issues/11394)).
+- ANSI stripping removes private-parameter sequences such as SGR mouse reports ([#11377](https://github.com/earendil-works/pi/issues/11377)).
+- PageUp and PageDown move selectors, settings lists, and autocomplete menus in fullscreen mode instead of scrolling the transcript ([#7629](https://github.com/earendil-works/pi/issues/7629)).
+- The login dialog opens only web URLs and does not print control characters from sign-in, device-code, or info URLs.
+- The todo example renders validation errors instead of returning `undefined`.
 
 ## [1.1.6] - 2026-10-22
 

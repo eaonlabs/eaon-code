@@ -2,11 +2,20 @@
 
 ## [Unreleased]
 
+### Added
+- `Component.capturesViewportInput` lets a focused component receive fullscreen viewport keys instead of the transcript.
+- `getSelectPageIndex()` and `replaceControlCharacters()` are exported.
+
 ### Fixed
 - Contiguous fuzzy matches rank above scattered matches.
 - Nested blockquotes no longer grow exponentially when rendered.
 - Boxed images scrolled above the fullscreen viewport are cropped; image search is bounded by the tallest registered image.
 - Fullscreen double-click word selection uses iTerm2's word characters.
+- Kitty keyboard protocol recognizes F1-F12 with and without modifiers and ignores F13+ instead of inserting them as text ([#11419](https://github.com/earendil-works/pi/issues/11419), [#11345](https://github.com/earendil-works/pi/issues/11345)).
+- Display math wider than the content width falls back to raw LaTeX, so the rows stay aligned ([#11483](https://github.com/earendil-works/pi/issues/11483)).
+- Bare URLs stop at CJK punctuation ([#10934](https://github.com/earendil-works/pi/pull/10934)).
+- PageUp and PageDown move every scrolling list, such as `SelectList`, `SettingsList`, and autocomplete, instead of scrolling the fullscreen transcript ([#7629](https://github.com/earendil-works/pi/issues/7629)).
+- `setTitle()` replaces control characters.
 
 ## [1.1.6] - 2026-10-22
 

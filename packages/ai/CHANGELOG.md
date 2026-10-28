@@ -10,11 +10,18 @@
 ### Fixed
 - Kimi K3.1 Pro and K3.1 Pro Highspeed use Kimi K3 settings and implied subscription costs.
 - OpenRouter-reported cost is used when present.
-- Anthropic system updates are held past assistant messages that convert to no blocks (#11091).
+- Anthropic system updates are held past assistant messages that convert to no blocks ([#11091](https://github.com/earendil-works/pi/issues/11091)).
 - Anthropic per-message effort sends a fixed low top-level effort.
 - Faux provider no longer counts cache writes as input tokens.
 - Gemini tool schemas send `const` as `enum` and keep literal data.
 - Eaon gateway requests are signed with `EAON_GATEWAY_APP_ID` and `EAON_GATEWAY_APP_SECRET`; unsigned requests fail with `eaon_apps_only`.
+- GPT-5.4 and GPT-5.5 declare tools at the top level, so a replayed tool call after another model's tool calls no longer fails with 400 ([#11415](https://github.com/earendil-works/pi/issues/11415)).
+- Bedrock strict tool limit rejections retry once with `strict: "prefer"` tools non-strict, as the Anthropic provider does ([#11416](https://github.com/earendil-works/pi/issues/11416)).
+- OpenRouter `~anthropic/*-latest` aliases use Anthropic Messages with adaptive thinking, so thinking signatures are kept on replay ([#9534](https://github.com/earendil-works/pi/issues/9534)).
+- OpenCode requests use the protocol-specific endpoints, such as `/inference/anthropic` and `/inference/google/v1beta` ([#11132](https://github.com/earendil-works/pi/issues/11132)).
+- LiteLLM `ContextWindowExceededError` is detected as context overflow, so compaction and retry run ([#11492](https://github.com/earendil-works/pi/issues/11492)).
+- OpenCode DeepSeek V4.1 Flash no longer sends `prompt_cache_retention`.
+- OAuth logins accept only http(s) URLs from servers, `pi-messages` rejects `contentIndex` values that are not the next or an existing block, and the CLI auth file is written with mode `0600`.
 
 ## [1.1.6] - 2026-10-22
 
