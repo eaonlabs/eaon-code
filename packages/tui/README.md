@@ -213,6 +213,7 @@ interface Component {
   render(width: number): string[];
   handleInput?(data: string): void;
   handleMouse?(event: TuiMouseEvent): TuiMouseEventResult | undefined;
+  capturesViewportInput?: boolean;
   invalidate?(): void;
 }
 ```
@@ -223,6 +224,7 @@ interface Component {
 | `handleInput?(data)` | Called when the component has focus and receives keyboard input. The `data` string contains raw terminal input (may include ANSI escape sequences). |
 | `handleMouse?(event)` | Called by `TuiAltScreen` for normalized pointer input targeted at the component. |
 | `invalidate?()` | Called to clear any cached render state. Components should re-render from scratch on the next `render()` call. |
+| `capturesViewportInput?` | If true while the component has focus, `TuiAltScreen` passes its viewport scrolling and prompt-jump keys (`tui.altScreen.*` except search) to it instead of scrolling the viewport, as it does for a focused overlay. Set by `SelectList`, `SettingsList`, and `Editor` while autocomplete is open, so PageUp/PageDown move the selection. Only the focused component is checked: a wrapper that forwards input to a list must expose the list's value itself. Use `getSelectPageIndex(keybindings, data, selectedIndex, itemCount, pageSize)` to compute the new selection. |
 
 The TUI appends a full SGR reset and OSC 8 reset at the end of each rendered line. Styles do not carry across lines. If you emit multi-line text with styling, reapply styles per line or use `wrapTextWithAnsi()` so styles are preserved for each wrapped line.
 
